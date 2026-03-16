@@ -8,13 +8,29 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const base44 = createClientFromRequest(req);
+    // IMPORTANT: Read body BEFORE createClientFromRequest (which may consume the request)
     const body = await req.text();
 
-    // Empty body = verification ping from LINE
+    // Empty body = verification ping
     if (!body || body.trim() === '') {
       return Response.json({ status: 'ok' }, { status: 200 });
     }
+
+    // Parse early to check for empty events (LINE verification POST)
+    let payload;
+    try {
+      payload = JSON.parse(body);
+    } catch {
+      return Response.json({ status: 'ok' }, { status: 200 });
+    }
+
+    // LINE sends empty events array for verification - return 200 immediately
+    if (!payload.events || payload.events.length === 0) {
+      return Response.json({ status: 'ok' }, { status: 200 });
+    }
+
+    // Now initialize SDK (need it only for actual message processing)
+    const base44 = createClientFromRequest(req);
 
     // Get LINE config from AppConfig (service role since this is a webhook with no user)
     const configs = await base44.asServiceRole.entities.AppConfig.filter({});
