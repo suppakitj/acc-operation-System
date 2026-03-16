@@ -54,13 +54,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const payload = JSON.parse(body);
     const events = payload.events || [];
-
-    // LINE sends empty events array for verification
-    if (events.length === 0) {
-      return Response.json({ status: 'ok' }, { status: 200 });
-    }
 
     for (const event of events) {
       if (event.type === 'message') {
