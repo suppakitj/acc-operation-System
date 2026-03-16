@@ -7,7 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Trash2, ClipboardList } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
 export default function TaskForm({ task, onSubmit, isLoading, permissions }) {
@@ -19,12 +20,44 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions }) {
     title: '', description: '', customer_id: '', customer_name: '',
     service_type: '', assigned_to: '', assigned_name: '', department: '',
     priority: 'medium', status: 'pending', due_date: '', start_date: '',
-    checklist: [], is_recurring: false, recurring_type: '', ...task,
+    checklist: [], is_recurring: false, recurring_type: '', template_id: '', ...task,
   });
 
   const { data: customers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
   const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list() });
+  const { data: templates = [] } = useQuery({ queryKey: ['taskTemplates'], queryFn: () => base44.entities.TaskTemplate.list() });
+  const activeTemplates = templates.filter(t => t.status !== 'inactive');
   const [newCheckItem, setNewCheckItem] = useState('');
+
+  const applyTemplate = (templateId) => {
+    if (!templateId || templateId === '_none') {
+      update('template_id', '');
+      return;
+    }
+    const tmpl = templates.find(t => t.id === templateId);
+    if (!tmpl) return;
+    // Calculate due date from rule
+    const now = new Date();
+    const dueDay = tmpl.due_date_rule || 15;
+    const dueDate = new Date(now.getFullYear(), now.getMonth(), Math.min(dueDay, 28));
+    if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
+    const dueDateStr = dueDate.toISOString().split('T')[0];
+
+    setForm(prev => ({
+      ...prev,
+      template_id: templateId,
+      title: tmpl.name || prev.title,
+      service_type: tmpl.service_type || prev.service_type,
+      department: tmpl.department || prev.department,
+      priority: tmpl.default_priority || prev.priority,
+      status: tmpl.default_status || prev.status,
+      due_date: dueDateStr,
+      is_recurring: true,
+      recurring_type: tmpl.recurring_type || prev.recurring_type,
+      checklist: tmpl.default_checklist?.map(c => ({ ...c, checked: false })) || prev.checklist,
+      description: tmpl.description || prev.description,
+    }));
+  };
 
   const update = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
   const addChecklistItem = () => { if (!newCheckItem.trim()) return; update('checklist', [...(form.checklist || []), { item: newCheckItem, checked: false }]); setNewCheckItem(''); };
@@ -45,6 +78,27 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions }) {
 
   return (
     <div className="space-y-4">
+      {/* Template Selector - only for new tasks */}
+      {!task && activeTemplates.length > 0 && (
+        <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg space-y-1.5">
+          <Label className="flex items-center gap-1.5 text-primary"><ClipboardList className="w-3.5 h-3.5" /> เลือก Task Template (สำหรับงานซ้ำประจำ)</Label>
+          <Select value={form.template_id || '_none'} onValueChange={v => applyTemplate(v)}>
+            <SelectTrigger className="bg-card"><SelectValue placeholder="เลือก Template..." /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_none">— ไม่ใช้ Template —</SelectItem>
+              {activeTemplates.map(t => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.template_code} — {t.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {form.template_id && form.template_id !== '_none' && (
+            <p className="text-[10px] text-muted-foreground">Template จะตั้งค่าชื่อ, บริการ, due date, checklist ให้อัตโนมัติ</p>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2 space-y-1.5"><Label>{t('task_name')} *</Label><Input value={form.title} onChange={e => update('title', e.target.value)} /></div>
 
