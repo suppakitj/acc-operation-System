@@ -52,12 +52,10 @@ export default function LineChat() {
     onError: (err) => toast.error(err.message),
   });
 
-  // Mark messages as read
+  // Mark messages as read (via backend to access service-role data)
   const markReadMutation = useMutation({
     mutationFn: async (messageIds) => {
-      for (const id of messageIds) {
-        await base44.entities.LineMessage.update(id, { is_read: true });
-      }
+      await base44.functions.invoke('markLineMessagesRead', { messageIds });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lineMessages'] }),
   });
