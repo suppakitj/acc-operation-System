@@ -128,7 +128,7 @@ export default function Billing() {
     const emails = [...new Set(billings.map(b => b.owner_email).filter(Boolean))];
     return emails.map(e => {
       const u = users.find(u => u.email === e);
-      return { email: e, name: u?.full_name || b?.owner || e };
+      return { email: e, name: u?.full_name || e };
     });
   }, [billings, users]);
 
