@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Search, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../components/LanguageContext';
@@ -59,7 +60,7 @@ export default function UserManagement() {
                 <p className="font-semibold text-sm truncate">{user.full_name}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
               </div>
-              <span className="hidden sm:block">{user.department && <Badge variant="outline">{t(`dept_${user.department}`)}</Badge>}</span>
+              <span className="hidden sm:flex gap-1 flex-wrap">{(user.departments || (user.department ? [user.department] : [])).map(d => <Badge key={d} variant="outline" className="text-[10px]">{t(`dept_${d}`)}</Badge>)}</span>
               <Badge variant="secondary" className={ROLE_COLORS[user.role] || ROLE_COLORS.staff}>{t(`role_${user.role}`) || 'Staff'}</Badge>
             </CardContent>
           </Card>
@@ -93,13 +94,25 @@ export default function UserManagement() {
                   <SelectContent>{roles.map(r => <SelectItem key={r} value={r}>{t(`role_${r}`)}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5"><Label>{t('department')}</Label>
-                <Select value={editingUser.department || ''} onValueChange={v => setEditingUser(p => ({ ...p, department: v }))}><SelectTrigger><SelectValue placeholder={t('select_department')} /></SelectTrigger>
-                  <SelectContent>{depts.map(d => <SelectItem key={d} value={d}>{t(`dept_${d}`)}</SelectItem>)}</SelectContent>
-                </Select>
+              <div className="space-y-1.5"><Label>{t('department')} (หลายแผนกได้)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {depts.map(d => {
+                    const checked = (editingUser.departments || (editingUser.department ? [editingUser.department] : [])).includes(d);
+                    return (
+                      <div key={d} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50">
+                        <Checkbox checked={checked} onCheckedChange={() => {
+                          const current = editingUser.departments || (editingUser.department ? [editingUser.department] : []);
+                          const updated = checked ? current.filter(x => x !== d) : [...current, d];
+                          setEditingUser(p => ({ ...p, departments: updated, department: updated[0] || '' }));
+                        }} />
+                        <span className="text-sm">{t(`dept_${d}`)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
               <div className="space-y-1.5"><Label>{t('phone')}</Label><Input value={editingUser.phone || ''} onChange={e => setEditingUser(p => ({ ...p, phone: e.target.value }))} /></div>
-              <Button onClick={() => updateMutation.mutate({ id: editingUser.id, data: { role: editingUser.role, department: editingUser.department, phone: editingUser.phone } })} disabled={updateMutation.isPending} className="w-full">{updateMutation.isPending ? t('saving') : t('save')}</Button>
+              <Button onClick={() => updateMutation.mutate({ id: editingUser.id, data: { role: editingUser.role, departments: editingUser.departments || (editingUser.department ? [editingUser.department] : []), department: (editingUser.departments || [editingUser.department])[0] || '', phone: editingUser.phone } })} disabled={updateMutation.isPending} className="w-full">{updateMutation.isPending ? t('saving') : t('save')}</Button>
             </div>
           )}
         </DialogContent>
