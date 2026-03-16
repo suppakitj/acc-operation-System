@@ -32,6 +32,7 @@ export default function LineOASettings() {
     setChannelId(getVal('line_channel_id'));
     setChannelSecret(getVal('line_channel_secret'));
     setAccessToken(getVal('line_access_token'));
+    setLineUserId(getVal('line_user_id'));
   }, [configs]);
 
   const saveMutation = useMutation({
