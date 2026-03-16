@@ -73,7 +73,16 @@ export default function TopBar({ user, unreadCount, onMenuClick }) {
               <Link to="/AppSettings" className="cursor-pointer"><Settings className="w-4 h-4 mr-2" /> {t('settings')}</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => base44.auth.logout()} className="text-destructive cursor-pointer">
+            <DropdownMenuItem onClick={async () => {
+              await base44.entities.AuditLog.create({
+                action: 'logout',
+                entity_type: 'User',
+                user_email: user?.email || '',
+                user_name: user?.full_name || '',
+                details: `User logged out at ${new Date().toISOString()}`,
+              }).catch(() => {});
+              base44.auth.logout();
+            }} className="text-destructive cursor-pointer">
               <LogOut className="w-4 h-4 mr-2" /> {t('logout')}
             </DropdownMenuItem>
           </DropdownMenuContent>
