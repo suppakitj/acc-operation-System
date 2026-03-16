@@ -6,12 +6,19 @@ import { Badge } from '@/components/ui/badge';
 import { Key, AlertTriangle } from 'lucide-react';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
+import { useAccessControl } from '../components/auth/useAccessControl';
 
 const PKG_COLORS = { basic: 'bg-blue-100 text-blue-700', pro: 'bg-purple-100 text-purple-700', pro_plus: 'bg-yellow-100 text-yellow-700', none: 'bg-gray-100 text-gray-700' };
 const PKG_LABELS = { basic: 'Basic', pro: 'Pro', pro_plus: 'Pro Plus', none: '-' };
 
 export default function PeakAccount() {
   const { t } = useLanguage();
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const ac = useAccessControl(currentUser);
+
+  if (!ac.canViewPeakAccount) {
+    return <div className="text-center py-12 text-muted-foreground">ไม่มีสิทธิ์เข้าถึงหน้านี้</div>;
+  }
   const { data: customers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
   const peakCustomers = customers.filter(c => (c.services || []).includes('peak_licensing'));
   const today = new Date();

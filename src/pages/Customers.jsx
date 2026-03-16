@@ -10,9 +10,12 @@ import StatusBadge from '../components/shared/StatusBadge';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import CustomerForm from '../components/customers/CustomerForm';
 import { useLanguage } from '../components/LanguageContext';
+import { useAccessControl } from '../components/auth/useAccessControl';
 
 export default function Customers() {
   const { t } = useLanguage();
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const ac = useAccessControl(currentUser);
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
@@ -46,9 +49,11 @@ export default function Customers() {
           <h1 className="text-xl md:text-2xl font-bold">{t('customers_title')}</h1>
           <p className="text-sm text-muted-foreground">{t('customers_subtitle')} — {customers.length} {t('companies')}</p>
         </div>
-        <Button onClick={() => { setEditingCustomer(null); setShowForm(true); }} className="gap-2 shrink-0 self-start sm:self-auto">
-          <Plus className="w-4 h-4" /> {t('add_customer')}
-        </Button>
+        {ac.canManageCustomers && (
+          <Button onClick={() => { setEditingCustomer(null); setShowForm(true); }} className="gap-2 shrink-0 self-start sm:self-auto">
+            <Plus className="w-4 h-4" /> {t('add_customer')}
+          </Button>
+        )}
       </div>
 
       <div className="relative max-w-md">
@@ -64,7 +69,7 @@ export default function Customers() {
         ) : (
           filtered.map(customer => (
             <Card key={customer.id} className="hover:shadow-md transition-all cursor-pointer group"
-              onClick={() => { setEditingCustomer(customer); setShowForm(true); }}>
+              onClick={() => { if (ac.canManageCustomers) { setEditingCustomer(customer); setShowForm(true); } }}>
               <CardContent className="p-4 md:p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3 min-w-0">

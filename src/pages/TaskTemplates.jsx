@@ -12,15 +12,20 @@ import { Plus, ClipboardList, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { useLanguage } from '../components/LanguageContext';
+import { useAccessControl } from '../components/auth/useAccessControl';
 
 export default function TaskTemplates() {
   const { t } = useLanguage();
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const ac = useAccessControl(currentUser);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({});
   const [newItem, setNewItem] = useState('');
   const queryClient = useQueryClient();
 
-  const { data: templates = [] } = useQuery({ queryKey: ['taskTemplates'], queryFn: () => base44.entities.TaskTemplate.list() });
+  const { data: allTemplates = [] } = useQuery({ queryKey: ['taskTemplates'], queryFn: () => base44.entities.TaskTemplate.list() });
+  // Full access or dept-only
+  const templates = ac.canManageTemplates ? allTemplates : ac.filterByDepartment(allTemplates);
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.TaskTemplate.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['taskTemplates'] }); setShowForm(false); },
@@ -35,9 +40,11 @@ export default function TaskTemplates() {
           <h1 className="text-xl md:text-2xl font-bold">{t('templates_title')}</h1>
           <p className="text-sm text-muted-foreground">{t('templates_subtitle')}</p>
         </div>
-        <Button onClick={() => { setForm({ recurring_type: 'none', default_priority: 'medium' }); setShowForm(true); }} className="gap-2 shrink-0 self-start sm:self-auto">
-          <Plus className="w-4 h-4" /> {t('create_template')}
-        </Button>
+        {(ac.canManageTemplates || ac.canManageTemplatesDept) && (
+          <Button onClick={() => { setForm({ recurring_type: 'none', default_priority: 'medium' }); setShowForm(true); }} className="gap-2 shrink-0 self-start sm:self-auto">
+            <Plus className="w-4 h-4" /> {t('create_template')}
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">

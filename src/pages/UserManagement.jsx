@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { useLanguage } from '../components/LanguageContext';
 import UserTable from '../components/users/UserTable';
 import UserFormDialog from '../components/users/UserFormDialog';
+import { useAccessControl } from '../components/auth/useAccessControl';
 
 // Employee ID prefixes per department
 const DEPT_PREFIX = {
@@ -53,7 +54,12 @@ export default function UserManagement() {
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const ac = useAccessControl(currentUser);
   const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list() });
+
+  if (!ac.canManageUsers) {
+    return <div className="text-center py-12 text-muted-foreground">เฉพาะ Admin เท่านั้นที่จัดการผู้ใช้ได้</div>;
+  }
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.User.update(id, data),

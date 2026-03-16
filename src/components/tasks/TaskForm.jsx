@@ -10,7 +10,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2 } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
-export default function TaskForm({ task, onSubmit, isLoading }) {
+export default function TaskForm({ task, onSubmit, isLoading, permissions }) {
+  const canEditAssignee = permissions?.canEditAssignee !== false;
+  const canEditDueDate = permissions ? permissions.canChangeDueDate(task) : true;
+  const canEditStatus = permissions ? permissions.canChangeStatus(task) : true;
   const { t } = useLanguage();
   const [form, setForm] = useState({
     title: '', description: '', customer_id: '', customer_name: '',
@@ -60,7 +63,7 @@ export default function TaskForm({ task, onSubmit, isLoading }) {
         </div>
 
         <div className="space-y-1.5"><Label>{t('assigned_to')}</Label>
-          <Select value={form.assigned_to} onValueChange={v => { const u = users.find(u => u.email === v); setForm(p => ({ ...p, assigned_to: v, assigned_name: u?.full_name || '' })); }}>
+          <Select value={form.assigned_to} onValueChange={v => { const u = users.find(u => u.email === v); setForm(p => ({ ...p, assigned_to: v, assigned_name: u?.full_name || '' })); }} disabled={!canEditAssignee && !!task}>
             <SelectTrigger><SelectValue placeholder={t('select_assignee')} /></SelectTrigger>
             <SelectContent>{users.map(u => <SelectItem key={u.id} value={u.email}>{u.full_name}</SelectItem>)}</SelectContent>
           </Select>
@@ -86,7 +89,7 @@ export default function TaskForm({ task, onSubmit, isLoading }) {
         </div>
 
         <div className="space-y-1.5"><Label>{t('status')}</Label>
-          <Select value={form.status} onValueChange={v => update('status', v)}>
+          <Select value={form.status} onValueChange={v => update('status', v)} disabled={!canEditStatus && !!task}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="pending">{t('status_pending')}</SelectItem>
@@ -99,7 +102,7 @@ export default function TaskForm({ task, onSubmit, isLoading }) {
         </div>
 
         <div className="space-y-1.5"><Label>{t('start_date')}</Label><Input type="date" value={form.start_date} onChange={e => update('start_date', e.target.value)} /></div>
-        <div className="space-y-1.5"><Label>{t('due_date')}</Label><Input type="date" value={form.due_date} onChange={e => update('due_date', e.target.value)} /></div>
+        <div className="space-y-1.5"><Label>{t('due_date')}</Label><Input type="date" value={form.due_date} onChange={e => update('due_date', e.target.value)} disabled={!canEditDueDate && !!task} /></div>
         <div className="md:col-span-2 space-y-1.5"><Label>{t('description')}</Label><Textarea value={form.description} onChange={e => update('description', e.target.value)} rows={3} /></div>
       </div>
 

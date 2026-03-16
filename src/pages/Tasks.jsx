@@ -10,9 +10,12 @@ import TaskDeptTabs from '../components/tasks/TaskDeptTabs';
 import TaskFilters from '../components/tasks/TaskFilters';
 import TaskTable from '../components/tasks/TaskTable';
 import { useLanguage } from '../components/LanguageContext';
+import { useAccessControl } from '../components/auth/useAccessControl';
 
 export default function Tasks() {
   const { t } = useLanguage();
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const ac = useAccessControl(currentUser);
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [selected, setSelected] = useState([]);
@@ -25,10 +28,12 @@ export default function Tasks() {
   });
   const queryClient = useQueryClient();
 
-  const { data: tasks = [], isLoading } = useQuery({
+  const { data: allTasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 500),
   });
+  // Apply department-based visibility
+  const tasks = ac.filterByDepartment(allTasks);
   const { data: customers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
   const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list() });
 
@@ -109,6 +114,8 @@ export default function Tasks() {
       {/* Stats Row */}
       <TaskStatsRow tasks={tasks} />
 
+      {/* Task Form passes permissions for field-level control */}
+
       {/* Dept Tabs */}
       <TaskDeptTabs tasks={tasks} />
 
@@ -134,7 +141,7 @@ export default function Tasks() {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingTask ? t('edit_task') : t('create_task')}</DialogTitle></DialogHeader>
-          <TaskForm task={editingTask} onSubmit={handleSubmit} isLoading={createMutation.isPending || updateMutation.isPending} />
+          <TaskForm task={editingTask} onSubmit={handleSubmit} isLoading={createMutation.isPending || updateMutation.isPending} permissions={ac} />
         </DialogContent>
       </Dialog>
     </div>

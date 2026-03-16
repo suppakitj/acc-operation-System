@@ -13,11 +13,14 @@ import { Plus, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameDay, addMonths, subMonths } from 'date-fns';
 import { th, enUS } from 'date-fns/locale';
 import { useLanguage } from '../components/LanguageContext';
+import { useAccessControl } from '../components/auth/useAccessControl';
 
 const TYPE_COLORS = { meeting: 'bg-blue-100 text-blue-700', deadline: 'bg-red-100 text-red-700', appointment: 'bg-green-100 text-green-700', reminder: 'bg-yellow-100 text-yellow-700', other: 'bg-gray-100 text-gray-700' };
 
 export default function Schedule() {
   const { t, lang } = useLanguage();
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const ac = useAccessControl(currentUser);
   const locale = lang === 'th' ? th : enUS;
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
@@ -25,7 +28,8 @@ export default function Schedule() {
   const [form, setForm] = useState({});
   const queryClient = useQueryClient();
 
-  const { data: schedules = [] } = useQuery({ queryKey: ['schedules'], queryFn: () => base44.entities.Schedule.list('-date', 200) });
+  const { data: allSchedules = [] } = useQuery({ queryKey: ['schedules'], queryFn: () => base44.entities.Schedule.list('-date', 200) });
+  const schedules = ac.canViewAllSchedules ? allSchedules : ac.filterByDepartment(allSchedules);
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Schedule.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['schedules'] }); setShowForm(false); },

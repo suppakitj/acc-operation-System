@@ -13,16 +13,22 @@ import { format } from 'date-fns';
 import StatusBadge from '../components/shared/StatusBadge';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import { useLanguage } from '../components/LanguageContext';
+import { useAccessControl } from '../components/auth/useAccessControl';
 
 export default function Billing() {
   const { t } = useLanguage();
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const ac = useAccessControl(currentUser);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({});
   const queryClient = useQueryClient();
 
-  const { data: billings = [] } = useQuery({ queryKey: ['billings'], queryFn: () => base44.entities.Billing.list('-created_date', 200) });
+  const { data: allBillings = [] } = useQuery({ queryKey: ['billings'], queryFn: () => base44.entities.Billing.list('-created_date', 200) });
+  // Apply role-based visibility — billing has no direct dept field, 
+  // but we can filter by related service/dept if needed. For now full vs hidden.
+  const billings = (ac.canViewBilling || ac.canViewBillingDept) ? allBillings : [];
   const { data: customers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Billing.create(data),

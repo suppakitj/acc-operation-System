@@ -9,10 +9,12 @@ import {
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAccessControl } from '../auth/useAccessControl';
 
 export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, setMobileOpen }) {
   const location = useLocation();
   const { t } = useLanguage();
+  const ac = useAccessControl(user);
 
   const menuItems = [
     { id: 'dashboard', label: t('menu_dashboard'), icon: LayoutDashboard, path: '/Dashboard' },
@@ -31,13 +33,8 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'settings', label: t('menu_settings'), icon: Settings, path: '/AppSettings' },
   ];
 
-  const userPermissions = user?.menu_permissions || [];
-  const isAdmin = user?.role === 'admin' || user?.role === 'management';
-  const visibleMenuItems = menuItems.filter(item => {
-    if (isAdmin) return true;
-    if (['dashboard', 'tasks', 'schedule', 'notifications', 'settings'].includes(item.id)) return true;
-    return userPermissions.includes(item.id);
-  });
+  const allowedIds = ac.getVisibleMenuIds();
+  const visibleMenuItems = menuItems.filter(item => allowedIds.includes(item.id));
 
   const handleNavClick = () => {
     if (mobileOpen) setMobileOpen(false);

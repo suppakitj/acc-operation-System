@@ -8,9 +8,16 @@ import { Badge } from '@/components/ui/badge';
 import { Shield, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../components/LanguageContext';
+import { useAccessControl } from '../components/auth/useAccessControl';
 
 export default function RoleManagement() {
   const { t } = useLanguage();
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const ac = useAccessControl(currentUser);
+
+  if (!ac.canManageRoles) {
+    return <div className="text-center py-12 text-muted-foreground">เฉพาะ Admin เท่านั้นที่จัดการสิทธิ์ได้</div>;
+  }
   const [selectedUser, setSelectedUser] = useState(null);
   const queryClient = useQueryClient();
 
