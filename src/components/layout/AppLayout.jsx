@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
+import SessionTimeout from '../auth/SessionTimeout';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
@@ -24,6 +25,21 @@ export default function AppLayout() {
     enabled: !!user?.email,
     refetchInterval: 60000,
   });
+
+  // Log login event once
+  const loginLogged = useRef(false);
+  useEffect(() => {
+    if (user?.email && !loginLogged.current) {
+      loginLogged.current = true;
+      base44.entities.AuditLog.create({
+        action: 'login',
+        entity_type: 'User',
+        user_email: user.email,
+        user_name: user.full_name || user.email,
+        details: `User logged in at ${new Date().toISOString()}`,
+      }).catch(() => {});
+    }
+  }, [user?.email]);
 
   useEffect(() => {
     if (user?.theme) {
@@ -58,6 +74,7 @@ export default function AppLayout() {
         <main className="p-4 md:p-6 max-w-[1600px] mx-auto">
           <Outlet />
         </main>
+        <SessionTimeout />
       </div>
     </div>
   );
