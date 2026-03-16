@@ -24,15 +24,18 @@ export default function LineOASettings() {
   const [channelSecret, setChannelSecret] = useState('');
   const [accessToken, setAccessToken] = useState('');
   const [lineUserId, setLineUserId] = useState('');
+  const [lineGroupId, setLineGroupId] = useState('');
   const [showSecret, setShowSecret] = useState(false);
   const [showToken, setShowToken] = useState(false);
   const [showUserId, setShowUserId] = useState(false);
+  const [showGroupId, setShowGroupId] = useState(false);
 
   useEffect(() => {
     setChannelId(getVal('line_channel_id'));
     setChannelSecret(getVal('line_channel_secret'));
     setAccessToken(getVal('line_access_token'));
     setLineUserId(getVal('line_user_id'));
+    setLineGroupId(getVal('line_group_id'));
   }, [configs]);
 
   const saveMutation = useMutation({
@@ -42,6 +45,7 @@ export default function LineOASettings() {
         { key: 'line_channel_secret', value: channelSecret, description: 'LINE OA Channel Secret' },
         { key: 'line_access_token', value: accessToken, description: 'LINE OA Channel Access Token' },
         { key: 'line_user_id', value: lineUserId, description: 'LINE Your User ID' },
+        { key: 'line_group_id', value: lineGroupId, description: 'LINE Group ID สำหรับส่งแจ้งเตือนเข้ากลุ่ม' },
       ];
       for (const p of pairs) {
         const existing = configs.find(c => c.key === p.key);
@@ -70,6 +74,7 @@ export default function LineOASettings() {
   });
 
   const isConnected = !!(getVal('line_channel_id') && getVal('line_channel_secret') && getVal('line_access_token') && getVal('line_user_id'));
+  const hasGroupId = !!getVal('line_group_id');
   const webhookUrl = 'https://acc-precision-hub.base44.app/functions/lineWebhook';
   const maskedSecret = channelSecret ? '•'.repeat(Math.max(0, channelSecret.length - 4)) + channelSecret.slice(-4) : '';
 
