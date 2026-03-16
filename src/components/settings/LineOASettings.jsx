@@ -176,6 +176,30 @@ export default function LineOASettings() {
           <p className="text-[11px] text-muted-foreground">Found in LINE Developers Console → Basic settings → Your user ID</p>
         </div>
 
+        {/* LINE Group ID */}
+        <div className="space-y-1.5">
+          <Label className="text-sm">
+            <span className="font-semibold">Group ID (กลุ่มบริษัท)</span>
+            <span className="text-muted-foreground font-normal"> — LINE Group ID สำหรับส่งแจ้งเตือนเข้ากลุ่ม</span>
+          </Label>
+          <div className="relative">
+            <Input
+              type={showGroupId ? 'text' : 'password'}
+              value={lineGroupId}
+              onChange={e => setLineGroupId(e.target.value)}
+              placeholder="C..."
+            />
+            <button
+              type="button"
+              onClick={() => setShowGroupId(!showGroupId)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showGroupId ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">เชิญ LINE OA Bot เข้ากลุ่ม แล้วส่งข้อความ — ระบบจะบันทึก Group ID จาก webhook อัตโนมัติ หรือกรอกเอง</p>
+        </div>
+
         {/* Webhook URL */}
         <div className="space-y-1.5">
           <Label className="text-sm">
