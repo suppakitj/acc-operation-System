@@ -62,6 +62,7 @@ export default function LineOASettings() {
     mutationFn: async () => {
       // Simple validation test
       if (!channelId || !channelSecret || !accessToken) throw new Error('กรุณากรอก Channel ID, Channel Secret และ Channel Access Token');
+      if (!lineUserId) throw new Error('กรุณากรอก Your User ID');
       return true;
     },
     onSuccess: () => toast.success('การเชื่อมต่อสำเร็จ (Channel ID & Secret ถูกบันทึก)'),
