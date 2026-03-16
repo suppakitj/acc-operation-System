@@ -32,7 +32,7 @@ export default function EmailSettings() {
     setSenderName(getVal('smtp_sender_name'));
     setGmailAddress(getVal('smtp_gmail_address'));
     setSmtpHost(getVal('smtp_host') || 'smtp.gmail.com');
-    setSmtpPort(getVal('smtp_port') || '465');
+    setSmtpPort(getVal('smtp_port') || '587');
     setEmailSubject(getVal('smtp_email_subject'));
     // If password exists, show placeholder
     const savedPw = getVal('smtp_app_password');
@@ -137,11 +137,11 @@ export default function EmailSettings() {
             <Input
               value={smtpPort}
               onChange={e => setSmtpPort(e.target.value)}
-              placeholder="465"
+              placeholder="587"
             />
           </div>
         </div>
-        <p className="text-[11px] text-muted-foreground -mt-2">สำหรับ Gmail ใช้ smtp.gmail.com พอร์ต 465 (SSL) หรือ 587 (TLS)</p>
+        <p className="text-[11px] text-muted-foreground -mt-2">สำหรับ Gmail ใช้ smtp.gmail.com พอร์ต 587 (TLS/STARTTLS)</p>
 
         {/* Email Subject */}
         <div className="space-y-1.5">
