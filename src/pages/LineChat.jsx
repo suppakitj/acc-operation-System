@@ -160,7 +160,16 @@ export default function LineChat() {
                       <p className="text-sm font-medium truncate">{u.name}</p>
                       {u.lastDate && <span className="text-[10px] text-muted-foreground shrink-0">{format(new Date(u.lastDate), 'HH:mm')}</span>}
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">{u.messages[u.messages.length - 1]?.content}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {(() => {
+                        const last = u.messages[u.messages.length - 1];
+                        if (!last) return '';
+                        if (last.message_type === 'image') return '🖼️ รูปภาพ';
+                        if (last.message_type === 'sticker') return '😊 Sticker';
+                        if (last.message_type === 'file') return '📎 ไฟล์';
+                        return last.content;
+                      })()}
+                    </p>
                   </div>
                   {u.unread > 0 && <Badge className="bg-destructive text-destructive-foreground text-[10px]">{u.unread}</Badge>}
                 </div>
