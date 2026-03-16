@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const body = await req.text();
 
-    // Get LINE config from AppConfig
+    // Get LINE config from AppConfig (service role since this is a webhook with no user)
     const configs = await base44.asServiceRole.entities.AppConfig.filter({});
     const getVal = (key) => configs.find(c => c.key === key)?.value || '';
     const channelSecret = getVal('line_channel_secret');
@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'LINE OA not configured' }, { status: 400 });
     }
 
-    // Verify LINE signature
+    // Verify LINE signature if present
     const signature = req.headers.get('x-line-signature');
     if (signature) {
       const hmac = createHmac('SHA256', channelSecret);
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
           console.warn('Failed to fetch LINE profile:', e.message);
         }
 
-        // Save message to LineMessage entity
+        // Save message to LineMessage entity (service role)
         await base44.asServiceRole.entities.LineMessage.create({
           line_user_id: userId,
           display_name: displayName,
