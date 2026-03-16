@@ -8,15 +8,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // IMPORTANT: Read body BEFORE createClientFromRequest (which may consume the request)
     const body = await req.text();
 
-    // Empty body = verification ping
     if (!body || body.trim() === '') {
       return Response.json({ status: 'ok' }, { status: 200 });
     }
 
-    // Parse early to check for empty events (LINE verification POST)
     let payload;
     try {
       payload = JSON.parse(body);
@@ -24,15 +21,12 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'ok' }, { status: 200 });
     }
 
-    // LINE sends empty events array for verification - return 200 immediately
     if (!payload.events || payload.events.length === 0) {
       return Response.json({ status: 'ok' }, { status: 200 });
     }
 
-    // Now initialize SDK (need it only for actual message processing)
     const base44 = createClientFromRequest(req);
 
-    // Get LINE config from AppConfig (service role since this is a webhook with no user)
     const configs = await base44.asServiceRole.entities.AppConfig.filter({});
     const getVal = (key) => configs.find(c => c.key === key)?.value || '';
     const channelSecret = getVal('line_channel_secret');
@@ -42,7 +36,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'LINE OA not configured' }, { status: 400 });
     }
 
-    // Verify LINE signature if present
+    // Verify LINE signature
     const signature = req.headers.get('x-line-signature');
     if (signature && channelSecret) {
       const hmac = createHmac('SHA256', channelSecret);
@@ -57,7 +51,7 @@ Deno.serve(async (req) => {
     const events = payload.events || [];
 
     for (const event of events) {
-      // Auto-capture Group ID when bot receives message in a group
+      // Auto-capture Group ID
       if (event.source?.type === 'group' && event.source?.groupId) {
         const existingGroupConfig = configs.find(c => c.key === 'line_group_id');
         const currentGroupId = existingGroupConfig?.value || '';
@@ -73,10 +67,10 @@ Deno.serve(async (req) => {
 
       if (event.type === 'message') {
         const userId = event.source?.userId;
-        const messageType = event.message?.type || 'text';
-        const content = event.message?.text || `[${messageType}]`;
+        const msg = event.message;
+        const messageType = msg?.type || 'text';
 
-        // Fetch user profile from LINE
+        // Fetch user profile
         let displayName = userId;
         let profileImage = '';
         try {
@@ -92,18 +86,70 @@ Deno.serve(async (req) => {
           console.warn('Failed to fetch LINE profile:', e.message);
         }
 
-        // Save message to LineMessage entity (service role)
+        let content = '';
+        let fileUrl = '';
+
+        if (messageType === 'text') {
+          content = msg.text || '';
+        } else if (messageType === 'sticker') {
+          // Build sticker image URL from LINE sticker CDN
+          const stickerId = msg.stickerId;
+          const packageId = msg.packageId;
+          content = `[Sticker]`;
+          if (stickerId) {
+            fileUrl = `https://stickershop.line-scdn.net/stickershop/v1/sticker/${stickerId}/iPhone/sticker.png`;
+          }
+        } else if (messageType === 'image' || messageType === 'video' || messageType === 'audio' || messageType === 'file') {
+          // Download content from LINE API and upload to Base44
+          content = messageType === 'image' ? '[รูปภาพ]'
+            : messageType === 'video' ? '[วิดีโอ]'
+            : messageType === 'audio' ? '[เสียง]'
+            : `[ไฟล์: ${msg.fileName || 'file'}]`;
+
+          try {
+            const contentRes = await fetch(`https://api-data.line.me/v2/bot/message/${msg.id}/content`, {
+              headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+
+            if (contentRes.ok) {
+              const contentType = contentRes.headers.get('content-type') || 'application/octet-stream';
+              const blob = await contentRes.blob();
+
+              // Determine file extension
+              let ext = 'bin';
+              if (messageType === 'image') ext = 'jpg';
+              else if (messageType === 'video') ext = 'mp4';
+              else if (messageType === 'audio') ext = 'm4a';
+              else if (msg.fileName) ext = msg.fileName.split('.').pop() || 'bin';
+
+              const fileName = `line_${messageType}_${msg.id}.${ext}`;
+              const file = new File([blob], fileName, { type: contentType });
+
+              const uploadResult = await base44.asServiceRole.integrations.Core.UploadFile({ file });
+              fileUrl = uploadResult.file_url || '';
+              console.log(`Uploaded LINE ${messageType} → ${fileUrl}`);
+            } else {
+              console.warn(`Failed to download LINE content: ${contentRes.status}`);
+            }
+          } catch (e) {
+            console.warn(`Failed to process LINE ${messageType}:`, e.message);
+          }
+        } else {
+          content = `[${messageType}]`;
+        }
+
         await base44.asServiceRole.entities.LineMessage.create({
           line_user_id: userId,
           display_name: displayName,
           profile_image: profileImage,
-          message_type: messageType,
+          message_type: messageType === 'audio' || messageType === 'video' ? 'file' : (messageType === 'sticker' ? 'sticker' : messageType),
           content: content,
           direction: 'incoming',
+          file_url: fileUrl || undefined,
           is_read: false,
         });
 
-        console.log(`Saved incoming message from ${displayName}: ${content}`);
+        console.log(`Saved incoming ${messageType} from ${displayName}: ${content}`);
       }
     }
 
