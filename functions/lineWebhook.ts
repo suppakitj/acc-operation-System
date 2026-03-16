@@ -2,9 +2,19 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import { createHmac } from 'node:crypto';
 
 Deno.serve(async (req) => {
+  // Handle GET requests (LINE webhook verification)
+  if (req.method === 'GET') {
+    return Response.json({ status: 'ok' }, { status: 200 });
+  }
+
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.text();
+
+    // Empty body = verification ping from LINE
+    if (!body || body.trim() === '') {
+      return Response.json({ status: 'ok' }, { status: 200 });
+    }
 
     // Get LINE config from AppConfig (service role since this is a webhook with no user)
     const configs = await base44.asServiceRole.entities.AppConfig.filter({});
@@ -18,7 +28,7 @@ Deno.serve(async (req) => {
 
     // Verify LINE signature if present
     const signature = req.headers.get('x-line-signature');
-    if (signature) {
+    if (signature && channelSecret) {
       const hmac = createHmac('SHA256', channelSecret);
       hmac.update(body);
       const expectedSig = hmac.digest('base64');
@@ -30,6 +40,11 @@ Deno.serve(async (req) => {
 
     const payload = JSON.parse(body);
     const events = payload.events || [];
+
+    // LINE sends empty events array for verification
+    if (events.length === 0) {
+      return Response.json({ status: 'ok' }, { status: 200 });
+    }
 
     for (const event of events) {
       if (event.type === 'message') {
