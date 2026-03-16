@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Send, Search, MessageCircle, User, ArrowLeft, AlertCircle, Settings } from 'lucide-react';
+import { Send, Search, MessageCircle, User, Users, ArrowLeft, AlertCircle, Settings } from 'lucide-react';
 import ChatBubble from '../components/chat/ChatBubble';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -65,7 +65,7 @@ export default function LineChat() {
   const userGroups = {};
   messages.forEach(m => {
     const key = m.line_user_id || m.customer_name || 'unknown';
-    if (!userGroups[key]) userGroups[key] = { id: key, name: m.display_name || m.customer_name || '?', image: m.profile_image, messages: [], unread: 0, lastDate: m.created_date };
+    if (!userGroups[key]) userGroups[key] = { id: key, name: m.display_name || m.customer_name || '?', image: m.profile_image, messages: [], unread: 0, lastDate: m.created_date, chatType: m.chat_type || 'user' };
     userGroups[key].messages.push(m);
     if (!m.is_read && m.direction === 'incoming') userGroups[key].unread++;
     if (m.created_date > userGroups[key].lastDate) userGroups[key].lastDate = m.created_date;
@@ -153,7 +153,7 @@ export default function LineChat() {
                 <div key={u.id} onClick={() => setSelectedUserId(u.id)}
                   className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/50 transition-colors border-b ${selectedUserId === u.id ? 'bg-muted' : ''}`}>
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
-                    {u.image ? <img src={u.image} className="w-full h-full object-cover" alt="" /> : <User className="w-5 h-5 text-primary" />}
+                    {u.image ? <img src={u.image} className="w-full h-full object-cover" alt="" /> : (u.chatType === 'group' ? <Users className="w-5 h-5 text-primary" /> : <User className="w-5 h-5 text-primary" />)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
