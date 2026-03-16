@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Send, Search, MessageCircle, User, ArrowLeft, AlertCircle, Settings } from 'lucide-react';
+import ChatBubble from '../components/chat/ChatBubble';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '../components/LanguageContext';
@@ -194,17 +195,7 @@ export default function LineChat() {
                 <ScrollArea className="h-full p-3 md:p-4">
                   <div className="space-y-3">
                     {chatMessages.map(m => (
-                      <div key={m.id} className={`flex ${m.direction === 'outgoing' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] md:max-w-[70%] rounded-2xl px-3.5 py-2 ${m.direction === 'outgoing' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                          <p className="text-sm whitespace-pre-wrap">{m.content}</p>
-                          <div className={`flex items-center gap-1 mt-1 ${m.direction === 'outgoing' ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
-                            <span className="text-[10px]">{m.created_date && format(new Date(m.created_date), 'HH:mm')}</span>
-                            {m.direction === 'outgoing' && m.replied_by && (
-                              <span className="text-[10px]">· {m.replied_by.split('@')[0]}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                      <ChatBubble key={m.id} message={m} />
                     ))}
                     <div ref={chatEndRef} />
                   </div>
