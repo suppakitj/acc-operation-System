@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { line_user_id, message, display_name } = await req.json();
+    const { line_user_id, message, display_name, chat_type } = await req.json();
 
     if (!line_user_id || !message) {
       return Response.json({ error: 'line_user_id and message are required' }, { status: 400 });
@@ -52,6 +52,7 @@ Deno.serve(async (req) => {
       message_type: 'text',
       is_read: true,
       replied_by: user.email,
+      chat_type: chat_type || 'user',
     });
 
     console.log(`Sent message to ${line_user_id}: ${message}`);
