@@ -22,11 +22,14 @@ export default function LineOASettings() {
 
   const [channelId, setChannelId] = useState('');
   const [channelSecret, setChannelSecret] = useState('');
+  const [accessToken, setAccessToken] = useState('');
   const [showSecret, setShowSecret] = useState(false);
+  const [showToken, setShowToken] = useState(false);
 
   useEffect(() => {
     setChannelId(getVal('line_channel_id'));
     setChannelSecret(getVal('line_channel_secret'));
+    setAccessToken(getVal('line_access_token'));
   }, [configs]);
 
   const saveMutation = useMutation({
@@ -34,6 +37,7 @@ export default function LineOASettings() {
       const pairs = [
         { key: 'line_channel_id', value: channelId, description: 'LINE OA Channel ID' },
         { key: 'line_channel_secret', value: channelSecret, description: 'LINE OA Channel Secret' },
+        { key: 'line_access_token', value: accessToken, description: 'LINE OA Channel Access Token' },
       ];
       for (const p of pairs) {
         const existing = configs.find(c => c.key === p.key);
@@ -53,14 +57,14 @@ export default function LineOASettings() {
   const testMutation = useMutation({
     mutationFn: async () => {
       // Simple validation test
-      if (!channelId || !channelSecret) throw new Error('กรุณากรอก Channel ID และ Channel Secret');
+      if (!channelId || !channelSecret || !accessToken) throw new Error('กรุณากรอก Channel ID, Channel Secret และ Channel Access Token');
       return true;
     },
     onSuccess: () => toast.success('การเชื่อมต่อสำเร็จ (Channel ID & Secret ถูกบันทึก)'),
     onError: (err) => toast.error(err.message),
   });
 
-  const isConnected = !!(getVal('line_channel_id') && getVal('line_channel_secret'));
+  const isConnected = !!(getVal('line_channel_id') && getVal('line_channel_secret') && getVal('line_access_token'));
   const webhookUrl = `https://your-app.base44.app/webhooks/line`;
   const maskedSecret = channelSecret ? '•'.repeat(Math.max(0, channelSecret.length - 4)) + channelSecret.slice(-4) : '';
 
@@ -112,6 +116,35 @@ export default function LineOASettings() {
             </button>
           </div>
           <p className="text-[11px] text-muted-foreground">Stored securely. Update via your LINE Developers Console.</p>
+        </div>
+
+        {/* Channel Access Token */}
+        <div className="space-y-1.5">
+          <Label className="text-sm">
+            <span className="font-semibold">Channel Access Token</span>
+            <span className="text-muted-foreground font-normal"> — Your LINE Official Account Channel Access Token (masked)</span>
+          </Label>
+          <div className="relative">
+            <Input
+              type={showToken ? 'text' : 'password'}
+              value={accessToken}
+              onChange={e => setAccessToken(e.target.value)}
+              placeholder=""
+            />
+            <button
+              type="button"
+              onClick={() => setShowToken(!showToken)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowToken(!showToken)} className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1">
+              {showToken ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />} {showToken ? 'Hide' : 'Show'}
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">Stored securely. Found in LINE Developers Console → Messaging API.</p>
         </div>
 
         {/* Webhook URL */}
