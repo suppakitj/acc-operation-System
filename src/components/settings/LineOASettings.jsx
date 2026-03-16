@@ -65,7 +65,7 @@ export default function LineOASettings() {
   });
 
   const isConnected = !!(getVal('line_channel_id') && getVal('line_channel_secret') && getVal('line_access_token'));
-  const webhookUrl = `https://your-app.base44.app/webhooks/line`;
+  const webhookUrl = `${window.location.origin}/api/lineWebhook`;
   const maskedSecret = channelSecret ? '•'.repeat(Math.max(0, channelSecret.length - 4)) + channelSecret.slice(-4) : '';
 
   return (
