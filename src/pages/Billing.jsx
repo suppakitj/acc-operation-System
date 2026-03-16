@@ -12,24 +12,18 @@ import { Plus, Search, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import StatusBadge from '../components/shared/StatusBadge';
 import ServiceBadge from '../components/shared/ServiceBadge';
+import { useLanguage } from '../components/LanguageContext';
 
 export default function Billing() {
+  const { t } = useLanguage();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({});
   const queryClient = useQueryClient();
 
-  const { data: billings = [], isLoading } = useQuery({
-    queryKey: ['billings'],
-    queryFn: () => base44.entities.Billing.list('-created_date', 200),
-  });
-
-  const { data: customers = [] } = useQuery({
-    queryKey: ['customers'],
-    queryFn: () => base44.entities.Customer.list(),
-  });
-
+  const { data: billings = [] } = useQuery({ queryKey: ['billings'], queryFn: () => base44.entities.Billing.list('-created_date', 200) });
+  const { data: customers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Billing.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['billings'] }); setShowForm(false); },
@@ -45,99 +39,87 @@ export default function Billing() {
   const totalPending = billings.filter(b => b.status === 'sent' || b.status === 'overdue').reduce((s, b) => s + (b.total_amount || b.amount || 0), 0);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Billing & Payment</h1>
-          <p className="text-sm text-muted-foreground mt-1">จัดการใบแจ้งหนี้และการชำระเงิน</p>
+          <h1 className="text-xl md:text-2xl font-bold">{t('billing_title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('billing_subtitle')}</p>
         </div>
-        <Button onClick={() => { setForm({ status: 'draft', billing_date: format(new Date(), 'yyyy-MM-dd') }); setShowForm(true); }} className="gap-2">
-          <Plus className="w-4 h-4" /> สร้างใบแจ้งหนี้
+        <Button onClick={() => { setForm({ status: 'draft', billing_date: format(new Date(), 'yyyy-MM-dd') }); setShowForm(true); }} className="gap-2 shrink-0 self-start sm:self-auto">
+          <Plus className="w-4 h-4" /> {t('create_invoice')}
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4"><p className="text-xs text-muted-foreground">ชำระแล้วทั้งหมด</p><p className="text-2xl font-bold text-green-600">฿{totalPaid.toLocaleString()}</p></Card>
-        <Card className="p-4"><p className="text-xs text-muted-foreground">ค้างชำระ</p><p className="text-2xl font-bold text-red-600">฿{totalPending.toLocaleString()}</p></Card>
-        <Card className="p-4"><p className="text-xs text-muted-foreground">จำนวนใบแจ้งหนี้</p><p className="text-2xl font-bold">{billings.length}</p></Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Card className="p-4"><p className="text-xs text-muted-foreground">{t('total_paid')}</p><p className="text-xl md:text-2xl font-bold text-green-600">฿{totalPaid.toLocaleString()}</p></Card>
+        <Card className="p-4"><p className="text-xs text-muted-foreground">{t('total_pending')}</p><p className="text-xl md:text-2xl font-bold text-red-600">฿{totalPending.toLocaleString()}</p></Card>
+        <Card className="p-4"><p className="text-xs text-muted-foreground">{t('total_invoices')}</p><p className="text-xl md:text-2xl font-bold">{billings.length}</p></Card>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="ค้นหา..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
+          <Input placeholder={t('search')} value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">ทั้งหมด</SelectItem>
-            <SelectItem value="draft">ร่าง</SelectItem>
-            <SelectItem value="sent">ส่งแล้ว</SelectItem>
-            <SelectItem value="paid">ชำระแล้ว</SelectItem>
-            <SelectItem value="overdue">เกินกำหนด</SelectItem>
+            <SelectItem value="all">{t('all')}</SelectItem>
+            <SelectItem value="draft">{t('status_draft')}</SelectItem>
+            <SelectItem value="sent">{t('status_sent')}</SelectItem>
+            <SelectItem value="paid">{t('status_paid')}</SelectItem>
+            <SelectItem value="overdue">{t('status_overdue')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {filtered.map(b => (
-          <Card key={b.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <CreditCard className="w-5 h-5 text-primary" />
-              </div>
+          <Card key={b.id} className="hover:shadow-md transition-all">
+            <CardContent className="p-3 md:p-4 flex items-center gap-3 md:gap-4">
+              <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><CreditCard className="w-4 h-4 md:w-5 md:h-5 text-primary" /></div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold text-sm">{b.invoice_number || 'ร่าง'}</p>
-                  <StatusBadge status={b.status} />
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {b.customer_name} {b.due_date && `· กำหนด ${format(new Date(b.due_date), 'dd/MM/yyyy')}`}
-                </p>
+                <div className="flex items-center gap-2"><p className="font-semibold text-sm truncate">{b.invoice_number || t('status_draft')}</p><StatusBadge status={b.status} /></div>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">{b.customer_name} {b.due_date && `· ${format(new Date(b.due_date), 'dd/MM/yyyy')}`}</p>
               </div>
-              {b.service_type && <ServiceBadge service={b.service_type} />}
-              <p className="font-bold text-sm">฿{(b.total_amount || b.amount || 0).toLocaleString()}</p>
+              <span className="hidden sm:block">{b.service_type && <ServiceBadge service={b.service_type} />}</span>
+              <p className="font-bold text-sm shrink-0">฿{(b.total_amount || b.amount || 0).toLocaleString()}</p>
             </CardContent>
           </Card>
         ))}
-        {filtered.length === 0 && <div className="text-center py-12 text-muted-foreground">ไม่พบข้อมูล</div>}
+        {filtered.length === 0 && <div className="text-center py-12 text-muted-foreground">{t('no_data')}</div>}
       </div>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>สร้างใบแจ้งหนี้</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('create_invoice')}</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>ลูกค้า *</Label>
-              <Select value={form.customer_id || ''} onValueChange={v => {
-                const c = customers.find(c => c.id === v);
-                setForm(p => ({ ...p, customer_id: v, customer_name: c?.company_name || '' }));
-              }}>
-                <SelectTrigger><SelectValue placeholder="เลือกลูกค้า" /></SelectTrigger>
+            <div className="space-y-1.5"><Label>{t('customer')} *</Label>
+              <Select value={form.customer_id || ''} onValueChange={v => { const c = customers.find(c => c.id === v); setForm(p => ({ ...p, customer_id: v, customer_name: c?.company_name || '' })); }}>
+                <SelectTrigger><SelectValue placeholder={t('select_customer')} /></SelectTrigger>
                 <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5"><Label>เลขที่ใบแจ้งหนี้</Label><Input value={form.invoice_number || ''} onChange={e => setForm(p => ({ ...p, invoice_number: e.target.value }))} /></div>
+            <div className="space-y-1.5"><Label>{t('invoice_number')}</Label><Input value={form.invoice_number || ''} onChange={e => setForm(p => ({ ...p, invoice_number: e.target.value }))} /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5"><Label>จำนวนเงิน</Label><Input type="number" value={form.amount || ''} onChange={e => setForm(p => ({ ...p, amount: parseFloat(e.target.value) || 0 }))} /></div>
-              <div className="space-y-1.5"><Label>กำหนดชำระ</Label><Input type="date" value={form.due_date || ''} onChange={e => setForm(p => ({ ...p, due_date: e.target.value }))} /></div>
+              <div className="space-y-1.5"><Label>{t('amount')}</Label><Input type="number" value={form.amount || ''} onChange={e => setForm(p => ({ ...p, amount: parseFloat(e.target.value) || 0 }))} /></div>
+              <div className="space-y-1.5"><Label>{t('due_payment')}</Label><Input type="date" value={form.due_date || ''} onChange={e => setForm(p => ({ ...p, due_date: e.target.value }))} /></div>
             </div>
-            <div className="space-y-1.5">
-              <Label>บริการ</Label>
+            <div className="space-y-1.5"><Label>{t('service')}</Label>
               <Select value={form.service_type || ''} onValueChange={v => setForm(p => ({ ...p, service_type: v }))}>
-                <SelectTrigger><SelectValue placeholder="เลือกบริการ" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('select_service')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="accounting">ทำบัญชี</SelectItem>
-                  <SelectItem value="payroll">เงินเดือน</SelectItem>
-                  <SelectItem value="tax_consulting">ที่ปรึกษาภาษี</SelectItem>
-                  <SelectItem value="audit">ตรวจสอบบัญชี</SelectItem>
-                  <SelectItem value="peak_licensing">Peak Account</SelectItem>
+                  <SelectItem value="accounting">{t('service_accounting')}</SelectItem>
+                  <SelectItem value="payroll">{t('service_payroll')}</SelectItem>
+                  <SelectItem value="tax_consulting">{t('service_tax')}</SelectItem>
+                  <SelectItem value="audit">{t('service_audit')}</SelectItem>
+                  <SelectItem value="peak_licensing">{t('service_peak')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5"><Label>หมายเหตุ</Label><Textarea value={form.notes || ''} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={2} /></div>
+            <div className="space-y-1.5"><Label>{t('notes')}</Label><Textarea value={form.notes || ''} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={2} /></div>
             <Button onClick={() => createMutation.mutate(form)} disabled={!form.customer_name || createMutation.isPending} className="w-full">
-              {createMutation.isPending ? 'กำลังบันทึก...' : 'สร้างใบแจ้งหนี้'}
+              {createMutation.isPending ? t('saving') : t('create_invoice')}
             </Button>
           </div>
         </DialogContent>
