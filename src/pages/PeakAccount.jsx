@@ -54,6 +54,13 @@ export default function PeakAccount() {
   const [payerFilter, setPayerFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [staffFilter, setStaffFilter] = useState('all');
+  const [checkFilters, setCheckFilters] = useState({
+    acc_prepaid: false,
+    customer_paid_back: false,
+    invoice_issued: false,
+    invoice_paid: false,
+    wht_received: false,
+  });
   const [showForm, setShowForm] = useState(false);
   const [editingLicense, setEditingLicense] = useState(null);
   const [showNotifSettings, setShowNotifSettings] = useState(false);
