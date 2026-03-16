@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Search, Settings, CheckCircle, Clock, AlertTriangle, AlertOctagon, RefreshCw, MoreVertical } from 'lucide-react';
 import { format, differenceInDays, parseISO, addDays, startOfMonth, endOfMonth } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
