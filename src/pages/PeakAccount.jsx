@@ -327,7 +327,8 @@ export default function PeakAccount() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => { setEditingLicense(l); setShowForm(true); }}>แก้ไข</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => {
-                            updateMutation.mutate({ id: l.id, data: { license_status: 'renewed' } });
+                            setEditingLicense({ ...l, license_status: 'renewed' });
+                            setShowForm(true);
                           }}>ต่ออายุ</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => {
                             updateMutation.mutate({ id: l.id, data: { license_status: 'cancelled' } });
