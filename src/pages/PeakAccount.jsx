@@ -141,9 +141,14 @@ export default function PeakAccount() {
       if (payerFilter !== 'all' && l.payer_type !== payerFilter) return false;
       if (statusFilter !== 'all' && l.license_status !== statusFilter) return false;
       if (staffFilter !== 'all' && l.created_by !== staffFilter) return false;
+      if (checkFilters.acc_prepaid && !l.acc_prepaid) return false;
+      if (checkFilters.customer_paid_back && !l.customer_paid_back) return false;
+      if (checkFilters.invoice_issued && !l.invoice_issued) return false;
+      if (checkFilters.invoice_paid && !l.invoice_paid) return false;
+      if (checkFilters.wht_received && !l.wht_received) return false;
       return true;
     });
-  }, [tabFiltered, search, pkgFilter, payerFilter, statusFilter, staffFilter]);
+  }, [tabFiltered, search, pkgFilter, payerFilter, statusFilter, staffFilter, checkFilters]);
 
   // Unique staff from licenses
   const staffList = useMemo(() => {
