@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { MessageCircle, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
-const KEYS = ['line_channel_id', 'line_channel_secret'];
+const KEYS = ['line_channel_id', 'line_channel_secret', 'line_user_id'];
 
 export default function LineOASettings() {
   const queryClient = useQueryClient();
