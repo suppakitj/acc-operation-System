@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Search, Building2, Users, UserCheck, Filter } from 'lucide-react';
 import CustomerForm from '../components/customers/CustomerForm';
+import CustomerImportExport from '../components/customers/CustomerImportExport';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
 
@@ -86,10 +87,13 @@ export default function Customers() {
           <p className="text-xs md:text-sm text-muted-foreground">เก็บข้อมูลลูกค้าเพื่อใช้กับ Task, Billing, Schedule</p>
         </div>
         {canEdit && (
-          <Button size="sm" className="gap-1.5 text-xs shrink-0 self-start sm:self-auto"
-            onClick={() => { setEditingCustomer(null); setShowForm(true); }}>
-            <Plus className="w-3.5 h-3.5" /> เพิ่มลูกค้า
-          </Button>
+          <div className="flex gap-2 shrink-0 self-start sm:self-auto flex-wrap">
+            <CustomerImportExport customers={customers} generateCustomerCode={generateCustomerCode} />
+            <Button size="sm" className="gap-1.5 text-xs"
+              onClick={() => { setEditingCustomer(null); setShowForm(true); }}>
+              <Plus className="w-3.5 h-3.5" /> เพิ่มลูกค้า
+            </Button>
+          </div>
         )}
       </div>
 
