@@ -57,6 +57,20 @@ Deno.serve(async (req) => {
     const events = payload.events || [];
 
     for (const event of events) {
+      // Auto-capture Group ID when bot receives message in a group
+      if (event.source?.type === 'group' && event.source?.groupId) {
+        const existingGroupConfig = configs.find(c => c.key === 'line_group_id');
+        const currentGroupId = existingGroupConfig?.value || '';
+        if (currentGroupId !== event.source.groupId) {
+          if (existingGroupConfig) {
+            await base44.asServiceRole.entities.AppConfig.update(existingGroupConfig.id, { value: event.source.groupId });
+          } else {
+            await base44.asServiceRole.entities.AppConfig.create({ key: 'line_group_id', value: event.source.groupId, description: 'LINE Group ID (auto-captured)' });
+          }
+          console.log(`Auto-captured LINE Group ID: ${event.source.groupId}`);
+        }
+      }
+
       if (event.type === 'message') {
         const userId = event.source?.userId;
         const messageType = event.message?.type || 'text';
