@@ -20,6 +20,8 @@ Deno.serve(async (req) => {
 
     const senderName = getVal('smtp_sender_name') || 'ACC Consulting';
     const gmailAddress = getVal('smtp_gmail_address');
+    const smtpHost = getVal('smtp_host') || 'smtp.gmail.com';
+    const smtpPort = parseInt(getVal('smtp_port')) || 465;
     const appPassword = getVal('smtp_app_password');
 
     if (!gmailAddress || !appPassword) {
@@ -30,7 +32,9 @@ Deno.serve(async (req) => {
 
     // Create transporter
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
       auth: {
         user: gmailAddress,
         pass: appPassword,
