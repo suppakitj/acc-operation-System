@@ -21,6 +21,8 @@ export default function EmailSettings() {
 
   const [senderName, setSenderName] = useState('');
   const [gmailAddress, setGmailAddress] = useState('');
+  const [smtpHost, setSmtpHost] = useState('');
+  const [smtpPort, setSmtpPort] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [appPassword, setAppPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -29,6 +31,8 @@ export default function EmailSettings() {
   useEffect(() => {
     setSenderName(getVal('smtp_sender_name'));
     setGmailAddress(getVal('smtp_gmail_address'));
+    setSmtpHost(getVal('smtp_host') || 'smtp.gmail.com');
+    setSmtpPort(getVal('smtp_port') || '465');
     setEmailSubject(getVal('smtp_email_subject'));
     // If password exists, show placeholder
     const savedPw = getVal('smtp_app_password');
@@ -45,6 +49,8 @@ export default function EmailSettings() {
       const pairs = [
         { key: 'smtp_sender_name', value: senderName, description: 'Email sender display name' },
         { key: 'smtp_gmail_address', value: gmailAddress, description: 'Gmail address for SMTP' },
+        { key: 'smtp_host', value: smtpHost, description: 'SMTP server hostname' },
+        { key: 'smtp_port', value: smtpPort, description: 'SMTP server port' },
         { key: 'smtp_email_subject', value: emailSubject, description: 'Default email subject line' },
       ];
       // Only update password if user typed a new one
@@ -115,6 +121,27 @@ export default function EmailSettings() {
           />
           <p className="text-[11px] text-muted-foreground">อีเมล Gmail ที่ใช้สำหรับส่งอีเมลจากระบบ</p>
         </div>
+
+        {/* SMTP Server */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold">SMTP Host</Label>
+            <Input
+              value={smtpHost}
+              onChange={e => setSmtpHost(e.target.value)}
+              placeholder="smtp.gmail.com"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold">SMTP Port</Label>
+            <Input
+              value={smtpPort}
+              onChange={e => setSmtpPort(e.target.value)}
+              placeholder="465"
+            />
+          </div>
+        </div>
+        <p className="text-[11px] text-muted-foreground -mt-2">สำหรับ Gmail ใช้ smtp.gmail.com พอร์ต 465 (SSL) หรือ 587 (TLS)</p>
 
         {/* Email Subject */}
         <div className="space-y-1.5">
