@@ -41,8 +41,8 @@ export default function LineChat() {
 
   // Send via backend function (actual LINE API)
   const sendMutation = useMutation({
-    mutationFn: async ({ line_user_id, message, display_name }) => {
-      const res = await base44.functions.invoke('lineSendMessage', { line_user_id, message, display_name });
+    mutationFn: async ({ line_user_id, message, display_name, chat_type }) => {
+      const res = await base44.functions.invoke('lineSendMessage', { line_user_id, message, display_name, chat_type });
       if (res.data?.error) throw new Error(res.data.error);
       return res.data;
     },
@@ -95,6 +95,7 @@ export default function LineChat() {
       line_user_id: selectedUserId,
       message: newMessage.trim(),
       display_name: selectedUser?.name,
+      chat_type: selectedUser?.chatType || 'user',
     });
   };
 
