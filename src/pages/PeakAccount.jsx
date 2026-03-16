@@ -46,14 +46,14 @@ export default function PeakAccount() {
   const [editingLicense, setEditingLicense] = useState(null);
   const [showNotifSettings, setShowNotifSettings] = useState(false);
 
-  if (!ac.canViewPeakAccount) {
-    return <div className="text-center py-12 text-muted-foreground">ไม่มีสิทธิ์เข้าถึงหน้านี้</div>;
-  }
-
   const { data: licenses = [], isLoading } = useQuery({
     queryKey: ['peakLicenses'],
     queryFn: () => base44.entities.PeakLicense.list('-created_date', 500),
   });
+
+  if (!ac.canViewPeakAccount) {
+    return <div className="text-center py-12 text-muted-foreground">ไม่มีสิทธิ์เข้าถึงหน้านี้</div>;
+  }
 
   const createMutation = useMutation({
     mutationFn: (data) => {
