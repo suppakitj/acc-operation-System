@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../components/LanguageContext';
 import LineOASettings from '../components/settings/LineOASettings';
+import EmailSettings from '../components/settings/EmailSettings';
 
 const THEMES = [
   { id: 'default', label: 'Navy Blue', color: 'bg-[#1e3a5f]' },
@@ -151,6 +152,9 @@ export default function AppSettings() {
       </Card>
 
       <Button onClick={handleSave} disabled={saving} className="w-full">{saving ? t('saving') : t('save_settings')}</Button>
+
+      {/* Email Settings — Admin Only */}
+      {(user?.role === 'admin' || user?.role === 'management') && <EmailSettings />}
 
       {/* LINE OA Settings — Admin Only */}
       {(user?.role === 'admin' || user?.role === 'management') && <LineOASettings />}
