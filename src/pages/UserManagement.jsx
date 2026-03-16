@@ -8,26 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Users, UserPlus } from 'lucide-react';
+import { Search, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '../components/LanguageContext';
 
-const DEPT_LABELS = {
-  management: 'Management', accounting: 'บัญชี', consulting: 'ที่ปรึกษา',
-  audit: 'Audit', billing: 'Billing', it: 'IT'
-};
-
-const ROLE_LABELS = {
-  admin: 'Admin', management: 'Management', manager: 'Manager',
-  super_supervisor: 'Super Supervisor', staff: 'Staff'
-};
-
-const ROLE_COLORS = {
-  admin: 'bg-red-100 text-red-700', management: 'bg-purple-100 text-purple-700',
-  manager: 'bg-blue-100 text-blue-700', super_supervisor: 'bg-yellow-100 text-yellow-700',
-  staff: 'bg-gray-100 text-gray-700'
-};
+const ROLE_COLORS = { admin: 'bg-red-100 text-red-700', management: 'bg-purple-100 text-purple-700', manager: 'bg-blue-100 text-blue-700', super_supervisor: 'bg-yellow-100 text-yellow-700', staff: 'bg-gray-100 text-gray-700' };
 
 export default function UserManagement() {
+  const { t } = useLanguage();
   const [search, setSearch] = useState('');
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -35,122 +23,83 @@ export default function UserManagement() {
   const [editingUser, setEditingUser] = useState(null);
   const queryClient = useQueryClient();
 
-  const { data: users = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
-  });
-
+  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list() });
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); setEditingUser(null); },
   });
 
-  const filtered = users.filter(u =>
-    !search || u.full_name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = users.filter(u => !search || u.full_name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase()));
 
-  const handleInvite = async () => {
-    await base44.users.inviteUser(inviteEmail, inviteRole === 'admin' ? 'admin' : 'user');
-    toast.success('ส่งคำเชิญแล้ว');
-    setShowInvite(false);
-    setInviteEmail('');
-  };
+  const roles = ['admin', 'management', 'manager', 'super_supervisor', 'staff'];
+  const depts = ['management', 'accounting', 'consulting', 'audit', 'billing', 'it'];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">จัดการผู้ใช้</h1>
-          <p className="text-sm text-muted-foreground mt-1">User Master — {users.length} คน</p>
+          <h1 className="text-xl md:text-2xl font-bold">{t('users_title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('users_subtitle')} — {users.length} {t('people')}</p>
         </div>
-        <Button onClick={() => setShowInvite(true)} className="gap-2">
-          <UserPlus className="w-4 h-4" /> เชิญผู้ใช้
+        <Button onClick={() => setShowInvite(true)} className="gap-2 shrink-0 self-start sm:self-auto">
+          <UserPlus className="w-4 h-4" /> {t('invite_user')}
         </Button>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="ค้นหาผู้ใช้..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
-      </div>
+      <div className="relative max-w-md"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder={t('search_users')} value={search} onChange={e => setSearch(e.target.value)} className="pl-10" /></div>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {filtered.map(user => (
-          <Card key={user.id} className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => setEditingUser(user)}>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0">
-                <span className="text-primary-foreground font-semibold text-sm">{user.full_name?.[0]?.toUpperCase() || 'U'}</span>
+          <Card key={user.id} className="hover:shadow-md transition-all cursor-pointer" onClick={() => setEditingUser({ ...user })}>
+            <CardContent className="p-3 md:p-4 flex items-center gap-3 md:gap-4">
+              <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-primary flex items-center justify-center shrink-0">
+                <span className="text-primary-foreground font-bold text-xs md:text-sm">{user.full_name?.[0]?.toUpperCase() || 'U'}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm">{user.full_name}</p>
-                <p className="text-xs text-muted-foreground">{user.email}</p>
+                <p className="font-semibold text-sm truncate">{user.full_name}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
               </div>
-              {user.department && <Badge variant="outline">{DEPT_LABELS[user.department] || user.department}</Badge>}
-              <Badge variant="secondary" className={ROLE_COLORS[user.role] || ROLE_COLORS.staff}>
-                {ROLE_LABELS[user.role] || user.role || 'Staff'}
-              </Badge>
+              <span className="hidden sm:block">{user.department && <Badge variant="outline">{t(`dept_${user.department}`)}</Badge>}</span>
+              <Badge variant="secondary" className={ROLE_COLORS[user.role] || ROLE_COLORS.staff}>{t(`role_${user.role}`) || 'Staff'}</Badge>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Invite Dialog */}
       <Dialog open={showInvite} onOpenChange={setShowInvite}>
         <DialogContent>
-          <DialogHeader><DialogTitle>เชิญผู้ใช้ใหม่</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('invite_title')}</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-1.5"><Label>อีเมล *</Label><Input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} /></div>
-            <div className="space-y-1.5">
-              <Label>Role</Label>
-              <Select value={inviteRole} onValueChange={setInviteRole}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="staff">User</SelectItem>
-                </SelectContent>
+            <div className="space-y-1.5"><Label>{t('email')} *</Label><Input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} /></div>
+            <div className="space-y-1.5"><Label>{t('role')}</Label>
+              <Select value={inviteRole} onValueChange={setInviteRole}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="admin">Admin</SelectItem><SelectItem value="staff">User</SelectItem></SelectContent>
               </Select>
             </div>
-            <Button onClick={handleInvite} disabled={!inviteEmail} className="w-full">ส่งคำเชิญ</Button>
+            <Button onClick={async () => { await base44.users.inviteUser(inviteEmail, inviteRole === 'admin' ? 'admin' : 'user'); toast.success(t('saved')); setShowInvite(false); setInviteEmail(''); }} disabled={!inviteEmail} className="w-full">{t('send_invite')}</Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Dialog */}
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>แก้ไขข้อมูลผู้ใช้</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('edit_user')}</DialogTitle></DialogHeader>
           {editingUser && (
             <div className="space-y-4">
-              <div><Label>ชื่อ</Label><p className="text-sm mt-1">{editingUser.full_name}</p></div>
-              <div><Label>อีเมล</Label><p className="text-sm mt-1">{editingUser.email}</p></div>
-              <div className="space-y-1.5">
-                <Label>ตำแหน่ง</Label>
-                <Select value={editingUser.role || 'staff'} onValueChange={v => setEditingUser(p => ({ ...p, role: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(ROLE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                  </SelectContent>
+              <div><Label>{t('name')}</Label><p className="text-sm mt-1">{editingUser.full_name}</p></div>
+              <div><Label>{t('email')}</Label><p className="text-sm mt-1">{editingUser.email}</p></div>
+              <div className="space-y-1.5"><Label>{t('role')}</Label>
+                <Select value={editingUser.role || 'staff'} onValueChange={v => setEditingUser(p => ({ ...p, role: v }))}><SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{roles.map(r => <SelectItem key={r} value={r}>{t(`role_${r}`)}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label>แผนก</Label>
-                <Select value={editingUser.department || ''} onValueChange={v => setEditingUser(p => ({ ...p, department: v }))}>
-                  <SelectTrigger><SelectValue placeholder="เลือกแผนก" /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(DEPT_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                  </SelectContent>
+              <div className="space-y-1.5"><Label>{t('department')}</Label>
+                <Select value={editingUser.department || ''} onValueChange={v => setEditingUser(p => ({ ...p, department: v }))}><SelectTrigger><SelectValue placeholder={t('select_department')} /></SelectTrigger>
+                  <SelectContent>{depts.map(d => <SelectItem key={d} value={d}>{t(`dept_${d}`)}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label>เบอร์โทร</Label>
-                <Input value={editingUser.phone || ''} onChange={e => setEditingUser(p => ({ ...p, phone: e.target.value }))} />
-              </div>
-              <Button onClick={() => updateMutation.mutate({
-                id: editingUser.id,
-                data: { role: editingUser.role, department: editingUser.department, phone: editingUser.phone }
-              })} disabled={updateMutation.isPending} className="w-full">
-                {updateMutation.isPending ? 'กำลังบันทึก...' : 'บันทึก'}
-              </Button>
+              <div className="space-y-1.5"><Label>{t('phone')}</Label><Input value={editingUser.phone || ''} onChange={e => setEditingUser(p => ({ ...p, phone: e.target.value }))} /></div>
+              <Button onClick={() => updateMutation.mutate({ id: editingUser.id, data: { role: editingUser.role, department: editingUser.department, phone: editingUser.phone } })} disabled={updateMutation.isPending} className="w-full">{updateMutation.isPending ? t('saving') : t('save')}</Button>
             </div>
           )}
         </DialogContent>
