@@ -28,10 +28,13 @@ export default function LineChat() {
   const getConfigVal = (key) => configs.find(c => c.key === key)?.value || '';
   const isLineConfigured = !!(getConfigVal('line_channel_id') && getConfigVal('line_channel_secret') && getConfigVal('line_access_token'));
 
-  // Poll messages every 5s for real-time feel
+  // Poll messages every 5s for real-time feel (via backend to access service-role data)
   const { data: messages = [] } = useQuery({
     queryKey: ['lineMessages'],
-    queryFn: () => base44.entities.LineMessage.list('-created_date', 500),
+    queryFn: async () => {
+      const res = await base44.functions.invoke('listLineMessages', {});
+      return res.data?.messages || [];
+    },
     refetchInterval: 5000,
   });
 
