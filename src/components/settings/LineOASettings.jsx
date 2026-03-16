@@ -23,8 +23,10 @@ export default function LineOASettings() {
   const [channelId, setChannelId] = useState('');
   const [channelSecret, setChannelSecret] = useState('');
   const [accessToken, setAccessToken] = useState('');
+  const [lineUserId, setLineUserId] = useState('');
   const [showSecret, setShowSecret] = useState(false);
   const [showToken, setShowToken] = useState(false);
+  const [showUserId, setShowUserId] = useState(false);
 
   useEffect(() => {
     setChannelId(getVal('line_channel_id'));
