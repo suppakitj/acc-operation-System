@@ -65,7 +65,10 @@ export default function LineOASettings() {
   });
 
   const isConnected = !!(getVal('line_channel_id') && getVal('line_channel_secret') && getVal('line_access_token'));
-  const webhookUrl = `${window.location.origin}/api/lineWebhook`;
+  const appId = window.location.hostname.split('--')[1]?.split('.')[0] || '';
+  const webhookUrl = appId 
+    ? `https://app--${window.location.hostname.split('--')[1]}/api/apps/${appId}/functions/lineWebhook`
+    : `${window.location.origin}/functions/lineWebhook`;
   const maskedSecret = channelSecret ? '•'.repeat(Math.max(0, channelSecret.length - 4)) + channelSecret.slice(-4) : '';
 
   return (
