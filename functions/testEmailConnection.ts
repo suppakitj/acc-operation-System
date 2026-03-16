@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
-import { SmtpClient } from 'npm:denomailer@1.6.0';
+import nodemailer from 'npm:nodemailer@6.9.16';
 
 Deno.serve(async (req) => {
   try {
@@ -28,24 +28,20 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Connect to Gmail SMTP
-    const client = new SmtpClient({
-      connection: {
-        hostname: 'smtp.gmail.com',
-        port: 465,
-        tls: true,
-        auth: {
-          username: gmailAddress,
-          password: appPassword,
-        },
+    // Create transporter
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: gmailAddress,
+        pass: appPassword,
       },
     });
 
-    await client.send({
+    // Send test email
+    await transporter.sendMail({
       from: `${senderName} <${gmailAddress}>`,
       to: user.email,
       subject: '✅ ทดสอบการเชื่อมต่อ Email — ACC Consulting',
-      content: 'auto',
       html: `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px;">
           <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a9e 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
@@ -72,8 +68,6 @@ Deno.serve(async (req) => {
       `,
     });
 
-    await client.close();
-
     console.log(`Test email sent successfully to ${user.email}`);
     return Response.json({ status: 'success', message: 'ส่งอีเมลทดสอบสำเร็จ' });
 
@@ -81,9 +75,9 @@ Deno.serve(async (req) => {
     console.error('Email test error:', error.message);
 
     let userMessage = 'ไม่สามารถเชื่อมต่อได้ รบกวนตรวจสอบอีเมลหรือ App Password อีกครั้งนะครับ';
-    if (error.message?.includes('auth') || error.message?.includes('credentials')) {
+    if (error.message?.includes('auth') || error.message?.includes('Invalid login') || error.message?.includes('credentials')) {
       userMessage = 'อีเมลหรือ App Password ไม่ถูกต้อง กรุณาตรวจสอบใหม่อีกครั้งนะครับ';
-    } else if (error.message?.includes('network') || error.message?.includes('connect')) {
+    } else if (error.message?.includes('network') || error.message?.includes('ECONNREFUSED')) {
       userMessage = 'ไม่สามารถเชื่อมต่อ Gmail SMTP ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
     }
 
