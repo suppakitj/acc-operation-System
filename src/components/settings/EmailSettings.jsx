@@ -21,6 +21,7 @@ export default function EmailSettings() {
 
   const [senderName, setSenderName] = useState('');
   const [gmailAddress, setGmailAddress] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
   const [appPassword, setAppPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -28,6 +29,7 @@ export default function EmailSettings() {
   useEffect(() => {
     setSenderName(getVal('smtp_sender_name'));
     setGmailAddress(getVal('smtp_gmail_address'));
+    setEmailSubject(getVal('smtp_email_subject'));
     // If password exists, show placeholder
     const savedPw = getVal('smtp_app_password');
     if (savedPw) {
@@ -43,6 +45,7 @@ export default function EmailSettings() {
       const pairs = [
         { key: 'smtp_sender_name', value: senderName, description: 'Email sender display name' },
         { key: 'smtp_gmail_address', value: gmailAddress, description: 'Gmail address for SMTP' },
+        { key: 'smtp_email_subject', value: emailSubject, description: 'Default email subject line' },
       ];
       // Only update password if user typed a new one
       if (appPassword) {
@@ -111,6 +114,17 @@ export default function EmailSettings() {
             placeholder="example@gmail.com"
           />
           <p className="text-[11px] text-muted-foreground">อีเมล Gmail ที่ใช้สำหรับส่งอีเมลจากระบบ</p>
+        </div>
+
+        {/* Email Subject */}
+        <div className="space-y-1.5">
+          <Label className="text-sm font-semibold">Email Subject</Label>
+          <Input
+            value={emailSubject}
+            onChange={e => setEmailSubject(e.target.value)}
+            placeholder="เช่น แจ้งเตือนจาก ACC Consulting"
+          />
+          <p className="text-[11px] text-muted-foreground">หัวข้ออีเมลเริ่มต้นที่ระบบจะใช้ในการส่งอีเมล</p>
         </div>
 
         {/* App Password */}
