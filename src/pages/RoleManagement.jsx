@@ -12,7 +12,7 @@ import { useAccessControl } from '../components/auth/useAccessControl';
 
 const ROLES = ['admin', 'management', 'manager', 'super_supervisor', 'staff'];
 
-const MATRIX = [
+const DEFAULT_MATRIX = [
   { key: 'login', label: 'Login ระบบ', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   { key: 'user_master', label: 'จัดการ User & User Master', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
   { key: 'role_mgmt', label: 'User Role Management', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
@@ -29,12 +29,22 @@ const MATRIX = [
   { key: 'peak', label: 'Licensing Peak Account', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
 ];
 
-function PermCell({ value }) {
-  if (value === 'yes') return <div className="flex justify-center"><Check className="w-4 h-4 text-green-600" /></div>;
-  if (value === 'no') return <div className="flex justify-center"><X className="w-4 h-4 text-red-400" /></div>;
-  if (value === 'dept') return <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px] px-1.5">เฉพาะแผนก</Badge>;
-  if (value === 'own') return <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 text-[10px] px-1.5">เฉพาะงานตัวเอง</Badge>;
-  return <Minus className="w-4 h-4 text-muted-foreground mx-auto" />;
+const PERM_CYCLE = ['yes', 'dept', 'own', 'no'];
+
+function PermCell({ value, editable, onClick }) {
+  const content = (() => {
+    if (value === 'yes') return <div className="flex justify-center"><Check className="w-4 h-4 text-green-600" /></div>;
+    if (value === 'no') return <div className="flex justify-center"><X className="w-4 h-4 text-red-400" /></div>;
+    if (value === 'dept') return <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px] px-1.5">เฉพาะแผนก</Badge>;
+    if (value === 'own') return <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 text-[10px] px-1.5">เฉพาะงานตัวเอง</Badge>;
+    return <Minus className="w-4 h-4 text-muted-foreground mx-auto" />;
+  })();
+  if (!editable) return content;
+  return (
+    <button onClick={onClick} className="w-full flex justify-center cursor-pointer hover:bg-muted/40 rounded py-0.5 transition-colors" title="คลิกเพื่อเปลี่ยน">
+      {content}
+    </button>
+  );
 }
 
 const ROLE_LABELS = {
@@ -61,6 +71,78 @@ export default function RoleManagement() {
   const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list() });
   const [editingUserId, setEditingUserId] = useState(null);
   const [selectedRole, setSelectedRole] = useState('');
+  const [isEditingMatrix, setIsEditingMatrix] = useState(false);
+  const [matrixEdits, setMatrixEdits] = useState(null); // local edits before save
+
+  // Load saved matrix from AppConfig
+  const { data: matrixConfigs = [] } = useQuery({
+    queryKey: ['appConfig', 'permission_matrix'],
+    queryFn: () => base44.entities.AppConfig.filter({ key: 'permission_matrix' }),
+  });
+
+  const savedMatrix = (() => {
+    const cfg = matrixConfigs.find(c => c.key === 'permission_matrix');
+    if (cfg?.value) {
+      try { return JSON.parse(cfg.value); } catch { return null; }
+    }
+    return null;
+  })();
+
+  // Merge saved overrides into default matrix
+  const matrix = DEFAULT_MATRIX.map(row => {
+    const source = isEditingMatrix && matrixEdits ? matrixEdits : savedMatrix;
+    if (source?.[row.key]) {
+      return { ...row, ...source[row.key] };
+    }
+    return row;
+  });
+
+  const saveMatrixMutation = useMutation({
+    mutationFn: async (overrides) => {
+      const cfg = matrixConfigs.find(c => c.key === 'permission_matrix');
+      const val = JSON.stringify(overrides);
+      if (cfg) {
+        await base44.entities.AppConfig.update(cfg.id, { value: val });
+      } else {
+        await base44.entities.AppConfig.create({ key: 'permission_matrix', value: val, description: 'Permission matrix overrides' });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appConfig', 'permission_matrix'] });
+      setIsEditingMatrix(false);
+      setMatrixEdits(null);
+      toast.success('บันทึก Permission Matrix เรียบร้อย');
+    },
+  });
+
+  const handleCellClick = (permKey, role) => {
+    if (!isEditingMatrix) return;
+    const current = matrixEdits || {};
+    const rowOverrides = current[permKey] || {};
+    const currentRow = DEFAULT_MATRIX.find(r => r.key === permKey);
+    const currentVal = rowOverrides[role] || currentRow[role];
+    const nextIdx = (PERM_CYCLE.indexOf(currentVal) + 1) % PERM_CYCLE.length;
+    setMatrixEdits({
+      ...current,
+      [permKey]: { ...rowOverrides, [role]: PERM_CYCLE[nextIdx] },
+    });
+  };
+
+  const handleSaveMatrix = () => {
+    if (!matrixEdits) { setIsEditingMatrix(false); return; }
+    // Merge with existing saved
+    const existing = savedMatrix || {};
+    const merged = { ...existing };
+    Object.entries(matrixEdits).forEach(([key, vals]) => {
+      merged[key] = { ...(merged[key] || {}), ...vals };
+    });
+    saveMatrixMutation.mutate(merged);
+  };
+
+  const handleStartEditMatrix = () => {
+    setMatrixEdits(null); // start fresh edits
+    setIsEditingMatrix(true);
+  };
 
   const updateRoleMutation = useMutation({
     mutationFn: ({ id, role }) => base44.entities.User.update(id, { role }),
@@ -106,9 +188,34 @@ export default function RoleManagement() {
 
       {/* Permission Matrix Table */}
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 flex flex-row items-center justify-between">
           <CardTitle className="text-base">Permission Matrix</CardTitle>
+          <div className="flex gap-2">
+            {isEditingMatrix ? (
+              <>
+                <Button size="sm" variant="outline" className="text-xs h-7 gap-1"
+                  onClick={() => { setIsEditingMatrix(false); setMatrixEdits(null); }}>
+                  <XCircle className="w-3 h-3" /> ยกเลิก
+                </Button>
+                <Button size="sm" className="text-xs h-7 gap-1" disabled={saveMatrixMutation.isPending}
+                  onClick={handleSaveMatrix}>
+                  <Save className="w-3 h-3" /> บันทึก
+                </Button>
+              </>
+            ) : (
+              <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={handleStartEditMatrix}>
+                <Pencil className="w-3 h-3" /> แก้ไข
+              </Button>
+            )}
+          </div>
         </CardHeader>
+        {isEditingMatrix && (
+          <div className="px-6 pb-2">
+            <p className="text-[11px] text-muted-foreground bg-yellow-50 border border-yellow-200 rounded px-2 py-1">
+              คลิกที่ช่องเพื่อสลับค่า: ✅ ใช่ → 🏢 เฉพาะแผนก → 👤 เฉพาะงานตัวเอง → ❌ ไม่ → ✅ ใช่
+            </p>
+          </div>
+        )}
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -125,12 +232,16 @@ export default function RoleManagement() {
                 </tr>
               </thead>
               <tbody>
-                {MATRIX.map((row, i) => (
+                {matrix.map((row, i) => (
                   <tr key={row.key} className={`border-b last:border-b-0 ${i % 2 === 0 ? 'bg-card' : 'bg-muted/10'}`}>
                     <td className="px-4 py-2.5 text-xs font-medium">{row.label}</td>
                     {ROLES.map(role => (
                       <td key={role} className="px-3 py-2.5 text-center">
-                        <PermCell value={row[role]} />
+                        <PermCell
+                          value={row[role]}
+                          editable={isEditingMatrix}
+                          onClick={() => handleCellClick(row.key, role)}
+                        />
                       </td>
                     ))}
                   </tr>
