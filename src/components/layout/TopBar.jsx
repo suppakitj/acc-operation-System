@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { Bell, Search, LogOut, Settings, User, Palette } from 'lucide-react';
+import React from 'react';
+import { Bell, LogOut, Settings, Palette, Menu, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -9,34 +8,38 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../LanguageContext';
 
-const DEPARTMENT_LABELS = {
-  management: 'Management', accounting: 'บัญชี', consulting: 'ที่ปรึกษา',
-  audit: 'Audit', billing: 'Billing', it: 'IT'
-};
+export default function TopBar({ user, unreadCount, onMenuClick }) {
+  const { t, lang, setLang } = useLanguage();
 
-const ROLE_LABELS = {
-  admin: 'Admin', management: 'Management', manager: 'Manager',
-  super_supervisor: 'Super Supervisor', staff: 'Staff'
-};
+  const deptKey = user?.department ? `dept_${user.department}` : null;
+  const roleKey = user?.role ? `role_${user.role}` : null;
 
-export default function TopBar({ user, unreadCount }) {
   return (
-    <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 sticky top-0 z-30">
-      <div className="flex items-center gap-4 flex-1">
-        <div className="relative max-w-md w-full hidden md:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="ค้นหา..." className="pl-10 bg-muted/50 border-0" />
+    <header className="h-14 bg-card/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
+      <div className="flex items-center gap-3">
+        {/* Mobile hamburger */}
+        <Button variant="ghost" size="icon" className="lg:hidden shrink-0" onClick={onMenuClick}>
+          <Menu className="w-5 h-5" />
+        </Button>
+        <div className="hidden sm:block">
+          <h2 className="text-sm font-semibold text-foreground/80">{t('app_name')}</h2>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Language toggle */}
+        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setLang(lang === 'th' ? 'en' : 'th')}>
+          <span className="text-xs font-bold">{lang === 'th' ? 'EN' : 'TH'}</span>
+        </Button>
+
         {/* Notifications */}
         <Link to="/Notifications">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="w-5 h-5" />
+          <Button variant="ghost" size="icon" className="relative h-9 w-9">
+            <Bell className="w-[18px] h-[18px]" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-bold">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-bold px-1">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
@@ -46,36 +49,32 @@ export default function TopBar({ user, unreadCount }) {
         {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-3 hover:bg-muted rounded-lg p-2 transition-colors">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground text-sm font-semibold">
+            <button className="flex items-center gap-2.5 hover:bg-muted rounded-lg py-1.5 px-2 transition-colors">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                <span className="text-primary-foreground text-xs font-bold">
                   {user?.full_name?.[0]?.toUpperCase() || 'U'}
                 </span>
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-medium leading-tight">{user?.full_name || 'User'}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {DEPARTMENT_LABELS[user?.department] || '-'} · {ROLE_LABELS[user?.role] || 'Staff'}
+                <p className="text-[13px] font-semibold leading-tight">{user?.full_name || 'User'}</p>
+                <p className="text-[11px] text-muted-foreground leading-tight">
+                  {deptKey ? t(deptKey) : '-'} · {roleKey ? t(roleKey) : 'Staff'}
                 </p>
               </div>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>บัญชีของฉัน</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuLabel>{t('my_account')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link to="/AppSettings" className="cursor-pointer">
-                <Palette className="w-4 h-4 mr-2" /> ตั้งค่าธีม
-              </Link>
+              <Link to="/AppSettings" className="cursor-pointer"><Palette className="w-4 h-4 mr-2" /> {t('theme_settings')}</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/AppSettings" className="cursor-pointer">
-                <Settings className="w-4 h-4 mr-2" /> ตั้งค่า
-              </Link>
+              <Link to="/AppSettings" className="cursor-pointer"><Settings className="w-4 h-4 mr-2" /> {t('settings')}</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => base44.auth.logout()} className="text-destructive cursor-pointer">
-              <LogOut className="w-4 h-4 mr-2" /> ออกจากระบบ
+              <LogOut className="w-4 h-4 mr-2" /> {t('logout')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -24,7 +25,6 @@ export default function AppLayout() {
     refetchInterval: 60000,
   });
 
-  // Apply theme
   useEffect(() => {
     if (user?.theme) {
       document.documentElement.classList.remove('theme-emerald', 'theme-purple', 'theme-rose', 'dark');
@@ -38,10 +38,24 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar user={user} collapsed={collapsed} setCollapsed={setCollapsed} />
-      <div className={cn("transition-all duration-300", collapsed ? "ml-16" : "ml-64")}>
-        <TopBar user={user} unreadCount={notifications?.length || 0} />
-        <main className="p-6">
+      <Sidebar
+        user={user}
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+      />
+      <div className={cn(
+        "transition-all duration-300",
+        "lg:ml-64",
+        collapsed && "lg:ml-[68px]"
+      )}>
+        <TopBar
+          user={user}
+          unreadCount={notifications?.length || 0}
+          onMenuClick={() => setMobileOpen(true)}
+        />
+        <main className="p-4 md:p-6 max-w-[1600px] mx-auto">
           <Outlet />
         </main>
       </div>
