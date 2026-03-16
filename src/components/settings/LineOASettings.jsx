@@ -152,6 +152,30 @@ export default function LineOASettings() {
           <p className="text-[11px] text-muted-foreground">Stored securely. Found in LINE Developers Console → Messaging API.</p>
         </div>
 
+        {/* Your User ID */}
+        <div className="space-y-1.5">
+          <Label className="text-sm">
+            <span className="font-semibold">Your User ID</span>
+            <span className="text-muted-foreground font-normal"> — Your LINE User ID (masked)</span>
+          </Label>
+          <div className="relative">
+            <Input
+              type={showUserId ? 'text' : 'password'}
+              value={lineUserId}
+              onChange={e => setLineUserId(e.target.value)}
+              placeholder=""
+            />
+            <button
+              type="button"
+              onClick={() => setShowUserId(!showUserId)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showUserId ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">Found in LINE Developers Console → Basic settings → Your user ID</p>
+        </div>
+
         {/* Webhook URL */}
         <div className="space-y-1.5">
           <Label className="text-sm">
