@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Send, Search, MessageCircle, User, ArrowLeft } from 'lucide-react';
+import { Send, Search, MessageCircle, User, ArrowLeft, AlertCircle, Settings } from 'lucide-react';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '../components/LanguageContext';
+import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 
 export default function LineChat() {
   const { t } = useLanguage();
@@ -16,39 +18,120 @@ export default function LineChat() {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [newMessage, setNewMessage] = useState('');
   const queryClient = useQueryClient();
+  const chatEndRef = useRef(null);
 
-  const { data: messages = [] } = useQuery({ queryKey: ['lineMessages'], queryFn: () => base44.entities.LineMessage.list('-created_date', 500) });
-  const sendMutation = useMutation({
-    mutationFn: (data) => base44.entities.LineMessage.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['lineMessages'] }); setNewMessage(''); },
+  // Check LINE config
+  const { data: configs = [] } = useQuery({
+    queryKey: ['appConfig', 'line_oa'],
+    queryFn: () => base44.entities.AppConfig.list(),
+  });
+  const getConfigVal = (key) => configs.find(c => c.key === key)?.value || '';
+  const isLineConfigured = !!(getConfigVal('line_channel_id') && getConfigVal('line_channel_secret') && getConfigVal('line_access_token'));
+
+  // Poll messages every 5s for real-time feel
+  const { data: messages = [] } = useQuery({
+    queryKey: ['lineMessages'],
+    queryFn: () => base44.entities.LineMessage.list('-created_date', 500),
+    refetchInterval: 5000,
   });
 
+  // Send via backend function (actual LINE API)
+  const sendMutation = useMutation({
+    mutationFn: async ({ line_user_id, message, display_name }) => {
+      const res = await base44.functions.invoke('lineSendMessage', { line_user_id, message, display_name });
+      if (res.data?.error) throw new Error(res.data.error);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lineMessages'] });
+      setNewMessage('');
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  // Mark messages as read
+  const markReadMutation = useMutation({
+    mutationFn: async (messageIds) => {
+      for (const id of messageIds) {
+        await base44.entities.LineMessage.update(id, { is_read: true });
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lineMessages'] }),
+  });
+
+  // Group messages by user
   const userGroups = {};
   messages.forEach(m => {
     const key = m.line_user_id || m.customer_name || 'unknown';
-    if (!userGroups[key]) userGroups[key] = { id: key, name: m.display_name || m.customer_name || '?', image: m.profile_image, messages: [], unread: 0 };
+    if (!userGroups[key]) userGroups[key] = { id: key, name: m.display_name || m.customer_name || '?', image: m.profile_image, messages: [], unread: 0, lastDate: m.created_date };
     userGroups[key].messages.push(m);
     if (!m.is_read && m.direction === 'incoming') userGroups[key].unread++;
+    if (m.created_date > userGroups[key].lastDate) userGroups[key].lastDate = m.created_date;
   });
 
-  const userList = Object.values(userGroups).filter(u => !search || u.name.toLowerCase().includes(search.toLowerCase()));
+  const userList = Object.values(userGroups)
+    .filter(u => !search || u.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => new Date(b.lastDate) - new Date(a.lastDate));
+
   const selectedUser = selectedUserId ? userGroups[selectedUserId] : null;
   const chatMessages = selectedUser?.messages?.sort((a, b) => new Date(a.created_date) - new Date(b.created_date)) || [];
 
+  // Auto-scroll and mark read
+  useEffect(() => {
+    if (selectedUserId && chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+    if (selectedUser) {
+      const unreadIds = selectedUser.messages.filter(m => !m.is_read && m.direction === 'incoming').map(m => m.id);
+      if (unreadIds.length > 0) markReadMutation.mutate(unreadIds);
+    }
+  }, [selectedUserId, messages.length]);
+
   const handleSend = () => {
     if (!newMessage.trim() || !selectedUserId) return;
-    sendMutation.mutate({ line_user_id: selectedUserId, display_name: selectedUser?.name, content: newMessage, direction: 'outgoing', message_type: 'text' });
+    sendMutation.mutate({
+      line_user_id: selectedUserId,
+      message: newMessage.trim(),
+      display_name: selectedUser?.name,
+    });
   };
+
+  // Not configured banner
+  if (!isLineConfigured && configs.length > 0) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold">{t('line_title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('line_subtitle')}</p>
+        </div>
+        <Card className="border-yellow-300 bg-yellow-50/50">
+          <CardContent className="p-6 text-center space-y-3">
+            <AlertCircle className="w-10 h-10 text-yellow-500 mx-auto" />
+            <h3 className="font-semibold text-lg">LINE OA ยังไม่ได้ตั้งค่า</h3>
+            <p className="text-sm text-muted-foreground">กรุณาตั้งค่า Channel ID, Channel Secret และ Channel Access Token ก่อนใช้งาน Chat</p>
+            <Link to="/AppSettings">
+              <Button className="gap-2 mt-2"><Settings className="w-4 h-4" /> ไปตั้งค่า LINE OA</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl md:text-2xl font-bold">{t('line_title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('line_subtitle')}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold">{t('line_title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('line_subtitle')}</p>
+        </div>
+        <Badge variant="outline" className="bg-green-50 text-green-700 text-[10px] gap-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-green-500" /> LINE Connected
+        </Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-200px)] md:h-[calc(100vh-220px)]">
-        {/* Contact List — hidden on mobile when chat selected */}
+        {/* Contact List */}
         <Card className={`lg:col-span-1 flex flex-col ${selectedUserId ? 'hidden lg:flex' : 'flex'}`}>
           <CardHeader className="pb-2 shrink-0">
             <div className="relative">
@@ -60,17 +143,22 @@ export default function LineChat() {
             <ScrollArea className="h-full">
               {userList.length === 0 ? (
                 <div className="p-6 text-center text-muted-foreground text-sm">
-                  <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-30" />{t('no_messages')}
+                  <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p>{t('no_messages')}</p>
+                  <p className="text-[11px] mt-1">เมื่อมีคนส่งข้อความมาที่ LINE OA จะแสดงที่นี่</p>
                 </div>
               ) : userList.map(u => (
                 <div key={u.id} onClick={() => setSelectedUserId(u.id)}
                   className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/50 transition-colors border-b ${selectedUserId === u.id ? 'bg-muted' : ''}`}>
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
-                    {u.image ? <img src={u.image} className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-primary" />}
+                    {u.image ? <img src={u.image} className="w-full h-full object-cover" alt="" /> : <User className="w-5 h-5 text-primary" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{u.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{u.messages[0]?.content}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium truncate">{u.name}</p>
+                      {u.lastDate && <span className="text-[10px] text-muted-foreground shrink-0">{format(new Date(u.lastDate), 'HH:mm')}</span>}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{u.messages[u.messages.length - 1]?.content}</p>
                   </div>
                   {u.unread > 0 && <Badge className="bg-destructive text-destructive-foreground text-[10px]">{u.unread}</Badge>}
                 </div>
@@ -93,9 +181,12 @@ export default function LineChat() {
                     <ArrowLeft className="w-5 h-5" />
                   </Button>
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
-                    {selectedUser.image ? <img src={selectedUser.image} className="w-full h-full object-cover" /> : <User className="w-4 h-4 text-primary" />}
+                    {selectedUser.image ? <img src={selectedUser.image} className="w-full h-full object-cover" alt="" /> : <User className="w-4 h-4 text-primary" />}
                   </div>
-                  <CardTitle className="text-base">{selectedUser.name}</CardTitle>
+                  <div>
+                    <CardTitle className="text-base">{selectedUser.name}</CardTitle>
+                    <p className="text-[10px] text-muted-foreground">LINE User ID: {selectedUserId.substring(0, 12)}...</p>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="flex-1 overflow-hidden p-0">
@@ -104,19 +195,31 @@ export default function LineChat() {
                     {chatMessages.map(m => (
                       <div key={m.id} className={`flex ${m.direction === 'outgoing' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[80%] md:max-w-[70%] rounded-2xl px-3.5 py-2 ${m.direction === 'outgoing' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                          <p className="text-sm">{m.content}</p>
-                          <p className={`text-[10px] mt-1 ${m.direction === 'outgoing' ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
-                            {m.created_date && format(new Date(m.created_date), 'HH:mm')}
-                          </p>
+                          <p className="text-sm whitespace-pre-wrap">{m.content}</p>
+                          <div className={`flex items-center gap-1 mt-1 ${m.direction === 'outgoing' ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
+                            <span className="text-[10px]">{m.created_date && format(new Date(m.created_date), 'HH:mm')}</span>
+                            {m.direction === 'outgoing' && m.replied_by && (
+                              <span className="text-[10px]">· {m.replied_by.split('@')[0]}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
+                    <div ref={chatEndRef} />
                   </div>
                 </ScrollArea>
               </CardContent>
               <div className="p-3 border-t flex gap-2 shrink-0">
-                <Input placeholder={t('type_message')} value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} />
-                <Button onClick={handleSend} disabled={!newMessage.trim()} size="icon" className="shrink-0"><Send className="w-4 h-4" /></Button>
+                <Input
+                  placeholder={t('type_message')}
+                  value={newMessage}
+                  onChange={e => setNewMessage(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                  disabled={sendMutation.isPending}
+                />
+                <Button onClick={handleSend} disabled={!newMessage.trim() || sendMutation.isPending} size="icon" className="shrink-0">
+                  <Send className="w-4 h-4" />
+                </Button>
               </div>
             </>
           )}
