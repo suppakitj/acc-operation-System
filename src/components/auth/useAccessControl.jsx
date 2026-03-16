@@ -105,8 +105,11 @@ export function useAccessControl(user) {
       if (canManageUsers)             menus.push('users');
       if (canManageRoles)             menus.push('roles');
 
-      // reports, line_chat, audit → admin/management only
-      if (is('admin', 'management'))  menus.push('reports', 'line_chat', 'audit');
+      // line_chat → everyone
+      menus.push('line_chat');
+
+      // reports, audit → admin/management only
+      if (is('admin', 'management'))  menus.push('reports', 'audit');
 
       return menus;
     };
