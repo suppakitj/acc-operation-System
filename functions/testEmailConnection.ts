@@ -30,11 +30,11 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Create transporter
+    // Create transporter — force port 587 + STARTTLS (Deno blocks direct port 465)
     const transporter = nodemailer.createTransport({
       host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
+      port: 587,
+      secure: false,
       auth: {
         user: gmailAddress,
         pass: appPassword,
