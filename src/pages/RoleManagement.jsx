@@ -1,9 +1,12 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Check, X, Minus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Shield, Check, X, Minus, Pencil, Save, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
 
@@ -52,9 +55,22 @@ const ROLE_COLORS = {
 
 export default function RoleManagement() {
   const { t } = useLanguage();
+  const queryClient = useQueryClient();
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
   const ac = useAccessControl(currentUser);
   const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list() });
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [selectedRole, setSelectedRole] = useState('');
+
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ id, role }) => base44.entities.User.update(id, { role }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setEditingUserId(null);
+      setSelectedRole('');
+      toast.success('บันทึก Role เรียบร้อย');
+    },
+  });
 
   if (!ac.canManageRoles) {
     return <div className="text-center py-12 text-muted-foreground">เฉพาะ Admin เท่านั้นที่จัดการสิทธิ์ได้</div>;
@@ -147,10 +163,37 @@ export default function RoleManagement() {
                         <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                           <span className="text-primary text-[10px] font-bold">{u.full_name?.[0]?.toUpperCase() || 'U'}</span>
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="text-xs font-medium truncate">{u.full_name}</p>
                           <p className="text-[10px] text-muted-foreground truncate">{u.email}</p>
                         </div>
+                        {editingUserId === u.id ? (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Select value={selectedRole} onValueChange={setSelectedRole}>
+                              <SelectTrigger className="h-7 w-[130px] text-[10px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {ROLES.map(r => (
+                                  <SelectItem key={r} value={r} className="text-xs">{ROLE_LABELS[r]}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button size="icon" variant="ghost" className="h-6 w-6" disabled={updateRoleMutation.isPending}
+                              onClick={() => updateRoleMutation.mutate({ id: u.id, role: selectedRole })}>
+                              <Save className="w-3 h-3 text-green-600" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-6 w-6"
+                              onClick={() => { setEditingUserId(null); setSelectedRole(''); }}>
+                              <XCircle className="w-3 h-3 text-red-400" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0"
+                            onClick={() => { setEditingUserId(u.id); setSelectedRole(u.role || 'staff'); }}>
+                            <Pencil className="w-3 h-3 text-muted-foreground" />
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>
