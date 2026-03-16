@@ -65,7 +65,7 @@ export default function LineOASettings() {
   });
 
   const isConnected = !!(getVal('line_channel_id') && getVal('line_channel_secret') && getVal('line_access_token'));
-  const webhookUrl = 'https://acc-precision-hub.base44.app/api/lineWebhook';
+  const webhookUrl = 'https://acc-precision-hub.base44.app/functions/lineWebhook';
   const maskedSecret = channelSecret ? '•'.repeat(Math.max(0, channelSecret.length - 4)) + channelSecret.slice(-4) : '';
 
   return (
