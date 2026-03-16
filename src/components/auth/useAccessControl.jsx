@@ -43,7 +43,7 @@ export function useAccessControl(user) {
     // ─── page-level access ───────────────────────────────────
     const canManageUsers        = is('admin');
     const canManageRoles        = is('admin');
-    const canManageCustomers    = is('admin', 'management', 'super_supervisor');
+    const canManageCustomers    = is('admin', 'management', 'manager', 'super_supervisor');
     const canManageTemplates    = is('admin', 'management'); // full; manager/super = dept only
     const canManageTemplatesDept= is('manager', 'super_supervisor');
     const canViewBilling        = is('admin', 'management'); // full; manager/super = dept only
