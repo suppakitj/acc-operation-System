@@ -2,7 +2,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import { createHmac } from 'node:crypto';
 
 Deno.serve(async (req) => {
-  // Handle GET requests (LINE webhook verification)
   if (req.method === 'GET') {
     return Response.json({ status: 'ok' }, { status: 200 });
   }
@@ -51,7 +50,7 @@ Deno.serve(async (req) => {
     const events = payload.events || [];
 
     for (const event of events) {
-      // Auto-capture Group ID
+      // Auto-capture Group ID in AppConfig
       if (event.source?.type === 'group' && event.source?.groupId) {
         const existingGroupConfig = configs.find(c => c.key === 'line_group_id');
         const currentGroupId = existingGroupConfig?.value || '';
@@ -66,41 +65,79 @@ Deno.serve(async (req) => {
       }
 
       if (event.type === 'message') {
+        const sourceType = event.source?.type; // 'user', 'group', 'room'
         const userId = event.source?.userId;
+        const groupId = event.source?.groupId;
+        const roomId = event.source?.roomId;
         const msg = event.message;
         const messageType = msg?.type || 'text';
 
-        // Fetch user profile
-        let displayName = userId;
-        let profileImage = '';
-        try {
-          const profileRes = await fetch(`https://api.line.me/v2/bot/profile/${userId}`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-          });
-          if (profileRes.ok) {
-            const profile = await profileRes.json();
-            displayName = profile.displayName || userId;
-            profileImage = profile.pictureUrl || '';
+        // Determine chat key: group/room ID for group chats, userId for 1-on-1
+        const isGroup = sourceType === 'group' || sourceType === 'room';
+        const chatKey = isGroup ? (groupId || roomId) : userId;
+        const chatType = isGroup ? 'group' : 'user';
+
+        // Fetch sender profile (the person who sent the message)
+        let senderName = userId || 'Unknown';
+        let senderImage = '';
+        if (userId) {
+          try {
+            let profileUrl;
+            if (sourceType === 'group' && groupId) {
+              profileUrl = `https://api.line.me/v2/bot/group/${groupId}/member/${userId}`;
+            } else if (sourceType === 'room' && roomId) {
+              profileUrl = `https://api.line.me/v2/bot/room/${roomId}/member/${userId}`;
+            } else {
+              profileUrl = `https://api.line.me/v2/bot/profile/${userId}`;
+            }
+            const profileRes = await fetch(profileUrl, {
+              headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            if (profileRes.ok) {
+              const profile = await profileRes.json();
+              senderName = profile.displayName || userId;
+              senderImage = profile.pictureUrl || '';
+            }
+          } catch (e) {
+            console.warn('Failed to fetch LINE profile:', e.message);
           }
-        } catch (e) {
-          console.warn('Failed to fetch LINE profile:', e.message);
         }
 
+        // Fetch group/room name for display_name
+        let chatDisplayName = senderName;
+        let chatImage = senderImage;
+        if (isGroup) {
+          try {
+            const groupUrl = sourceType === 'group'
+              ? `https://api.line.me/v2/bot/group/${groupId}/summary`
+              : `https://api.line.me/v2/bot/room/${roomId}/member/${userId}`;
+            const groupRes = await fetch(groupUrl, {
+              headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            if (groupRes.ok) {
+              const groupData = await groupRes.json();
+              chatDisplayName = groupData.groupName || `กลุ่ม ${(groupId || roomId).substring(0, 8)}`;
+              chatImage = groupData.pictureUrl || '';
+            }
+          } catch (e) {
+            chatDisplayName = `กลุ่ม ${(groupId || roomId).substring(0, 8)}`;
+            console.warn('Failed to fetch group summary:', e.message);
+          }
+        }
+
+        // Process message content
         let content = '';
         let fileUrl = '';
 
         if (messageType === 'text') {
           content = msg.text || '';
         } else if (messageType === 'sticker') {
-          // Build sticker image URL from LINE sticker CDN
           const stickerId = msg.stickerId;
-          const packageId = msg.packageId;
-          content = `[Sticker]`;
+          content = '[Sticker]';
           if (stickerId) {
             fileUrl = `https://stickershop.line-scdn.net/stickershop/v1/sticker/${stickerId}/iPhone/sticker.png`;
           }
         } else if (messageType === 'image' || messageType === 'video' || messageType === 'audio' || messageType === 'file') {
-          // Download content from LINE API and upload to Base44
           content = messageType === 'image' ? '[รูปภาพ]'
             : messageType === 'video' ? '[วิดีโอ]'
             : messageType === 'audio' ? '[เสียง]'
@@ -110,12 +147,9 @@ Deno.serve(async (req) => {
             const contentRes = await fetch(`https://api-data.line.me/v2/bot/message/${msg.id}/content`, {
               headers: { 'Authorization': `Bearer ${accessToken}` }
             });
-
             if (contentRes.ok) {
               const contentType = contentRes.headers.get('content-type') || 'application/octet-stream';
               const blob = await contentRes.blob();
-
-              // Determine file extension
               let ext = 'bin';
               if (messageType === 'image') ext = 'jpg';
               else if (messageType === 'video') ext = 'mp4';
@@ -124,12 +158,9 @@ Deno.serve(async (req) => {
 
               const fileName = `line_${messageType}_${msg.id}.${ext}`;
               const file = new File([blob], fileName, { type: contentType });
-
               const uploadResult = await base44.asServiceRole.integrations.Core.UploadFile({ file });
               fileUrl = uploadResult.file_url || '';
               console.log(`Uploaded LINE ${messageType} → ${fileUrl}`);
-            } else {
-              console.warn(`Failed to download LINE content: ${contentRes.status}`);
             }
           } catch (e) {
             console.warn(`Failed to process LINE ${messageType}:`, e.message);
@@ -138,18 +169,26 @@ Deno.serve(async (req) => {
           content = `[${messageType}]`;
         }
 
+        const mappedType = (messageType === 'audio' || messageType === 'video') ? 'file'
+          : (messageType === 'sticker') ? 'sticker'
+          : (messageType === 'image') ? 'image'
+          : (messageType === 'file') ? 'file'
+          : 'text';
+
         await base44.asServiceRole.entities.LineMessage.create({
-          line_user_id: userId,
-          display_name: displayName,
-          profile_image: profileImage,
-          message_type: messageType === 'audio' || messageType === 'video' ? 'file' : (messageType === 'sticker' ? 'sticker' : messageType),
+          line_user_id: chatKey,
+          display_name: chatDisplayName,
+          profile_image: chatImage,
+          sender_name: isGroup ? senderName : undefined,
+          message_type: mappedType,
           content: content,
           direction: 'incoming',
           file_url: fileUrl || undefined,
           is_read: false,
+          chat_type: chatType,
         });
 
-        console.log(`Saved incoming ${messageType} from ${displayName}: ${content}`);
+        console.log(`Saved incoming ${messageType} from ${senderName} in ${chatType} (${chatKey}): ${content}`);
       }
     }
 
