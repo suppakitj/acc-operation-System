@@ -178,6 +178,11 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
           <div className="space-y-1"><Label>อีเมล</Label><Input type="email" value={form.contact_email} onChange={e => update('contact_email', e.target.value)} disabled={readOnly} /></div>
           <div className="space-y-1"><Label>เบอร์โทร</Label><Input value={form.contact_phone} onChange={e => update('contact_phone', e.target.value)} disabled={readOnly} /></div>
           <div className="space-y-1"><Label>Line ID</Label><Input value={form.line_id} onChange={e => update('line_id', e.target.value)} disabled={readOnly} /></div>
+          <div className="md:col-span-2 space-y-1">
+            <Label>LINE Group ID</Label>
+            <Input value={form.line_group_id || ''} onChange={e => update('line_group_id', e.target.value)} placeholder="C..." disabled={readOnly} />
+            <p className="text-[11px] text-muted-foreground">Group ID ของกลุ่ม LINE สำหรับส่งแจ้งเตือนเข้ากลุ่มลูกค้า</p>
+          </div>
         </div>
       </div>
 
