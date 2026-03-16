@@ -1,23 +1,24 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { CheckSquare, Building2, CreditCard, AlertTriangle, Users, Clock } from 'lucide-react';
+import { CheckSquare, Building2, CreditCard, AlertTriangle } from 'lucide-react';
 import StatCard from '../components/dashboard/StatCard';
 import TaskStatusChart from '../components/dashboard/TaskStatusChart';
 import DueDateAlerts from '../components/dashboard/DueDateAlerts';
 import RecentTasks from '../components/dashboard/RecentTasks';
+import { useLanguage } from '../components/LanguageContext';
 
 export default function Dashboard() {
+  const { t } = useLanguage();
+
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 200),
   });
-
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
     queryFn: () => base44.entities.Customer.list(),
   });
-
   const { data: billings = [] } = useQuery({
     queryKey: ['billings'],
     queryFn: () => base44.entities.Billing.list('-created_date', 100),
@@ -29,23 +30,22 @@ export default function Dashboard() {
     return new Date(t.due_date) < new Date();
   });
   const unpaidBillings = billings.filter(b => b.status === 'sent' || b.status === 'overdue');
-  const totalRevenue = billings.filter(b => b.status === 'paid').reduce((sum, b) => sum + (b.total_amount || b.amount || 0), 0);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">ภาพรวมระบบ ACC Consulting</p>
+        <h1 className="text-xl md:text-2xl font-bold">{t('dashboard_title')}</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">{t('dashboard_subtitle')}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="งานทั้งหมด" value={activeTasks.length} icon={CheckSquare} />
-        <StatCard title="ลูกค้า" value={customers.length} icon={Building2} />
-        <StatCard title="เกินกำหนด" value={overdueTasks.length} icon={AlertTriangle} />
-        <StatCard title="ค้างชำระ" value={unpaidBillings.length} icon={CreditCard} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <StatCard title={t('active_tasks')} value={activeTasks.length} icon={CheckSquare} />
+        <StatCard title={t('customers')} value={customers.length} icon={Building2} />
+        <StatCard title={t('overdue')} value={overdueTasks.length} icon={AlertTriangle} />
+        <StatCard title={t('unpaid')} value={unpaidBillings.length} icon={CreditCard} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <TaskStatusChart tasks={tasks} />
         <DueDateAlerts tasks={tasks} />
       </div>
