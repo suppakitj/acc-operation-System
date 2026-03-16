@@ -253,6 +253,24 @@ export default function PeakAccount() {
             </SelectContent>
           </Select>
         </div>
+        {/* Checkbox Filters */}
+        <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-2.5">
+          {[
+            { key: 'acc_prepaid', label: 'ACC ชำระเงินล่วงหน้าแล้ว' },
+            { key: 'customer_paid_back', label: 'ลูกค้าชำระเงินคืน ACC แล้ว' },
+            { key: 'invoice_issued', label: 'ออกใบแจ้งหนี้แล้ว' },
+            { key: 'invoice_paid', label: 'ชำระใบแจ้งหนี้แล้ว' },
+            { key: 'wht_received', label: 'ได้รับ WHT แล้ว' },
+          ].map(cf => (
+            <label key={cf.key} className="flex items-center gap-1.5 cursor-pointer">
+              <Checkbox
+                checked={checkFilters[cf.key]}
+                onCheckedChange={(v) => setCheckFilters(prev => ({ ...prev, [cf.key]: !!v }))}
+              />
+              <span className="text-xs text-muted-foreground select-none">{cf.label}</span>
+            </label>
+          ))}
+        </div>
         <p className="text-[11px] text-muted-foreground mt-1.5">{filtered.length} of {licenses.length} records</p>
       </div>
 
