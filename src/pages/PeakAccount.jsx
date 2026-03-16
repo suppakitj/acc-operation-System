@@ -48,7 +48,7 @@ export default function PeakAccount() {
   const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list() });
 
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('active');
+  const [activeTab, setActiveTab] = useState('all');
   const [pkgFilter, setPkgFilter] = useState('all');
   const [payerFilter, setPayerFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -114,7 +114,7 @@ export default function PeakAccount() {
   // Tab filtering
   const tabFiltered = useMemo(() => {
     return enriched.filter(l => {
-      if (activeTab === 'active') return (l.license_status === 'active' || l.license_status === 'renewed') && (l.daysLeft === null || l.daysLeft > 0);
+      if (activeTab === 'active') return l.license_status === 'active' || l.license_status === 'renewed';
       if (activeTab === 'expiring') return l.daysLeft !== null && l.daysLeft >= 0 && l.daysLeft <= 30;
       if (activeTab === 'expired') return l.license_status === 'expired' || (l.daysLeft !== null && l.daysLeft < 0);
       if (activeTab === 'renewed') return l.license_status === 'renewed';
