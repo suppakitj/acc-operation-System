@@ -5,21 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Search, Building2, Phone, Mail } from 'lucide-react';
+import { Plus, Search, Building2 } from 'lucide-react';
 import StatusBadge from '../components/shared/StatusBadge';
 import ServiceBadge from '../components/shared/ServiceBadge';
 import CustomerForm from '../components/customers/CustomerForm';
+import { useLanguage } from '../components/LanguageContext';
 
 export default function Customers() {
+  const { t } = useLanguage();
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const queryClient = useQueryClient();
 
-  const { data: customers = [], isLoading } = useQuery({
-    queryKey: ['customers'],
-    queryFn: () => base44.entities.Customer.list('-created_date'),
-  });
+  const { data: customers = [], isLoading } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date') });
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Customer.create(data),
@@ -41,46 +40,46 @@ export default function Customers() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">ลูกค้า</h1>
-          <p className="text-sm text-muted-foreground mt-1">Customer Master — {customers.length} บริษัท</p>
+          <h1 className="text-xl md:text-2xl font-bold">{t('customers_title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('customers_subtitle')} — {customers.length} {t('companies')}</p>
         </div>
-        <Button onClick={() => { setEditingCustomer(null); setShowForm(true); }} className="gap-2">
-          <Plus className="w-4 h-4" /> เพิ่มลูกค้า
+        <Button onClick={() => { setEditingCustomer(null); setShowForm(true); }} className="gap-2 shrink-0 self-start sm:self-auto">
+          <Plus className="w-4 h-4" /> {t('add_customer')}
         </Button>
       </div>
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="ค้นหาลูกค้า..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
+        <Input placeholder={t('search')} value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
         {isLoading ? (
-          <div className="col-span-full text-center py-12 text-muted-foreground">กำลังโหลด...</div>
+          <div className="col-span-full text-center py-12 text-muted-foreground">{t('loading')}</div>
         ) : filtered.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-muted-foreground">ไม่พบข้อมูล</div>
+          <div className="col-span-full text-center py-12 text-muted-foreground">{t('no_data')}</div>
         ) : (
           filtered.map(customer => (
-            <Card key={customer.id} className="hover:shadow-md transition-shadow cursor-pointer"
+            <Card key={customer.id} className="hover:shadow-md transition-all cursor-pointer group"
               onClick={() => { setEditingCustomer(customer); setShowForm(true); }}>
-              <CardContent className="p-5">
+              <CardContent className="p-4 md:p-5">
                 <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
                       <Building2 className="w-5 h-5 text-primary" />
                     </div>
-                    <div>
-                      <p className="font-semibold text-sm">{customer.company_name}</p>
-                      <p className="text-xs text-muted-foreground">{customer.tax_id || '-'}</p>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">{customer.company_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{customer.tax_id || '-'}</p>
                     </div>
                   </div>
                   <StatusBadge status={customer.status} />
                 </div>
                 {customer.contact_person && (
-                  <p className="text-xs text-muted-foreground mb-2">ผู้ติดต่อ: {customer.contact_person}</p>
+                  <p className="text-xs text-muted-foreground mb-2">{t('contact_person')}: {customer.contact_person}</p>
                 )}
                 <div className="flex flex-wrap gap-1 mt-2">
                   {customer.services?.map(s => <ServiceBadge key={s} service={s} />)}
@@ -93,9 +92,7 @@ export default function Customers() {
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingCustomer ? 'แก้ไขข้อมูลลูกค้า' : 'เพิ่มลูกค้าใหม่'}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{editingCustomer ? t('edit_customer') : t('add_customer')}</DialogTitle></DialogHeader>
           <CustomerForm customer={editingCustomer} onSubmit={handleSubmit} isLoading={createMutation.isPending || updateMutation.isPending} />
         </DialogContent>
       </Dialog>
