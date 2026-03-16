@@ -41,6 +41,7 @@ export default function LineOASettings() {
         { key: 'line_channel_id', value: channelId, description: 'LINE OA Channel ID' },
         { key: 'line_channel_secret', value: channelSecret, description: 'LINE OA Channel Secret' },
         { key: 'line_access_token', value: accessToken, description: 'LINE OA Channel Access Token' },
+        { key: 'line_user_id', value: lineUserId, description: 'LINE Your User ID' },
       ];
       for (const p of pairs) {
         const existing = configs.find(c => c.key === p.key);
