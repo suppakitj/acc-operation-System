@@ -80,8 +80,8 @@ export default function Customers() {
   const activeCount = customers.filter(c => c.status === 'active').length;
   const inactiveCount = customers.filter(c => c.status === 'inactive').length;
 
-  const canEdit = ac.canManageCustomers;
-  const isStaffOnly = ac.role === 'staff';
+  const canEdit = ac.canEditCustomer;
+  const canAdd = ac.canAddCustomer;
 
   return (
     <div className="space-y-4">
@@ -94,13 +94,15 @@ export default function Customers() {
           </div>
           <p className="text-xs md:text-sm text-muted-foreground">เก็บข้อมูลลูกค้าเพื่อใช้กับ Task, Billing, Schedule</p>
         </div>
-        {canEdit && (
+        {(canEdit || canAdd) && (
           <div className="flex gap-2 shrink-0 self-start sm:self-auto flex-wrap">
-            <CustomerImportExport customers={customers} generateCustomerCode={generateCustomerCode} />
-            <Button size="sm" className="gap-1.5 text-xs"
-              onClick={() => { setEditingCustomer(null); setShowForm(true); }}>
-              <Plus className="w-3.5 h-3.5" /> เพิ่มลูกค้า
-            </Button>
+            {canAdd && <CustomerImportExport customers={customers} generateCustomerCode={generateCustomerCode} />}
+            {canAdd && (
+              <Button size="sm" className="gap-1.5 text-xs"
+                onClick={() => { setEditingCustomer(null); setShowForm(true); }}>
+                <Plus className="w-3.5 h-3.5" /> เพิ่มลูกค้า
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -216,13 +218,13 @@ export default function Customers() {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingCustomer ? (canEdit ? 'แก้ไขข้อมูลลูกค้า' : 'ดูข้อมูลลูกค้า') : 'เพิ่มลูกค้าใหม่'}</DialogTitle>
+            <DialogTitle>{editingCustomer ? (canEdit ? 'แก้ไขข้อมูลลูกค้า' : 'ดูข้อมูลลูกค้า') : (canAdd ? 'เพิ่มลูกค้าใหม่' : 'ดูข้อมูลลูกค้า')}</DialogTitle>
           </DialogHeader>
           <CustomerForm
             customer={editingCustomer}
             onSubmit={handleSubmit}
             isLoading={createMutation.isPending || updateMutation.isPending}
-            readOnly={isStaffOnly}
+            readOnly={!canEdit}
           />
         </DialogContent>
       </Dialog>

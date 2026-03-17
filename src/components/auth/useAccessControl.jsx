@@ -20,7 +20,11 @@ export function useAccessControl(user) {
     // ─── page-level access ───────────────────────────────────
     const canManageUsers         = p('user_master') === 'yes';
     const canManageRoles         = p('role_mgmt') === 'yes';
-    const canManageCustomers     = p('customer') !== 'no';
+    const customerPerm           = p('customer');
+    const canManageCustomers     = customerPerm !== 'no';
+    const canAddCustomer         = customerPerm === 'yes' || customerPerm === 'dept';
+    const canDeleteCustomer      = customerPerm === 'yes';
+    const canEditCustomer        = customerPerm !== 'no'; // edit_only, yes, dept all can edit
     const canManageTemplates     = p('template') === 'yes';
     const canManageTemplatesDept = p('template') === 'dept';
     const canViewBilling         = p('view_billing') === 'yes';
@@ -90,6 +94,7 @@ export function useAccessControl(user) {
     return {
       role, email, userDepartments: depts,
       canManageUsers, canManageRoles, canManageCustomers,
+      canAddCustomer, canDeleteCustomer, canEditCustomer,
       canManageTemplates, canManageTemplatesDept,
       canViewBilling, canViewBillingDept,
       canViewPeakAccount, canViewAllSchedules,
@@ -105,6 +110,7 @@ function empty() {
   return {
     role: '', email: '', userDepartments: [],
     canManageUsers: false, canManageRoles: false, canManageCustomers: false,
+    canAddCustomer: false, canDeleteCustomer: false, canEditCustomer: false,
     canManageTemplates: false, canManageTemplatesDept: false,
     canViewBilling: false, canViewBillingDept: false,
     canViewPeakAccount: false, canViewAllSchedules: false,

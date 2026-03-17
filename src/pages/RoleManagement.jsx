@@ -16,7 +16,7 @@ const DEFAULT_MATRIX = [
   { key: 'login', label: 'Login ระบบ', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   { key: 'user_master', label: 'จัดการ User & User Master', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
   { key: 'role_mgmt', label: 'User Role Management', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
-  { key: 'customer', label: 'จัดการ Customer Master Data', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'yes', staff: 'no' },
+  { key: 'customer', label: 'จัดการ Customer Master Data', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'yes', staff: 'edit_only' },
   { key: 'template', label: 'จัดการ Task Template', admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'no' },
   { key: 'view_task', label: 'ดู Task ทั้งหมด', admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'dept' },
   { key: 'edit_assignee', label: 'แก้ไขผู้รับผิดชอบ', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
@@ -29,7 +29,7 @@ const DEFAULT_MATRIX = [
   { key: 'peak', label: 'Licensing Peak Account', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
 ];
 
-const PERM_CYCLE = ['yes', 'dept', 'own', 'no'];
+const PERM_CYCLE = ['yes', 'dept', 'own', 'edit_only', 'no'];
 
 function PermCell({ value, editable, onClick }) {
   const content = (() => {
@@ -37,6 +37,7 @@ function PermCell({ value, editable, onClick }) {
     if (value === 'no') return <div className="flex justify-center"><X className="w-4 h-4 text-red-400" /></div>;
     if (value === 'dept') return <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px] px-1.5">เฉพาะแผนก</Badge>;
     if (value === 'own') return <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 text-[10px] px-1.5">เฉพาะงานตัวเอง</Badge>;
+    if (value === 'edit_only') return <Badge variant="secondary" className="bg-orange-50 text-orange-700 text-[10px] px-1.5">แก้ไขเท่านั้น</Badge>;
     return <Minus className="w-4 h-4 text-muted-foreground mx-auto" />;
   })();
   if (!editable) return content;
@@ -212,7 +213,7 @@ export default function RoleManagement() {
         {isEditingMatrix && (
           <div className="px-6 pb-2">
             <p className="text-[11px] text-muted-foreground bg-yellow-50 border border-yellow-200 rounded px-2 py-1">
-              คลิกที่ช่องเพื่อสลับค่า: ✅ ใช่ → 🏢 เฉพาะแผนก → 👤 เฉพาะงานตัวเอง → ❌ ไม่ → ✅ ใช่
+              คลิกที่ช่องเพื่อสลับค่า: ✅ ใช่ → 🏢 เฉพาะแผนก → 👤 เฉพาะงานตัวเอง → ✏️ แก้ไขเท่านั้น → ❌ ไม่ → ✅ ใช่
             </p>
           </div>
         )}

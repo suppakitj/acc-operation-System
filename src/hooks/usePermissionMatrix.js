@@ -6,7 +6,7 @@ const DEFAULT_MATRIX = {
   login:          { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   user_master:    { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
   role_mgmt:      { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
-  customer:       { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'yes', staff: 'no' },
+  customer:       { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'yes', staff: 'edit_only' },
   template:       { admin: 'yes', management: 'yes', manager: 'dept',super_supervisor: 'dept',staff: 'no' },
   view_task:      { admin: 'yes', management: 'yes', manager: 'dept',super_supervisor: 'dept',staff: 'dept' },
   edit_assignee:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
