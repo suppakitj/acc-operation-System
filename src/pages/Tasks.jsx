@@ -136,16 +136,18 @@ export default function Tasks() {
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">{t('loading')}</div>
       ) : (
-        <TaskTable
-          tasks={paged}
-          selected={selected}
-          setSelected={setSelected}
-          onRowClick={(task) => { setEditingTask(task); setShowForm(true); }}
-          sortField={sortField}
-          sortDir={sortDir}
-          onSort={(field, dir) => { setSortField(field); setSortDir(dir); }}
-        />
-        <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+        <>
+          <TaskTable
+            tasks={paged}
+            selected={selected}
+            setSelected={setSelected}
+            onRowClick={(task) => { setEditingTask(task); setShowForm(true); }}
+            sortField={sortField}
+            sortDir={sortDir}
+            onSort={(field, dir) => { setSortField(field); setSortDir(dir); }}
+          />
+          <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+        </>
       )}
 
       {/* Task Form Dialog */}
