@@ -183,9 +183,11 @@ export default function Schedule() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">{monthEntries} entries</span>
-            <Button onClick={openForm} size="sm" className="gap-1.5">
-              <Plus className="w-4 h-4" /> Add
-            </Button>
+            {ac.canAddSchedule && (
+              <Button onClick={openForm} size="sm" className="gap-1.5">
+                <Plus className="w-4 h-4" /> Add
+              </Button>
+            )}
           </div>
         </div>
 
