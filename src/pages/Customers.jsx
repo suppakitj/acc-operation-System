@@ -62,12 +62,12 @@ export default function Customers() {
         const s = search.toLowerCase();
         if (!c.company_name?.toLowerCase().includes(s) && !c.customer_code?.toLowerCase().includes(s) && !c.tax_id?.includes(s) && !c.contact_person?.toLowerCase().includes(s)) return false;
       }
-      if (statusFilter !== 'all' && c.status !== statusFilter) return false;
+      if (c.status !== 'active') return false;
       if (deptFilter !== 'all' && !(c.departments || []).includes(deptFilter)) return false;
       if (groupFilter !== 'all' && c.customer_group !== groupFilter) return false;
       return true;
     });
-  }, [customers, search, statusFilter, deptFilter, groupFilter]);
+  }, [customers, search, deptFilter, groupFilter]);
 
   const activeCount = customers.filter(c => c.status === 'active').length;
   const inactiveCount = customers.filter(c => c.status === 'inactive').length;
@@ -115,14 +115,7 @@ export default function Customers() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="ค้นหาชื่อ, รหัส, TAX ID..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 h-8 text-xs" />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[120px] h-8 text-xs"><SelectValue placeholder="สถานะ" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">ทุกสถานะ</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
+        <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs h-8 px-3 flex items-center">Active Only</Badge>
         <Select value={deptFilter} onValueChange={setDeptFilter}>
           <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs"><SelectValue placeholder="แผนก" /></SelectTrigger>
           <SelectContent>
