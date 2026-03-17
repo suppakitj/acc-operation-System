@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useUserList } from '@/hooks/useUserList';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,7 +52,7 @@ const PAYMENT_METHODS = [
 
 export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }) {
   const { t } = useLanguage();
-  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list() });
+  const { data: users = [] } = useUserList();
 
   const [form, setForm] = useState({
     company_name: '', company_name_en: '', tax_id: '', address: '',
