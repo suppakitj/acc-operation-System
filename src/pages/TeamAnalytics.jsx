@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { BarChart3, Building2 } from 'lucide-react';
+import { BarChart3, Building2, CalendarDays } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import TeamSummaryCards from '../components/analytics/TeamSummaryCards';
@@ -9,6 +9,9 @@ import ProductivityTrend from '../components/analytics/ProductivityTrend';
 import AvgCompletionTime from '../components/analytics/AvgCompletionTime';
 import WorkloadByEmployee from '../components/analytics/WorkloadByEmployee';
 import CompletionRateByService from '../components/analytics/CompletionRateByService';
+import TopOverdueEmployees from '../components/analytics/TopOverdueEmployees';
+import TopPerformers from '../components/analytics/TopPerformers';
+import OnTimeRateTable from '../components/analytics/OnTimeRateTable';
 
 const DEPT_OPTIONS = [
   { value: 'all', label: 'ทุกแผนก (ภาพรวม)' },
@@ -22,6 +25,7 @@ const DEPT_OPTIONS = [
 
 export default function TeamAnalytics() {
   const [deptFilter, setDeptFilter] = useState('all');
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
@@ -43,6 +47,16 @@ export default function TeamAnalytics() {
 
   const selectedLabel = DEPT_OPTIONS.find(d => d.value === deptFilter)?.label;
 
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = new Set([currentYear]);
+    tasks.forEach(t => {
+      if (t.created_date) years.add(new Date(t.created_date).getFullYear());
+      if (t.due_date) years.add(new Date(t.due_date).getFullYear());
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [tasks]);
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -55,7 +69,7 @@ export default function TeamAnalytics() {
             Visualize team productivity, completion times, and workload distribution
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Building2 className="w-4 h-4 text-muted-foreground" />
           <Select value={deptFilter} onValueChange={setDeptFilter}>
             <SelectTrigger className="w-[180px] h-8 text-xs">
@@ -64,6 +78,17 @@ export default function TeamAnalytics() {
             <SelectContent>
               {DEPT_OPTIONS.map(d => (
                 <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <CalendarDays className="w-4 h-4 text-muted-foreground ml-2" />
+          <Select value={String(selectedYear)} onValueChange={v => setSelectedYear(Number(v))}>
+            <SelectTrigger className="w-[100px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {availableYears.map(y => (
+                <SelectItem key={y} value={String(y)}>ปี {y}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -88,6 +113,15 @@ export default function TeamAnalytics() {
         <WorkloadByEmployee tasks={filteredTasks} />
         <CompletionRateByService tasks={filteredTasks} />
       </div>
+
+      {/* Row 3: Top Overdue + Top Performer */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TopOverdueEmployees tasks={filteredTasks} year={selectedYear} />
+        <TopPerformers tasks={filteredTasks} year={selectedYear} />
+      </div>
+
+      {/* Row 4: On-Time Rate Table */}
+      <OnTimeRateTable tasks={filteredTasks} year={selectedYear} />
     </div>
   );
 }
