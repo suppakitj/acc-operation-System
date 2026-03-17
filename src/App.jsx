@@ -23,6 +23,7 @@ import UserManagement from './pages/UserManagement';
 import RoleManagement from './pages/RoleManagement';
 import AuditLog from './pages/AuditLog';
 import AppSettings from './pages/AppSettings';
+import DatabaseBackup from './pages/DatabaseBackup';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -65,6 +66,7 @@ const AuthenticatedApp = () => {
         <Route path="/RoleManagement" element={<RoleManagement />} />
         <Route path="/AuditLog" element={<AuditLog />} />
         <Route path="/AppSettings" element={<AppSettings />} />
+        <Route path="/DatabaseBackup" element={<DatabaseBackup />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

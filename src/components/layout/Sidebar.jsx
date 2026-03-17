@@ -4,7 +4,7 @@ import {
   LayoutDashboard, CheckSquare, Calendar, Users, Building2,
   Bell, CreditCard, MessageCircle, Shield,
   Settings, ChevronLeft, ChevronRight, Key, ClipboardList,
-  BarChart3, History, X
+  BarChart3, History, X, Database
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -30,6 +30,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'users', label: t('menu_users'), icon: Users, path: '/UserManagement' },
     { id: 'roles', label: t('menu_roles'), icon: Shield, path: '/RoleManagement' },
     { id: 'audit', label: t('menu_audit'), icon: History, path: '/AuditLog' },
+    { id: 'backup', label: 'Backup DB', icon: Database, path: '/DatabaseBackup' },
     { id: 'settings', label: t('menu_settings'), icon: Settings, path: '/AppSettings' },
   ];
 
