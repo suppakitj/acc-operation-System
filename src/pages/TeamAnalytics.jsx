@@ -9,6 +9,7 @@ import ProductivityTrend from '../components/analytics/ProductivityTrend';
 import AvgCompletionTime from '../components/analytics/AvgCompletionTime';
 import WorkloadByEmployee from '../components/analytics/WorkloadByEmployee';
 import CompletionRateByService from '../components/analytics/CompletionRateByService';
+import TopOverdueEmployees from '../components/analytics/TopOverdueEmployees';
 
 const DEPT_OPTIONS = [
   { value: 'all', label: 'ทุกแผนก (ภาพรวม)' },
@@ -87,6 +88,11 @@ export default function TeamAnalytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <WorkloadByEmployee tasks={filteredTasks} />
         <CompletionRateByService tasks={filteredTasks} />
+      </div>
+
+      {/* Row 3: Top Overdue Employees */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TopOverdueEmployees tasks={filteredTasks} />
       </div>
     </div>
   );
