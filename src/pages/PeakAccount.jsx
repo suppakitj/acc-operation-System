@@ -73,7 +73,8 @@ export default function PeakAccount() {
   const createMutation = useMutation({
     mutationFn: (data) => {
       if (data.payment_date && !data.expiry_date) {
-        data.expiry_date = format(addDays(parseISO(data.payment_date), 365), 'yyyy-MM-dd');
+        const days = data.package_type === 'trial' ? 30 : 365;
+        data.expiry_date = format(addDays(parseISO(data.payment_date), days), 'yyyy-MM-dd');
       }
       return base44.entities.PeakLicense.create(data);
     },
