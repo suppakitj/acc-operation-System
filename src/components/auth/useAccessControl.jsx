@@ -68,8 +68,16 @@ export function useAccessControl(user) {
       return depts.includes(dept);
     };
 
-    // ─── schedule visibility ──────────────────────────────────
+    // ─── schedule permissions ─────────────────────────────────
     const canViewAllSchedules = p('view_schedule') === 'yes';
+    const canAddSchedule = p('add_schedule') !== 'no';
+
+    const canEditSchedule = (schedule) => {
+      const v = p('edit_schedule');
+      if (v === 'yes' || v === 'dept') return true;
+      if (v === 'own') return schedule?.assigned_to === email || schedule?.created_by === email;
+      return false;
+    };
 
     // ─── sidebar menu visibility ─────────────────────────────
     const getVisibleMenuIds = () => {
@@ -102,7 +110,7 @@ export function useAccessControl(user) {
       canAddCustomer, canDeleteCustomer, canEditCustomer,
       canManageTemplates, canManageTemplatesDept, canManageServiceMaster, canManageHolidays,
       canViewBilling, canViewBillingDept,
-      canViewPeakAccount, canViewAllSchedules,
+      canViewPeakAccount, canViewAllSchedules, canAddSchedule, canEditSchedule,
       canEditAssignee, canAddTask, canChangeDueDate, canChangeStatus,
       filterByDepartment, canAccessDepartment,
       getVisibleMenuIds,
@@ -118,7 +126,7 @@ function empty() {
     canAddCustomer: false, canDeleteCustomer: false, canEditCustomer: false,
     canManageTemplates: false, canManageTemplatesDept: false, canManageServiceMaster: false, canManageHolidays: false,
     canViewBilling: false, canViewBillingDept: false,
-    canViewPeakAccount: false, canViewAllSchedules: false,
+    canViewPeakAccount: false, canViewAllSchedules: false, canAddSchedule: false, canEditSchedule: () => false,
     canEditAssignee: false, canAddTask: false,
     canChangeDueDate: () => false, canChangeStatus: () => false,
     filterByDepartment: () => [], canAccessDepartment: () => false,

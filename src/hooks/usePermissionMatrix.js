@@ -15,6 +15,8 @@ const DEFAULT_MATRIX = {
   add_task:       { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   view_billing:   { admin: 'yes', management: 'yes', manager: 'dept',super_supervisor: 'dept',staff: 'no' },
   view_schedule:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'dept',staff: 'dept' },
+  add_schedule:   { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  edit_schedule:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
   cross_group:    { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
   peak:           { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no',  staff: 'no' },
   service_master: { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },

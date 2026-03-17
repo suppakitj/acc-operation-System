@@ -25,6 +25,8 @@ const DEFAULT_MATRIX = [
   { key: 'add_task', label: 'เพิ่ม Task Manual', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   { key: 'view_billing', label: 'ดู Billing', admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'no' },
   { key: 'view_schedule', label: 'ดูตารางทีม', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'dept', staff: 'dept' },
+  { key: 'add_schedule', label: 'เพิ่มตารางงาน', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  { key: 'edit_schedule', label: 'แก้ไข/ลบตารางงาน', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
   { key: 'cross_group', label: 'ดูข้ามกลุ่ม', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
   { key: 'peak', label: 'Licensing Peak Account', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
   { key: 'service_master', label: 'จัดการ Service Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
