@@ -12,6 +12,7 @@ import { useAccessControl } from '../components/auth/useAccessControl';
 import PeakLicenseForm from '../components/peak/PeakLicenseForm';
 import PeakNotificationSettings from '../components/peak/PeakNotificationSettings';
 import TablePagination, { paginateData } from '../components/shared/TablePagination';
+import PeakImportExport from '../components/peak/PeakImportExport';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
@@ -181,6 +182,7 @@ export default function PeakAccount() {
               <Settings className="w-3.5 h-3.5" /> ตั้งค่าแจ้งเตือน
             </Button>
           )}
+          <PeakImportExport licenses={licenses} />
           <Button size="sm" className="gap-1.5 text-xs" onClick={() => { setEditingLicense(null); setShowForm(true); }}>
             <Plus className="w-3.5 h-3.5" /> สมัคร / ต่ออายุ
           </Button>
