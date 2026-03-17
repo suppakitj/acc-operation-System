@@ -73,11 +73,17 @@ export default function UserManagement() {
 
   const handleSave = async (formData) => {
     if (editingUser) {
-      // Update
+      // Auto-generate employee_id if missing and department is set
+      const dept = formData.departments?.[0] || formData.department;
+      let employeeId = editingUser.employee_id;
+      if (!employeeId && dept) {
+        employeeId = generateEmployeeId(dept, users);
+      }
       updateMutation.mutate({
         id: editingUser.id,
         data: {
           ...formData,
+          employee_id: employeeId || editingUser.employee_id,
           last_modified_by: currentUser?.email || '',
         },
       });
@@ -99,13 +105,6 @@ export default function UserManagement() {
   };
 
   const handleEdit = (user) => {
-    // Auto-generate employee ID if missing
-    if (!user.employee_id && user.department) {
-      const empId = generateEmployeeId(user.department, users);
-      user = { ...user, employee_id: empId };
-      // Save immediately
-      base44.entities.User.update(user.id, { employee_id: empId }).catch(() => {});
-    }
     setEditingUser(user);
     setShowForm(true);
   };
