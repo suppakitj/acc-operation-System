@@ -97,7 +97,8 @@ export function useAccessControl(user) {
       // line_chat → always visible
       menus.push('line_chat');
 
-      // reports, audit, backup → same as cross_group (admin-level)
+      // team_analytics, reports, audit, backup → same as cross_group (admin-level)
+      menus.push('team_analytics');
       if (crossGroup) menus.push('reports', 'audit');
       if (role === 'admin') menus.push('backup');
 
