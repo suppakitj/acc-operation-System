@@ -54,12 +54,20 @@ export default function PeakLicenseForm({ open, onOpenChange, license, onSubmit,
     }
   }, [open, license]);
 
+  const calcExpiry = (paymentDate, packageType) => {
+    if (!paymentDate) return '';
+    const days = packageType === 'trial' ? 30 : 365;
+    return format(addDays(parseISO(paymentDate), days), 'yyyy-MM-dd');
+  };
+
   const update = (key, value) => {
     setForm(prev => {
       const next = { ...prev, [key]: value };
-      // Auto-calc expiry when payment_date changes
       if (key === 'payment_date' && value) {
-        next.expiry_date = format(addDays(parseISO(value), 365), 'yyyy-MM-dd');
+        next.expiry_date = calcExpiry(value, next.package_type);
+      }
+      if (key === 'package_type' && next.payment_date) {
+        next.expiry_date = calcExpiry(next.payment_date, value);
       }
       return next;
     });
