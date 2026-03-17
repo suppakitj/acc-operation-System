@@ -1,27 +1,9 @@
 import { useMemo } from 'react';
-
-/**
- * Centralized Role Matrix for ACC Consulting.
- *
- * Capability               Admin  Management  Manager          SuperSupervisor   Staff
- * ───────────────────────── ─────  ──────────  ──────────────── ───────────────── ─────────────
- * Login                    ✓      ✓           ✓                ✓                 ✓
- * User Master & Mgmt       ✓      ✗           ✗                ✗                 ✗
- * User Role Mgmt            ✓      ✗           ✗                ✗                 ✗
- * Customer Master           ✓      ✓           ✗                ✓                 ✗
- * Task Template             ✓      ✓           own dept         own dept          ✗
- * View Tasks                ✓      ✓           own dept         own dept          own dept
- * Edit assignee             ✓      ✓           ✓                ✓                 ✗
- * Change due date           ✓      ✓           ✓                ✓                 own tasks
- * Change status             ✓      ✓           ✓                ✓                 own tasks
- * Add task manual           ✓      ✓           ✓                ✓                 ✓
- * View billing              ✓      ✓           own dept         own dept          ✗
- * View schedule/team        ✓      ✓           ✓                own dept          own dept
- * Cross-group viewing       ✓      ✗           ✗                ✗                 ✗
- * Peak Account Mgmt         ✓      ✓           ✓                ✗                 ✗
- */
+import { usePermissionMatrix, getPerm } from '@/hooks/usePermissionMatrix';
 
 export function useAccessControl(user) {
+  const matrix = usePermissionMatrix();
+
   return useMemo(() => {
     if (!user) return empty();
 
@@ -32,45 +14,41 @@ export function useAccessControl(user) {
       ? user.departments
       : user.department ? [user.department] : [];
 
-    // ─── helpers ──────────────────────────────────────────────
-    const is = (...roles) => roles.includes(role);
-    const isFullAccess = is('admin');              // cross-group
-    const isManagement = is('management');
-    const isManager = is('manager');
-    const isSuperSupervisor = is('super_supervisor');
-    const isStaff = is('staff');
+    // Helper: get perm value from matrix
+    const p = (cap) => getPerm(matrix, cap, role);
 
     // ─── page-level access ───────────────────────────────────
-    const canManageUsers        = is('admin');
-    const canManageRoles        = is('admin');
-    const canManageCustomers    = is('admin', 'management', 'manager', 'super_supervisor');
-    const canManageTemplates    = is('admin', 'management'); // full; manager/super = dept only
-    const canManageTemplatesDept= is('manager', 'super_supervisor');
-    const canViewBilling        = is('admin', 'management'); // full; manager/super = dept only
-    const canViewBillingDept    = is('manager', 'super_supervisor');
-    const canViewPeakAccount    = is('admin', 'management', 'manager');
+    const canManageUsers         = p('user_master') === 'yes';
+    const canManageRoles         = p('role_mgmt') === 'yes';
+    const canManageCustomers     = p('customer') !== 'no';
+    const canManageTemplates     = p('template') === 'yes';
+    const canManageTemplatesDept = p('template') === 'dept';
+    const canViewBilling         = p('view_billing') === 'yes';
+    const canViewBillingDept     = p('view_billing') === 'dept';
+    const canViewPeakAccount     = p('peak') !== 'no';
+    const crossGroup             = p('cross_group') === 'yes';
 
     // ─── task-level permissions ──────────────────────────────
-    const canEditAssignee       = !isStaff;
-    const canAddTask            = true;  // everyone
+    const canEditAssignee = p('edit_assignee') !== 'no';
+    const canAddTask      = p('add_task') !== 'no';
 
-    /** Can this user change due_date for a given task? */
     const canChangeDueDate = (task) => {
-      if (!isStaff) return true;
-      return task?.assigned_to === email || task?.created_by === email;
+      const v = p('change_due');
+      if (v === 'yes' || v === 'dept') return true;
+      if (v === 'own') return task?.assigned_to === email || task?.created_by === email;
+      return false;
     };
 
-    /** Can this user change status for a given task? */
     const canChangeStatus = (task) => {
-      if (!isStaff) return true;
-      return task?.assigned_to === email || task?.created_by === email;
+      const v = p('change_status');
+      if (v === 'yes' || v === 'dept') return true;
+      if (v === 'own') return task?.assigned_to === email || task?.created_by === email;
+      return false;
     };
 
     // ─── data filtering ──────────────────────────────────────
-    /** Filter records by department visibility */
     const filterByDepartment = (records, deptField = 'department') => {
-      if (isFullAccess || isManagement) return records;
-      // Manager, super_supervisor, staff → own departments only
+      if (crossGroup || p('view_task') === 'yes') return records;
       return records.filter(r => {
         const rd = r[deptField];
         if (!rd) return true;
@@ -78,59 +56,49 @@ export function useAccessControl(user) {
       });
     };
 
-    /** Check if user can see a specific department */
     const canAccessDepartment = (dept) => {
-      if (isFullAccess || isManagement) return true;
+      if (crossGroup || p('view_task') === 'yes') return true;
       if (!dept) return true;
       return depts.includes(dept);
     };
 
     // ─── schedule visibility ──────────────────────────────────
-    // Admin/Management/Manager → all; SuperSupervisor/Staff → own dept
-    const canViewAllSchedules = is('admin', 'management', 'manager');
+    const canViewAllSchedules = p('view_schedule') === 'yes';
 
     // ─── sidebar menu visibility ─────────────────────────────
     const getVisibleMenuIds = () => {
-      // Everyone always sees these
-      const always = ['dashboard', 'tasks', 'notifications', 'settings'];
-      const menus = [...always];
+      const menus = ['dashboard', 'notifications', 'settings'];
 
-      // schedule
-      menus.push('schedule');
+      if (p('view_task') !== 'no')       menus.push('tasks');
+      if (p('view_schedule') !== 'no')   menus.push('schedule');
+      if (p('customer') !== 'no')        menus.push('customers');
+      if (p('template') !== 'no')        menus.push('templates');
+      if (p('peak') !== 'no')            menus.push('peak');
+      if (p('view_billing') !== 'no')    menus.push('billing');
+      if (p('user_master') !== 'no')     menus.push('users');
+      if (p('role_mgmt') !== 'no')       menus.push('roles');
 
-      if (canManageCustomers)         menus.push('customers');
-      if (canManageTemplates || canManageTemplatesDept) menus.push('templates');
-      if (canViewPeakAccount)         menus.push('peak');
-      if (canViewBilling || canViewBillingDept) menus.push('billing');
-      if (canManageUsers)             menus.push('users');
-      if (canManageRoles)             menus.push('roles');
-
-      // line_chat → everyone
+      // line_chat → always visible
       menus.push('line_chat');
 
-      // reports, audit → admin/management only
-      if (is('admin', 'management'))  menus.push('reports', 'audit');
+      // reports, audit → same as cross_group (admin-level)
+      if (crossGroup) menus.push('reports', 'audit');
 
       return menus;
     };
 
     return {
       role, email, userDepartments: depts,
-      // page access
       canManageUsers, canManageRoles, canManageCustomers,
       canManageTemplates, canManageTemplatesDept,
       canViewBilling, canViewBillingDept,
       canViewPeakAccount, canViewAllSchedules,
-      // task
       canEditAssignee, canAddTask, canChangeDueDate, canChangeStatus,
-      // data
       filterByDepartment, canAccessDepartment,
-      // sidebar
       getVisibleMenuIds,
-      // legacy compat
-      canSeeAll: isFullAccess || isManagement,
+      canSeeAll: crossGroup,
     };
-  }, [user]);
+  }, [user, matrix]);
 }
 
 function empty() {
