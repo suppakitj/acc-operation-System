@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Search, CalendarHeart, Pencil, Trash2 } from 'lucide-react';
+import HolidayImportExport from '../components/holiday/HolidayImportExport';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useAccessControl } from '../components/auth/useAccessControl';
@@ -103,11 +104,14 @@ export default function HolidayMaster() {
           </div>
           <p className="text-xs text-muted-foreground">จัดการวันหยุดประจำปี — ใช้อ้างอิงใน Schedule, Task Due Date</p>
         </div>
-        {canManage && (
-          <Button size="sm" className="gap-1.5 text-xs shrink-0 self-start sm:self-auto" onClick={openCreate}>
-            <Plus className="w-3.5 h-3.5" /> เพิ่มวันหยุด
-          </Button>
-        )}
+        <div className="flex gap-2 shrink-0 self-start sm:self-auto">
+          {canManage && <HolidayImportExport holidays={holidays} />}
+          {canManage && (
+            <Button size="sm" className="gap-1.5 text-xs" onClick={openCreate}>
+              <Plus className="w-3.5 h-3.5" /> เพิ่มวันหยุด
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
