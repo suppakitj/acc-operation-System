@@ -20,6 +20,7 @@ import ScheduleLegend from '../components/schedule/ScheduleLegend';
 import MonthView from '../components/schedule/MonthView';
 import WeekView from '../components/schedule/WeekView';
 import AgendaView from '../components/schedule/AgendaView';
+import ScheduleEditDialog from '../components/schedule/ScheduleEditDialog';
 
 const TYPE_LABELS = {
   client_visit: 'Client Visit',
@@ -43,6 +44,7 @@ export default function Schedule() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({});
   const [filters, setFilters] = useState({ search: '', department: 'all', employee: 'all', type: 'all', customer: 'all' });
+  const [editingSchedule, setEditingSchedule] = useState(null);
 
   const { data: allSchedules = [] } = useQuery({ queryKey: ['schedules'], queryFn: () => base44.entities.Schedule.list('-date', 500) });
   const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 200) });
@@ -99,6 +101,22 @@ export default function Schedule() {
     queryClient.invalidateQueries({ queryKey: ['schedules'] });
     setShowForm(false);
     setIsSaving(false);
+  };
+
+  const handleScheduleClick = (schedule) => {
+    setEditingSchedule(schedule);
+  };
+
+  const handleScheduleUpdate = async (id, data) => {
+    await base44.entities.Schedule.update(id, data);
+    queryClient.invalidateQueries({ queryKey: ['schedules'] });
+    setEditingSchedule(null);
+  };
+
+  const handleScheduleDelete = async (id) => {
+    await base44.entities.Schedule.delete(id);
+    queryClient.invalidateQueries({ queryKey: ['schedules'] });
+    setEditingSchedule(null);
   };
 
   const navigate = (dir) => {
@@ -198,6 +216,7 @@ export default function Schedule() {
               schedules={filteredSchedules}
               onSelectDate={setSelectedDate}
               selectedDate={selectedDate}
+              onScheduleClick={handleScheduleClick}
             />
           )}
           {view === 'week' && (
@@ -206,15 +225,31 @@ export default function Schedule() {
               schedules={filteredSchedules}
               onSelectDate={setSelectedDate}
               selectedDate={selectedDate}
+              onScheduleClick={handleScheduleClick}
             />
           )}
           {view === 'agenda' && (
             <div className="p-4">
-              <AgendaView currentMonth={currentDate} schedules={filteredSchedules} />
+              <AgendaView currentMonth={currentDate} schedules={filteredSchedules} onScheduleClick={handleScheduleClick} />
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Schedule Dialog */}
+      {editingSchedule && (
+        <ScheduleEditDialog
+          schedule={editingSchedule}
+          open={!!editingSchedule}
+          onOpenChange={(open) => { if (!open) setEditingSchedule(null); }}
+          onSave={handleScheduleUpdate}
+          onDelete={handleScheduleDelete}
+          users={users}
+          customers={customers}
+          canEdit={ac.canEditSchedule(editingSchedule)}
+          canEditAssignee={ac.canEditAssignee}
+        />
+      )}
 
       {/* Add Schedule Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
