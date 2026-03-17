@@ -6,6 +6,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { LanguageProvider } from './components/LanguageContext';
+import { PermissionMatrixProvider } from './hooks/usePermissionMatrix';
 
 import AppLayout from './components/layout/AppLayout';
 import Dashboard from './pages/Dashboard';
@@ -75,9 +76,11 @@ function App() {
     <AuthProvider>
       <LanguageProvider>
         <QueryClientProvider client={queryClientInstance}>
-          <Router>
-            <AuthenticatedApp />
-          </Router>
+          <PermissionMatrixProvider>
+            <Router>
+              <AuthenticatedApp />
+            </Router>
+          </PermissionMatrixProvider>
           <Toaster />
         </QueryClientProvider>
       </LanguageProvider>
