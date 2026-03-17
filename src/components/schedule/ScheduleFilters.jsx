@@ -1,6 +1,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Search } from 'lucide-react';
 
 const DEPT_LABELS = {
@@ -44,13 +45,13 @@ export default function ScheduleFilters({ filters, setFilters, customers = [], u
             {Object.entries(DEPT_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={filters.employee || 'all'} onValueChange={v => update('employee', v)}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="All Employees" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Employees</SelectItem>
-            {users.map(u => <SelectItem key={u.email} value={u.email}>{u.full_name || u.email}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          value={filters.employee || 'all'}
+          onValueChange={v => update('employee', v)}
+          options={[{ value: 'all', label: 'All Employees' }, ...users.map(u => ({ value: u.email, label: u.full_name || u.email }))]}
+          placeholder="All Employees"
+          className="w-[160px]"
+        />
         <Select value={filters.type || 'all'} onValueChange={v => update('type', v)}>
           <SelectTrigger className="w-[140px]"><SelectValue placeholder="All Types" /></SelectTrigger>
           <SelectContent>
@@ -58,13 +59,13 @@ export default function ScheduleFilters({ filters, setFilters, customers = [], u
             {Object.entries(TYPE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={filters.customer || 'all'} onValueChange={v => update('customer', v)}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="All Clients" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Clients</SelectItem>
-            {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          value={filters.customer || 'all'}
+          onValueChange={v => update('customer', v)}
+          options={[{ value: 'all', label: 'All Clients' }, ...customers.map(c => ({ value: c.id, label: c.company_name }))]}
+          placeholder="All Clients"
+          className="w-[160px]"
+        />
       </div>
       <p className="text-xs text-muted-foreground">{totalEntries} entries</p>
     </div>
