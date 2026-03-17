@@ -35,7 +35,8 @@ export default function Tasks() {
   });
   // Apply department-based visibility
   const tasks = ac.filterByDepartment(allTasks);
-  const { data: customers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
+  const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
+  const customers = allCustomers.filter(c => c.status === 'active');
   const { data: users = [] } = useUserList();
 
   const createMutation = useMutation({
