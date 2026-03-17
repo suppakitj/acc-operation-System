@@ -53,7 +53,7 @@ export default function Tasks() {
   };
 
   const filtered = useMemo(() => {
-    let result = [...tasks];
+    let result = tasks.filter(t => t.status !== 'cancelled');
     const f = filters;
     if (f.search) {
       const s = f.search.toLowerCase();
