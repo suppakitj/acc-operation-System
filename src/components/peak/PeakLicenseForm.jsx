@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { addDays, format, parseISO } from 'date-fns';
 
 const PACKAGES = [
+  { value: 'trial', label: 'TRIAL' },
   { value: 'basic', label: 'BASIC' },
   { value: 'pro', label: 'PRO' },
   { value: 'pro_plus', label: 'PRO Plus' },

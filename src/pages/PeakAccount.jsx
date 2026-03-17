@@ -17,8 +17,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 
-const PKG_COLORS = { basic: 'bg-blue-50 text-blue-600 border-blue-200', pro: 'bg-purple-50 text-purple-600 border-purple-200', pro_plus: 'bg-amber-50 text-amber-600 border-amber-200' };
-const PKG_LABELS = { basic: 'BASIC', pro: 'PRO', pro_plus: 'PRO Plus' };
+const PKG_COLORS = { trial: 'bg-gray-50 text-gray-600 border-gray-200', basic: 'bg-blue-50 text-blue-600 border-blue-200', pro: 'bg-purple-50 text-purple-600 border-purple-200', pro_plus: 'bg-amber-50 text-amber-600 border-amber-200' };
+const PKG_LABELS = { trial: 'TRIAL', basic: 'BASIC', pro: 'PRO', pro_plus: 'PRO Plus' };
 const PAYER_LABELS = { customer_direct_peak: 'Client Pays', customer_via_acc: 'Client via ACC', acc_pay_for_customer: 'ACC Pays for Client' };
 
 const STATUS_CONFIG = {
