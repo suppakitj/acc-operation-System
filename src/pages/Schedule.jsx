@@ -114,7 +114,9 @@ export default function Schedule() {
       title: '', description: '', date: format(selectedDate || new Date(), 'yyyy-MM-dd'),
       date_end: '',
       start_time: '', end_time: '', type: 'meeting', status: 'scheduled',
-      assigned_to: '', assigned_name: '', customer_id: '', customer_name: '', department: '',
+      assigned_to: currentUser?.email || '',
+      assigned_name: currentUser?.full_name || currentUser?.email || '',
+      customer_id: '', customer_name: '', department: '',
     });
     setShowForm(true);
   };
@@ -239,7 +241,7 @@ export default function Schedule() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5"><Label>ผู้รับผิดชอบ</Label>
-                <Select value={form.assigned_to || 'none'} onValueChange={v => v === 'none' ? setForm(p => ({ ...p, assigned_to: '', assigned_name: '' })) : handleUserSelect(v)}>
+                <Select value={form.assigned_to || 'none'} onValueChange={v => v === 'none' ? setForm(p => ({ ...p, assigned_to: '', assigned_name: '' })) : handleUserSelect(v)} disabled={!ac.canEditAssignee}>
                   <SelectTrigger><SelectValue placeholder="เลือกผู้รับผิดชอบ" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">-</SelectItem>
