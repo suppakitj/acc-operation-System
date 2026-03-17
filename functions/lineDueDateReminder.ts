@@ -3,6 +3,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 const PRIORITY_EMOJI = { urgent: '🔴', high: '🟠', medium: '🟡', low: '🟢' };
 const PRIORITY_LABEL = { urgent: 'เร่งด่วน', high: 'สูง', medium: 'ปานกลาง', low: 'ต่ำ' };
 const STATUS_LABEL = { pending: 'รอดำเนินการ', in_progress: 'กำลังทำ', review: 'รอตรวจสอบ' };
+const DEPT_LABEL = {
+  management: 'Management', accounting: 'บัญชี', consulting: 'ที่ปรึกษา',
+  audit: 'Audit', billing: 'Billing', it: 'IT'
+};
 
 function formatDate(dateStr) {
   if (!dateStr) return '-';
@@ -30,7 +34,7 @@ async function sendToLineGroup(accessToken, groupId, message) {
   });
   if (!res.ok) {
     const errBody = await res.text();
-    console.error(`LINE push failed: ${res.status} ${errBody}`);
+    console.error(`LINE push failed for ${groupId}: ${res.status} ${errBody}`);
   }
   return res.ok;
 }
@@ -52,6 +56,50 @@ function buildSection(emoji, title, tasks) {
   return lines.join('\n');
 }
 
+function buildFullMessage(todayStr, overdueTasks, due3Days, due7Days, deptLabel) {
+  const totalAlerts = overdueTasks.length + due3Days.length + due7Days.length;
+  if (totalAlerts === 0) return null;
+
+  const sections = [];
+  const prefix = deptLabel ? `📢 แจ้งเตือน Due Date — แผนก${deptLabel}` : `📢 แจ้งเตือน Due Date ประจำวัน`;
+  sections.push(prefix);
+  sections.push(`📆 ${formatDate(todayStr)}`);
+  sections.push(`━━━━━━━━━━━━━━━━`);
+
+  const overdueSection = buildSection('🚨 OVERDUE — เกินกำหนดแล้ว!', 'เกินกำหนด', overdueTasks);
+  if (overdueSection) sections.push(overdueSection);
+
+  const due3Section = buildSection('⚠️ อีก 3 วันจะครบกำหนด', 'ครบกำหนดภายใน 3 วัน', due3Days);
+  if (due3Section) sections.push(due3Section);
+
+  const due7Section = buildSection('📋 อีก 7 วันจะครบกำหนด', 'ครบกำหนดภายใน 7 วัน', due7Days);
+  if (due7Section) sections.push(due7Section);
+
+  sections.push(`━━━━━━━━━━━━━━━━`);
+  sections.push(`รวม ${totalAlerts} งาน | 🚨 ${overdueTasks.length} เกินกำหนด | ⚠️ ${due3Days.length} ใน 3 วัน | 📋 ${due7Days.length} ใน 7 วัน`);
+
+  return sections.join('\n\n');
+}
+
+async function sendMessage(accessToken, target, message) {
+  if (message.length <= 5000) {
+    await sendToLineGroup(accessToken, target, message);
+  } else {
+    // Split into sections
+    const parts = message.split('\n\n');
+    let chunk = '';
+    for (const part of parts) {
+      if ((chunk + '\n\n' + part).length > 4800 && chunk) {
+        await sendToLineGroup(accessToken, target, chunk);
+        chunk = part;
+      } else {
+        chunk = chunk ? chunk + '\n\n' + part : part;
+      }
+    }
+    if (chunk) await sendToLineGroup(accessToken, target, chunk);
+  }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -63,31 +111,36 @@ Deno.serve(async (req) => {
     const lineGroupId = getVal('line_group_id');
     const lineUserId = getVal('line_user_id');
 
-    // Determine target: group first, fallback to admin user
-    const target = lineGroupId || lineUserId;
+    // Build department group map
+    const deptGroupMap = {};
+    const deptKeys = ['management', 'accounting', 'consulting', 'audit', 'billing', 'it'];
+    for (const dk of deptKeys) {
+      const gid = getVal(`line_group_dept_${dk}`);
+      if (gid) deptGroupMap[dk] = gid;
+    }
+
+    const companyTarget = lineGroupId || lineUserId;
 
     if (!accessToken) {
       console.warn('LINE access token not configured');
       return Response.json({ status: 'skipped', reason: 'no access token' });
     }
 
-    if (!target) {
-      console.warn('No LINE Group ID or User ID configured');
-      return Response.json({ status: 'skipped', reason: 'no target' });
+    if (!companyTarget && Object.keys(deptGroupMap).length === 0) {
+      console.warn('No LINE Group IDs configured (company or department)');
+      return Response.json({ status: 'skipped', reason: 'no targets' });
     }
 
-    // Get today's date in Bangkok timezone
+    // Get today in Bangkok timezone
     const now = new Date();
     const bangkokOffset = 7 * 60 * 60 * 1000;
     const bangkokNow = new Date(now.getTime() + bangkokOffset);
     const todayStr = bangkokNow.toISOString().split('T')[0];
 
-    // Fetch all active tasks with due_date
+    // Fetch all active tasks
     const allTasks = await base44.asServiceRole.entities.Task.filter({});
     const activeTasks = allTasks.filter(t =>
-      t.due_date &&
-      t.status !== 'completed' &&
-      t.status !== 'cancelled'
+      t.due_date && t.status !== 'completed' && t.status !== 'cancelled'
     );
 
     // Categorize
@@ -97,16 +150,11 @@ Deno.serve(async (req) => {
 
     for (const task of activeTasks) {
       const diff = getDaysDiff(task.due_date, todayStr);
-      if (diff < 0) {
-        overdueTasks.push({ ...task, _daysOver: Math.abs(diff) });
-      } else if (diff <= 3) {
-        due3Days.push({ ...task, _daysLeft: diff });
-      } else if (diff <= 7) {
-        due7Days.push({ ...task, _daysLeft: diff });
-      }
+      if (diff < 0) overdueTasks.push({ ...task, _daysOver: Math.abs(diff) });
+      else if (diff <= 3) due3Days.push({ ...task, _daysLeft: diff });
+      else if (diff <= 7) due7Days.push({ ...task, _daysLeft: diff });
     }
 
-    // Sort: overdue by most overdue first, others by soonest first
     overdueTasks.sort((a, b) => b._daysOver - a._daysOver);
     due3Days.sort((a, b) => a._daysLeft - b._daysLeft);
     due7Days.sort((a, b) => a._daysLeft - b._daysLeft);
@@ -118,41 +166,31 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'ok', message: 'No alerts' });
     }
 
-    // Build message
-    const sections = [];
+    let sentTargets = [];
 
-    sections.push(`📢 แจ้งเตือน Due Date ประจำวัน`);
-    sections.push(`📆 ${formatDate(todayStr)}`);
-    sections.push(`━━━━━━━━━━━━━━━━`);
-
-    const overdueSection = buildSection('🚨 OVERDUE — เกินกำหนดแล้ว!', `เกินกำหนด`, overdueTasks);
-    if (overdueSection) sections.push(overdueSection);
-
-    const due3Section = buildSection('⚠️ อีก 3 วันจะครบกำหนด', `ครบกำหนดภายใน 3 วัน`, due3Days);
-    if (due3Section) sections.push(due3Section);
-
-    const due7Section = buildSection('📋 อีก 7 วันจะครบกำหนด', `ครบกำหนดภายใน 7 วัน`, due7Days);
-    if (due7Section) sections.push(due7Section);
-
-    sections.push(`━━━━━━━━━━━━━━━━`);
-    sections.push(`รวม ${totalAlerts} งาน | 🚨 ${overdueTasks.length} เกินกำหนด | ⚠️ ${due3Days.length} ใน 3 วัน | 📋 ${due7Days.length} ใน 7 วัน`);
-
-    const fullMessage = sections.join('\n\n');
-
-    // LINE message limit is 5000 chars — split if needed
-    if (fullMessage.length <= 5000) {
-      await sendToLineGroup(accessToken, target, fullMessage);
-    } else {
-      // Send header + each section separately
-      const header = `📢 แจ้งเตือน Due Date ประจำวัน\n📆 ${formatDate(todayStr)}\n━━━━━━━━━━━━━━━━\nรวม ${totalAlerts} งาน | 🚨 ${overdueTasks.length} เกินกำหนด | ⚠️ ${due3Days.length} ใน 3 วัน | 📋 ${due7Days.length} ใน 7 วัน`;
-      await sendToLineGroup(accessToken, target, header);
-
-      if (overdueSection) await sendToLineGroup(accessToken, target, overdueSection);
-      if (due3Section) await sendToLineGroup(accessToken, target, due3Section);
-      if (due7Section) await sendToLineGroup(accessToken, target, due7Section);
+    // 1. Send full summary to company group
+    if (companyTarget) {
+      const msg = buildFullMessage(todayStr, overdueTasks, due3Days, due7Days, null);
+      if (msg) {
+        await sendMessage(accessToken, companyTarget, msg);
+        sentTargets.push('company');
+      }
     }
 
-    // Also save notification records
+    // 2. Send department-specific messages to department groups
+    for (const [dept, groupId] of Object.entries(deptGroupMap)) {
+      const deptOverdue = overdueTasks.filter(t => t.department === dept);
+      const deptDue3 = due3Days.filter(t => t.department === dept);
+      const deptDue7 = due7Days.filter(t => t.department === dept);
+
+      const msg = buildFullMessage(todayStr, deptOverdue, deptDue3, deptDue7, DEPT_LABEL[dept] || dept);
+      if (msg) {
+        await sendMessage(accessToken, groupId, msg);
+        sentTargets.push(`dept:${dept}`);
+      }
+    }
+
+    // Save notification records
     const notifPromises = [];
     for (const t of overdueTasks) {
       notifPromises.push(base44.asServiceRole.entities.Notification.create({
@@ -192,10 +230,10 @@ Deno.serve(async (req) => {
     }
     await Promise.all(notifPromises);
 
-    console.log(`Due date reminder sent: ${totalAlerts} alerts (overdue: ${overdueTasks.length}, 3d: ${due3Days.length}, 7d: ${due7Days.length})`);
+    console.log(`Due date reminder sent to: ${sentTargets.join(', ')} — total ${totalAlerts} alerts`);
     return Response.json({
       status: 'sent',
-      target: lineGroupId ? 'group' : 'user',
+      sent_to: sentTargets,
       overdue: overdueTasks.length,
       due_3days: due3Days.length,
       due_7days: due7Days.length,

@@ -11,6 +11,15 @@ import { toast } from 'sonner';
 
 const KEYS = ['line_channel_id', 'line_channel_secret', 'line_user_id'];
 
+const DEPT_LIST = [
+  { key: 'management', label: 'Management' },
+  { key: 'accounting', label: 'บัญชี' },
+  { key: 'consulting', label: 'ที่ปรึกษา' },
+  { key: 'audit', label: 'Audit' },
+  { key: 'billing', label: 'Billing' },
+  { key: 'it', label: 'IT' },
+];
+
 export default function LineOASettings() {
   const queryClient = useQueryClient();
   const { data: configs = [] } = useQuery({
@@ -29,6 +38,8 @@ export default function LineOASettings() {
   const [showToken, setShowToken] = useState(false);
   const [showUserId, setShowUserId] = useState(false);
   const [showGroupId, setShowGroupId] = useState(false);
+  const [deptGroups, setDeptGroups] = useState({});
+  const [showDeptGroupIds, setShowDeptGroupIds] = useState({});
 
   useEffect(() => {
     setChannelId(getVal('line_channel_id'));
@@ -36,6 +47,12 @@ export default function LineOASettings() {
     setAccessToken(getVal('line_access_token'));
     setLineUserId(getVal('line_user_id'));
     setLineGroupId(getVal('line_group_id'));
+    // Load department group IDs
+    const dg = {};
+    DEPT_LIST.forEach(d => {
+      dg[d.key] = getVal(`line_group_dept_${d.key}`);
+    });
+    setDeptGroups(dg);
   }, [configs]);
 
   const saveMutation = useMutation({
@@ -45,7 +62,12 @@ export default function LineOASettings() {
         { key: 'line_channel_secret', value: channelSecret, description: 'LINE OA Channel Secret' },
         { key: 'line_access_token', value: accessToken, description: 'LINE OA Channel Access Token' },
         { key: 'line_user_id', value: lineUserId, description: 'LINE Your User ID' },
-        { key: 'line_group_id', value: lineGroupId, description: 'LINE Group ID สำหรับส่งแจ้งเตือนเข้ากลุ่ม' },
+        { key: 'line_group_id', value: lineGroupId, description: 'LINE Group ID สำหรับส่งแจ้งเตือนเข้ากลุ่ม (บริษัท)' },
+        ...DEPT_LIST.map(d => ({
+          key: `line_group_dept_${d.key}`,
+          value: deptGroups[d.key] || '',
+          description: `LINE Group ID แผนก ${d.label}`,
+        })),
       ];
       for (const p of pairs) {
         const existing = configs.find(c => c.key === p.key);
@@ -203,6 +225,38 @@ export default function LineOASettings() {
             </button>
           </div>
           <p className="text-[11px] text-muted-foreground">เชิญ LINE OA Bot เข้ากลุ่ม แล้วส่งข้อความ — ระบบจะบันทึก Group ID จาก webhook อัตโนมัติ หรือกรอกเอง</p>
+        </div>
+
+        {/* Department Group IDs */}
+        <div className="space-y-2 pt-2 border-t">
+          <Label className="text-sm">
+            <span className="font-semibold">Group ID ตามแผนก</span>
+            <span className="text-muted-foreground font-normal"> — LINE Group ID สำหรับส่งแจ้งเตือนงานเข้ากลุ่มแต่ละแผนก</span>
+          </Label>
+          <p className="text-[11px] text-muted-foreground">เชิญ Bot เข้ากลุ่มแผนก แล้วกรอก Group ID — ระบบจะส่งแจ้งเตือนงานที่เกี่ยวข้องเข้ากลุ่มแผนกโดยอัตโนมัติ</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+            {DEPT_LIST.map(dept => (
+              <div key={dept.key} className="space-y-1">
+                <Label className="text-xs font-medium">{dept.label}</Label>
+                <div className="relative">
+                  <Input
+                    type={showDeptGroupIds[dept.key] ? 'text' : 'password'}
+                    value={deptGroups[dept.key] || ''}
+                    onChange={e => setDeptGroups(prev => ({ ...prev, [dept.key]: e.target.value }))}
+                    placeholder={`Group ID แผนก${dept.label}`}
+                    className="text-xs h-8 pr-8"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDeptGroupIds(prev => ({ ...prev, [dept.key]: !prev[dept.key] }))}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showDeptGroupIds[dept.key] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Webhook URL */}

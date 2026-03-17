@@ -1,44 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
-const PRIORITY_EMOJI = {
-  urgent: '🔴',
-  high: '🟠',
-  medium: '🟡',
-  low: '🟢',
-};
-
-const PRIORITY_LABEL = {
-  urgent: 'เร่งด่วน',
-  high: 'สูง',
-  medium: 'ปานกลาง',
-  low: 'ต่ำ',
-};
-
+const PRIORITY_EMOJI = { urgent: '🔴', high: '🟠', medium: '🟡', low: '🟢' };
+const PRIORITY_LABEL = { urgent: 'เร่งด่วน', high: 'สูง', medium: 'ปานกลาง', low: 'ต่ำ' };
 const STATUS_LABEL = {
-  pending: 'รอดำเนินการ',
-  in_progress: 'กำลังทำ',
-  review: 'รอตรวจสอบ',
-  completed: 'เสร็จแล้ว',
-  cancelled: 'ยกเลิก',
+  pending: 'รอดำเนินการ', in_progress: 'กำลังทำ', review: 'รอตรวจสอบ',
+  completed: 'เสร็จแล้ว', cancelled: 'ยกเลิก',
 };
-
 const SCHEDULE_TYPE_LABEL = {
-  client_visit: 'เยี่ยมลูกค้า',
-  office: 'ทำงานที่ออฟฟิศ',
-  leave: 'ลา',
-  meeting: 'ประชุม',
-  fieldwork: 'งานภาคสนาม',
-  wfh: 'Work from Home',
-  other: 'อื่นๆ',
+  client_visit: 'เยี่ยมลูกค้า', office: 'ทำงานที่ออฟฟิศ', leave: 'ลา',
+  meeting: 'ประชุม', fieldwork: 'งานภาคสนาม', wfh: 'Work from Home', other: 'อื่นๆ',
 };
+const SCHEDULE_STATUS_LABEL = { scheduled: 'กำหนดแล้ว', completed: 'เสร็จสิ้น', cancelled: 'ยกเลิก' };
 
-const SCHEDULE_STATUS_LABEL = {
-  scheduled: 'กำหนดแล้ว',
-  completed: 'เสร็จสิ้น',
-  cancelled: 'ยกเลิก',
-};
-
-async function sendLineMessage(accessToken, lineUserId, message) {
+async function sendLineMessage(accessToken, target, message) {
   const res = await fetch('https://api.line.me/v2/bot/message/push', {
     method: 'POST',
     headers: {
@@ -46,13 +20,13 @@ async function sendLineMessage(accessToken, lineUserId, message) {
       'Authorization': `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
-      to: lineUserId,
+      to: target,
       messages: [{ type: 'text', text: message }],
     }),
   });
   if (!res.ok) {
     const errBody = await res.text();
-    console.error(`LINE push failed for ${lineUserId}: ${res.status} ${errBody}`);
+    console.error(`LINE push failed for ${target}: ${res.status} ${errBody}`);
   }
   return res.ok;
 }
@@ -76,7 +50,6 @@ function buildTaskMessage(eventType, data, oldData) {
     ].filter(Boolean).join('\n');
   }
 
-  // Update — report what changed
   const changes = [];
   if (oldData?.status !== data.status) {
     changes.push(`📌 สถานะ: ${STATUS_LABEL[oldData?.status] || '-'} → ${statusText}`);
@@ -90,8 +63,7 @@ function buildTaskMessage(eventType, data, oldData) {
   if (oldData?.due_date !== data.due_date && data.due_date) {
     changes.push(`📅 กำหนดส่งใหม่: ${data.due_date}`);
   }
-
-  if (changes.length === 0) return null; // No important changes
+  if (changes.length === 0) return null;
 
   return [
     `${emoji} อัปเดตงาน`,
@@ -145,13 +117,22 @@ Deno.serve(async (req) => {
     }
 
     const entityName = event.entity_name;
-    const eventType = event.type; // create or update
+    const eventType = event.type;
 
     // Get LINE config
     const configs = await base44.asServiceRole.entities.AppConfig.filter({});
     const getVal = (key) => configs.find(c => c.key === key)?.value || '';
     const accessToken = getVal('line_access_token');
     const adminLineUserId = getVal('line_user_id');
+    const companyGroupId = getVal('line_group_id');
+
+    // Build department group map
+    const deptGroupMap = {};
+    const deptKeys = ['management', 'accounting', 'consulting', 'audit', 'billing', 'it'];
+    for (const dk of deptKeys) {
+      const gid = getVal(`line_group_dept_${dk}`);
+      if (gid) deptGroupMap[dk] = gid;
+    }
 
     if (!accessToken) {
       console.warn('LINE access token not configured, skipping notification');
@@ -162,7 +143,6 @@ Deno.serve(async (req) => {
     let message = null;
 
     if (entityName === 'Task') {
-      // Only notify for urgent/high priority on create, or important status changes on update
       if (eventType === 'create') {
         if (data.priority === 'urgent' || data.priority === 'high') {
           message = buildTaskMessage('create', data);
@@ -178,15 +158,26 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'skipped', reason: 'no notification needed' });
     }
 
-    // Determine recipients: assigned user + admin
+    // Determine recipients
     const recipients = new Set();
 
-    // Always notify admin
+    // Always notify admin user
     if (adminLineUserId) {
       recipients.add(adminLineUserId);
     }
 
-    // Try to find assigned user's LINE user ID
+    // Send to company group
+    if (companyGroupId) {
+      recipients.add(companyGroupId);
+    }
+
+    // Send to department group if task/schedule has a department
+    const dept = data.department;
+    if (dept && deptGroupMap[dept]) {
+      recipients.add(deptGroupMap[dept]);
+    }
+
+    // Also try to reach assigned user's LINE ID
     if (data.assigned_to) {
       const users = await base44.asServiceRole.entities.User.filter({ email: data.assigned_to });
       const assignedUser = users[0];
@@ -197,13 +188,13 @@ Deno.serve(async (req) => {
 
     // Send to all recipients
     let sentCount = 0;
-    for (const lineUserId of recipients) {
-      const ok = await sendLineMessage(accessToken, lineUserId, message);
+    for (const target of recipients) {
+      const ok = await sendLineMessage(accessToken, target, message);
       if (ok) sentCount++;
     }
 
-    console.log(`LINE notification sent to ${sentCount}/${recipients.size} recipients for ${entityName} ${eventType}`);
-    return Response.json({ status: 'sent', recipients: sentCount });
+    console.log(`LINE notification sent to ${sentCount}/${recipients.size} recipients for ${entityName} ${eventType} (dept: ${dept || 'none'})`);
+    return Response.json({ status: 'sent', recipients: sentCount, department: dept || null });
 
   } catch (error) {
     console.error('LINE notify error:', error.message);
