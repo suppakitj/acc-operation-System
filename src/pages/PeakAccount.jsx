@@ -143,7 +143,12 @@ export default function PeakAccount() {
         if (staffFilter !== 'all' && l.created_by !== staffFilter) return false;
         return true;
       })
-      .sort((a, b) => (a.daysLeft ?? 99999) - (b.daysLeft ?? 99999));
+      .sort((a, b) => {
+        // Sort by expiry_date ascending (soonest first), nulls last
+        const dateA = a.expiry_date || '9999-12-31';
+        const dateB = b.expiry_date || '9999-12-31';
+        return dateA.localeCompare(dateB);
+      });
   }, [tabFiltered, search, pkgFilter, payerFilter, statusFilter, staffFilter]);
 
   // Reset page on filter change
