@@ -1,3 +1,4 @@
+import React, { createContext, useContext } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
@@ -18,7 +19,9 @@ const DEFAULT_MATRIX = {
   peak:           { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no',  staff: 'no' },
 };
 
-export function usePermissionMatrix() {
+const PermissionMatrixContext = createContext(DEFAULT_MATRIX);
+
+export function PermissionMatrixProvider({ children }) {
   const { data: configs = [] } = useQuery({
     queryKey: ['appConfig', 'permission_matrix'],
     queryFn: () => base44.entities.AppConfig.filter({ key: 'permission_matrix' }),
@@ -39,12 +42,15 @@ export function usePermissionMatrix() {
     matrix[key] = { ...defaults, ...(savedOverrides[key] || {}) };
   }
 
-  return matrix;
+  return React.createElement(PermissionMatrixContext.Provider, { value: matrix }, children);
+}
+
+export function usePermissionMatrix() {
+  return useContext(PermissionMatrixContext);
 }
 
 /**
  * Get the permission value for a capability+role from a matrix object.
- * Returns 'yes' | 'no' | 'dept' | 'own'
  */
 export function getPerm(matrix, capability, role) {
   return matrix?.[capability]?.[role] || 'no';
