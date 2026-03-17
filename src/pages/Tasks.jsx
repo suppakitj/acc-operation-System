@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useUserList } from '@/hooks/useUserList';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Download } from 'lucide-react';
@@ -35,7 +36,7 @@ export default function Tasks() {
   // Apply department-based visibility
   const tasks = ac.filterByDepartment(allTasks);
   const { data: customers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
-  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list() });
+  const { data: users = [] } = useUserList();
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Task.create(data),
