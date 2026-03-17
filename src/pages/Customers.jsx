@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Plus, Search, Building2, Users, UserCheck, Filter } from 'lucide-react';
 import CustomerForm from '../components/customers/CustomerForm';
 import CustomerImportExport from '../components/customers/CustomerImportExport';
+import TablePagination, { paginateData } from '../components/shared/TablePagination';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
 
@@ -34,6 +35,8 @@ export default function Customers() {
   const [groupFilter, setGroupFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const queryClient = useQueryClient();
 
   const { data: customers = [], isLoading } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500) });
@@ -68,6 +71,11 @@ export default function Customers() {
       return true;
     });
   }, [customers, search, deptFilter, groupFilter]);
+
+  // Reset page when filters change
+  React.useEffect(() => { setPage(1); }, [search, deptFilter, groupFilter]);
+
+  const paged = paginateData(filtered, page, pageSize);
 
   const activeCount = customers.filter(c => c.status === 'active').length;
   const inactiveCount = customers.filter(c => c.status === 'inactive').length;
@@ -154,7 +162,7 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((c, i) => (
+              {paged.map((c, i) => (
                 <tr key={c.id}
                   className={`border-b last:border-b-0 hover:bg-muted/20 cursor-pointer transition-colors ${i % 2 === 0 ? '' : 'bg-muted/5'}`}
                   onClick={() => { setEditingCustomer(c); setShowForm(true); }}>
@@ -200,6 +208,7 @@ export default function Customers() {
               ))}
             </tbody>
           </table>
+          <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
         </div>
       )}
 

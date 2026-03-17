@@ -10,6 +10,7 @@ import { Plus, Search, ClipboardList, Pencil } from 'lucide-react';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
 import TemplateFormDialog from '../components/templates/TemplateFormDialog';
+import TablePagination, { paginateData } from '../components/shared/TablePagination';
 
 const SERVICE_LABELS = { accounting: 'ทำบัญชี', payroll: 'เงินเดือน', tax_consulting: 'ที่ปรึกษาภาษี', audit: 'ตรวจสอบ', peak_licensing: 'Peak Account' };
 const RECURRING_LABELS = { monthly: 'รายเดือน', quarterly: 'รายไตรมาส', yearly: 'รายปี' };
@@ -33,6 +34,8 @@ export default function TaskTemplates() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const queryClient = useQueryClient();
 
   const { data: allTemplates = [], isLoading } = useQuery({ queryKey: ['taskTemplates'], queryFn: () => base44.entities.TaskTemplate.list('-created_date', 500) });
@@ -65,6 +68,10 @@ export default function TaskTemplates() {
       return true;
     });
   }, [templates, search, serviceFilter, recurringFilter, statusFilter]);
+
+  React.useEffect(() => { setPage(1); }, [search, serviceFilter, recurringFilter, statusFilter]);
+
+  const paged = paginateData(filtered, page, pageSize);
 
   const activeCount = templates.filter(t => t.status !== 'inactive').length;
 
@@ -151,7 +158,7 @@ export default function TaskTemplates() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((tmpl, i) => (
+              {paged.map((tmpl, i) => (
                 <tr key={tmpl.id} className={`border-b last:border-b-0 hover:bg-muted/20 transition-colors ${i % 2 === 0 ? '' : 'bg-muted/5'}`}>
                   <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{tmpl.template_code || '-'}</td>
                   <td className="px-3 py-2">
@@ -194,6 +201,7 @@ export default function TaskTemplates() {
               ))}
             </tbody>
           </table>
+          <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
         </div>
       )}
 

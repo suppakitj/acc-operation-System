@@ -10,6 +10,7 @@ import TaskStatsRow from '../components/tasks/TaskStatsRow';
 import TaskDeptTabs from '../components/tasks/TaskDeptTabs';
 import TaskFilters from '../components/tasks/TaskFilters';
 import TaskTable from '../components/tasks/TaskTable';
+import TablePagination, { paginateData } from '../components/shared/TablePagination';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
 
@@ -22,6 +23,8 @@ export default function Tasks() {
   const [selected, setSelected] = useState([]);
   const [sortField, setSortField] = useState('due_date');
   const [sortDir, setSortDir] = useState('asc');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [filters, setFilters] = useState({
     search: '', department: 'all', status: 'all', priority: 'all',
     owner: 'all', serviceType: 'all', client: 'all', taskType: 'all',
@@ -91,6 +94,11 @@ export default function Tasks() {
     return result;
   }, [tasks, filters, sortField, sortDir]);
 
+  // Reset page when filters change
+  React.useEffect(() => { setPage(1); }, [filters, sortField, sortDir]);
+
+  const paged = paginateData(filtered, page, pageSize);
+
   // Update counts in filters for display
   const filtersWithCounts = { ...filters, _count: filtered.length, _total: tasks.length };
 
@@ -129,7 +137,7 @@ export default function Tasks() {
         <div className="text-center py-12 text-muted-foreground">{t('loading')}</div>
       ) : (
         <TaskTable
-          tasks={filtered}
+          tasks={paged}
           selected={selected}
           setSelected={setSelected}
           onRowClick={(task) => { setEditingTask(task); setShowForm(true); }}
@@ -137,6 +145,7 @@ export default function Tasks() {
           sortDir={sortDir}
           onSort={(field, dir) => { setSortField(field); setSortDir(dir); }}
         />
+        <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
       )}
 
       {/* Task Form Dialog */}

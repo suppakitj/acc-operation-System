@@ -13,6 +13,7 @@ import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
 import BillingStatCards from '../components/billing/BillingStatCards';
 import BillingTable from '../components/billing/BillingTable';
+import TablePagination, { paginateData } from '../components/shared/TablePagination';
 import { toast } from 'sonner';
 
 const TABS = [
@@ -57,6 +58,8 @@ export default function Billing() {
   const [showForm, setShowForm] = useState(false);
   const [editingBill, setEditingBill] = useState(null);
   const [form, setForm] = useState({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const today = new Date();
 
@@ -123,6 +126,11 @@ export default function Billing() {
       return true;
     });
   }, [billings, activeTab, search, clientFilter, deptFilter, statusFilter, receiptFilter, whtFilter, ownerFilter, dateFilter, overdueOnly]);
+
+  // Reset page when filters change
+  React.useEffect(() => { setPage(1); }, [activeTab, search, clientFilter, deptFilter, statusFilter, receiptFilter, whtFilter, ownerFilter, dateFilter, overdueOnly]);
+
+  const paged = paginateData(filtered, page, pageSize);
 
   // Unique owners
   const ownerList = useMemo(() => {
@@ -285,12 +293,15 @@ export default function Billing() {
       {filtered.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">{t('no_data')}</div>
       ) : (
-        <BillingTable
-          billings={filtered}
-          onToggleReceipt={handleToggleReceipt}
-          onToggleWht={handleToggleWht}
-          onEdit={handleEdit}
-        />
+        <>
+          <BillingTable
+            billings={paged}
+            onToggleReceipt={handleToggleReceipt}
+            onToggleWht={handleToggleWht}
+            onEdit={handleEdit}
+          />
+          <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+        </>
       )}
 
       {/* Create / Edit Form */}

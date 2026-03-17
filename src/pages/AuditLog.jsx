@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,15 +7,22 @@ import { Badge } from '@/components/ui/badge';
 import { Search, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
+import TablePagination, { paginateData } from '../components/shared/TablePagination';
 
 const ACTION_COLORS = { create: 'bg-green-100 text-green-700', update: 'bg-blue-100 text-blue-700', delete: 'bg-red-100 text-red-700' };
 
 export default function AuditLog() {
   const { t } = useLanguage();
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const { data: logs = [], isLoading } = useQuery({ queryKey: ['auditLogs'], queryFn: () => base44.entities.AuditLog.list('-created_date', 200) });
 
   const filtered = logs.filter(l => !search || l.entity_name?.toLowerCase().includes(search.toLowerCase()) || l.user_name?.toLowerCase().includes(search.toLowerCase()) || l.action?.toLowerCase().includes(search.toLowerCase()));
+
+  useEffect(() => { setPage(1); }, [search]);
+
+  const paged = paginateData(filtered, page, pageSize);
 
   return (
     <div className="space-y-5">
@@ -29,7 +36,7 @@ export default function AuditLog() {
       <div className="space-y-2">
         {isLoading ? <div className="text-center py-12 text-muted-foreground">{t('loading')}</div> :
          filtered.length === 0 ? <Card className="p-8 text-center text-muted-foreground">{t('no_logs')}</Card> :
-         filtered.map(log => (
+         paged.map(log => (
            <Card key={log.id}>
              <CardContent className="p-3 md:p-4 flex items-center gap-3 md:gap-4">
                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0"><History className="w-4 h-4 text-muted-foreground" /></div>
@@ -44,7 +51,10 @@ export default function AuditLog() {
              </CardContent>
            </Card>
          ))}
-      </div>
-    </div>
+         </div>
+         {filtered.length > 0 && (
+         <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+         )}
+         </div>
   );
 }

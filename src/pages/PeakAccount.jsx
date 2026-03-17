@@ -11,6 +11,7 @@ import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
 import PeakLicenseForm from '../components/peak/PeakLicenseForm';
 import PeakNotificationSettings from '../components/peak/PeakNotificationSettings';
+import TablePagination, { paginateData } from '../components/shared/TablePagination';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
@@ -56,6 +57,8 @@ export default function PeakAccount() {
   const [showForm, setShowForm] = useState(false);
   const [editingLicense, setEditingLicense] = useState(null);
   const [showNotifSettings, setShowNotifSettings] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const { data: licenses = [], isLoading } = useQuery({
     queryKey: ['peakLicenses'],
@@ -138,6 +141,11 @@ export default function PeakAccount() {
       return true;
     });
   }, [tabFiltered, search, pkgFilter, payerFilter, statusFilter, staffFilter]);
+
+  // Reset page on filter change
+  React.useEffect(() => { setPage(1); }, [activeTab, search, pkgFilter, payerFilter, statusFilter, staffFilter]);
+
+  const paged = paginateData(filtered, page, pageSize);
 
   // Unique staff from licenses
   const staffList = useMemo(() => {
@@ -269,7 +277,7 @@ export default function PeakAccount() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((l, i) => {
+              {paged.map((l, i) => {
                 const isExpiring = l.daysLeft !== null && l.daysLeft >= 0 && l.daysLeft <= 30;
                 const isExpired = l.daysLeft !== null && l.daysLeft < 0;
                 const sc = STATUS_CONFIG[l.license_status] || STATUS_CONFIG.active;
@@ -339,9 +347,7 @@ export default function PeakAccount() {
               })}
             </tbody>
           </table>
-          <div className="px-4 py-2 border-t">
-            <span className="text-[11px] text-muted-foreground">{filtered.length} records</span>
-          </div>
+          <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
         </div>
       )}
 
