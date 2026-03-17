@@ -9,9 +9,13 @@ const COLORS = ['#1e3a5f', '#f59e0b', '#22c55e', '#8b5cf6', '#ef4444'];
 
 export default function Reports() {
   const { t } = useLanguage();
-  const { data: tasks = [] } = useQuery({ queryKey: ['tasks'], queryFn: () => base44.entities.Task.list('-created_date', 500) });
-  const { data: billings = [] } = useQuery({ queryKey: ['billings'], queryFn: () => base44.entities.Billing.list('-created_date', 500) });
-  const { data: customers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
+  const { data: allTasks = [] } = useQuery({ queryKey: ['tasks'], queryFn: () => base44.entities.Task.list('-created_date', 500) });
+  const { data: allBillings = [] } = useQuery({ queryKey: ['billings'], queryFn: () => base44.entities.Billing.list('-created_date', 500) });
+  const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
+
+  const tasks = allTasks.filter(t => t.status !== 'cancelled');
+  const billings = allBillings.filter(b => b.status !== 'cancelled');
+  const customers = allCustomers.filter(c => c.status === 'active');
 
   const svcKeys = { accounting: 'service_accounting', payroll: 'service_payroll', tax_consulting: 'service_tax', audit: 'service_audit', peak_licensing: 'service_peak' };
   const tasksByService = {};

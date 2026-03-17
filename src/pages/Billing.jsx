@@ -41,7 +41,7 @@ export default function Billing() {
   const { data: customers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
   const { data: allBillings = [] } = useQuery({ queryKey: ['billings'], queryFn: () => base44.entities.Billing.list('-created_date', 500) });
 
-  const billings = (ac.canViewBilling || ac.canViewBillingDept) ? allBillings : [];
+  const billings = (ac.canViewBilling || ac.canViewBillingDept) ? allBillings.filter(b => b.status !== 'cancelled') : [];
 
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
@@ -351,7 +351,7 @@ export default function Billing() {
                     <SelectItem value="sent">Invoiced</SelectItem>
                     <SelectItem value="paid">Paid</SelectItem>
                     <SelectItem value="overdue">Overdue</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    {/* Cancelled records are hidden from listing */}
                   </SelectContent>
                 </Select>
               </div>

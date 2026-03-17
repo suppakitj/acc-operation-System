@@ -91,10 +91,12 @@ export default function PeakAccount() {
   const thisMonthEnd = endOfMonth(today);
 
   // Compute days left for each license
-  const enriched = useMemo(() => licenses.map(l => {
-    const daysLeft = l.expiry_date ? differenceInDays(parseISO(l.expiry_date), today) : null;
-    return { ...l, daysLeft };
-  }), [licenses]);
+  const enriched = useMemo(() => licenses
+    .filter(l => l.license_status !== 'cancelled')
+    .map(l => {
+      const daysLeft = l.expiry_date ? differenceInDays(parseISO(l.expiry_date), today) : null;
+      return { ...l, daysLeft };
+    }), [licenses]);
 
   // Stats
   const stats = useMemo(() => ({

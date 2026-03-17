@@ -44,12 +44,14 @@ export default function Dashboard() {
     return d >= 0 && d <= 3;
   }).length;
   const completedToday = tasks.filter(t => t.completed_date === format(today, 'yyyy-MM-dd')).length;
-  const peakUrgent = customers.filter(c => {
+  const activeCustomers = customers.filter(c => c.status === 'active');
+  const peakUrgent = activeCustomers.filter(c => {
     if (!(c.services || []).includes('peak_licensing') || !c.peak_license_end) return false;
     const d = differenceInDays(new Date(c.peak_license_end), today);
     return d >= 0 && d <= 30;
   }).length;
-  const billingPending = billings.filter(b => b.status === 'sent' || b.status === 'overdue').length;
+  const activeBillings = billings.filter(b => b.status !== 'cancelled');
+  const billingPending = activeBillings.filter(b => b.status === 'sent' || b.status === 'overdue').length;
   // Missing docs — tasks with no attachments and status not completed
   const missingDocs = tasks.filter(t => t.status !== 'completed' && t.status !== 'cancelled' && (!t.attachments || t.attachments.length === 0) && t.service_type === 'audit').length;
   const todayScheduleCount = schedules.filter(s => s.date === format(today, 'yyyy-MM-dd')).length;
