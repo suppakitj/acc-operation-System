@@ -3,7 +3,7 @@ import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { TYPE_DOT_COLORS, TYPE_BG_COLORS } from './ScheduleLegend';
 import { Clock, MapPin, User } from 'lucide-react';
 
-export default function AgendaView({ currentMonth, schedules }) {
+export default function AgendaView({ currentMonth, schedules, onScheduleClick }) {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
 
@@ -37,7 +37,7 @@ export default function AgendaView({ currentMonth, schedules }) {
               const bg = TYPE_BG_COLORS[s.type] || TYPE_BG_COLORS.other;
               const dot = TYPE_DOT_COLORS[s.type] || TYPE_DOT_COLORS.other;
               return (
-                <div key={s.id} className={`rounded-lg p-3 ${bg}`}>
+                <div key={s.id} onClick={() => onScheduleClick?.(s)} className={`rounded-lg p-3 ${bg} hover:ring-1 hover:ring-primary/40 cursor-pointer`}>
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${dot}`} />
                     <span className="text-sm font-medium">{s.title}</span>

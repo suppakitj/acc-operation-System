@@ -4,7 +4,7 @@ import { TYPE_DOT_COLORS } from './ScheduleLegend';
 
 const DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-export default function MonthView({ currentMonth, schedules, onSelectDate, selectedDate }) {
+export default function MonthView({ currentMonth, schedules, onSelectDate, selectedDate, onScheduleClick }) {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -66,7 +66,9 @@ export default function MonthView({ currentMonth, schedules, onSelectDate, selec
                     s.type === 'fieldwork' ? 'bg-orange-50' :
                     s.type === 'wfh' ? 'bg-teal-50' : 'bg-gray-50';
                   return (
-                    <div key={s.id} className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] truncate ${bgColor}`}>
+                    <div key={s.id}
+                      onClick={(e) => { e.stopPropagation(); onScheduleClick?.(s); }}
+                      className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] truncate ${bgColor} hover:ring-1 hover:ring-primary/40 cursor-pointer`}>
                       <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
                       <span className="truncate">{s.assigned_name || s.title}</span>
                     </div>

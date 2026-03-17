@@ -4,7 +4,7 @@ import { TYPE_DOT_COLORS, TYPE_BG_COLORS } from './ScheduleLegend';
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7:00 - 19:00
 
-export default function WeekView({ currentMonth, schedules, onSelectDate, selectedDate }) {
+export default function WeekView({ currentMonth, schedules, onSelectDate, selectedDate, onScheduleClick }) {
   const weekStart = startOfWeek(currentMonth, { weekStartsOn: 0 });
   const weekEnd = endOfWeek(currentMonth, { weekStartsOn: 0 });
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
@@ -38,7 +38,9 @@ export default function WeekView({ currentMonth, schedules, onSelectDate, select
               {list.map(s => {
                 const bg = TYPE_BG_COLORS[s.type] || TYPE_BG_COLORS.other;
                 return (
-                  <div key={s.id} className={`text-[10px] px-1.5 py-0.5 rounded mb-0.5 truncate ${bg}`}>
+                  <div key={s.id}
+                    onClick={(e) => { e.stopPropagation(); onScheduleClick?.(s); }}
+                    className={`text-[10px] px-1.5 py-0.5 rounded mb-0.5 truncate ${bg} hover:ring-1 hover:ring-primary/40 cursor-pointer`}>
                     {s.assigned_name || s.title}
                     {s.start_time && <span className="text-muted-foreground ml-1">{s.start_time}</span>}
                   </div>
