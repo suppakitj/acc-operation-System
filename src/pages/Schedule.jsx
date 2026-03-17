@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import SearchableSelect from '../components/ui/SearchableSelect';
 import { Plus, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List } from 'lucide-react';
 import { format, addMonths, subMonths, addWeeks, subWeeks, startOfMonth, endOfMonth, addDays, differenceInDays } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
@@ -241,22 +242,21 @@ export default function Schedule() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5"><Label>ผู้รับผิดชอบ</Label>
-                <Select value={form.assigned_to || 'none'} onValueChange={v => v === 'none' ? setForm(p => ({ ...p, assigned_to: '', assigned_name: '' })) : handleUserSelect(v)} disabled={!ac.canEditAssignee}>
-                  <SelectTrigger><SelectValue placeholder="เลือกผู้รับผิดชอบ" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">-</SelectItem>
-                    {users.map(u => <SelectItem key={u.email} value={u.email}>{u.full_name || u.email}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={form.assigned_to || 'none'}
+                  onValueChange={v => v === 'none' ? setForm(p => ({ ...p, assigned_to: '', assigned_name: '' })) : handleUserSelect(v)}
+                  options={[{ value: 'none', label: '-' }, ...users.map(u => ({ value: u.email, label: u.full_name || u.email }))]}
+                  placeholder="เลือกผู้รับผิดชอบ"
+                  disabled={!ac.canEditAssignee}
+                />
               </div>
               <div className="space-y-1.5"><Label>ลูกค้า</Label>
-                <Select value={form.customer_id || 'none'} onValueChange={v => v === 'none' ? setForm(p => ({ ...p, customer_id: '', customer_name: '' })) : handleCustomerSelect(v)}>
-                  <SelectTrigger><SelectValue placeholder="เลือกลูกค้า" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">-</SelectItem>
-                    {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={form.customer_id || 'none'}
+                  onValueChange={v => v === 'none' ? setForm(p => ({ ...p, customer_id: '', customer_name: '' })) : handleCustomerSelect(v)}
+                  options={[{ value: 'none', label: '-' }, ...customers.map(c => ({ value: c.id, label: c.company_name }))]}
+                  placeholder="เลือกลูกค้า"
+                />
               </div>
             </div>
             <div className="space-y-1.5"><Label>{t('description')}</Label><Textarea value={form.description || ''} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={2} /></div>
