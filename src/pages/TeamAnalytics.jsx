@@ -11,6 +11,7 @@ import AvgCompletionTime from '../components/analytics/AvgCompletionTime';
 import WorkloadByEmployee from '../components/analytics/WorkloadByEmployee';
 import CompletionRateByService from '../components/analytics/CompletionRateByService';
 import TopOverdueEmployees from '../components/analytics/TopOverdueEmployees';
+import ResizableChartWrapper from '../components/analytics/ResizableChartWrapper';
 
 const DEPT_OPTIONS = [
   { value: 'all', label: 'ทุกแผนก (ภาพรวม)' },
@@ -133,7 +134,7 @@ export default function TeamAnalytics() {
 
       {/* Drag hint */}
       <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-        <GripVertical className="w-3 h-3" /> ลากเพื่อจัดเรียงกราฟตามต้องการ
+        <GripVertical className="w-3 h-3" /> ลากเพื่อจัดเรียงกราฟ · ลากขอบล่างเพื่อปรับขนาด
       </p>
 
       {/* Draggable Charts */}
@@ -158,7 +159,9 @@ export default function TeamAnalytics() {
                           <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
                           <span className="text-[10px] text-muted-foreground hidden sm:inline">{CHART_LABELS[id]}</span>
                         </div>
-                        {renderChart(id)}
+                        <ResizableChartWrapper chartId={id}>
+                          {renderChart(id)}
+                        </ResizableChartWrapper>
                       </div>
                     </div>
                   )}
