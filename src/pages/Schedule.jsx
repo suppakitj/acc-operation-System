@@ -45,7 +45,8 @@ export default function Schedule() {
   const [filters, setFilters] = useState({ search: '', department: 'all', employee: 'all', type: 'all', customer: 'all' });
 
   const { data: allSchedules = [] } = useQuery({ queryKey: ['schedules'], queryFn: () => base44.entities.Schedule.list('-date', 500) });
-  const { data: customers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 200) });
+  const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 200) });
+  const customers = allCustomers.filter(c => c.status === 'active');
   const { data: users = [] } = useUserList();
 
   const baseSchedules = ac.canViewAllSchedules ? allSchedules : ac.filterByDepartment(allSchedules);

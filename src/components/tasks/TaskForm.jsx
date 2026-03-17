@@ -25,7 +25,8 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions }) {
     checklist: [], is_recurring: false, recurring_type: '', template_id: '', ...task,
   });
 
-  const { data: customers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
+  const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
+  const customers = allCustomers.filter(c => c.status === 'active');
   const { data: users = [] } = useUserList();
   const { data: templates = [] } = useQuery({ queryKey: ['taskTemplates'], queryFn: () => base44.entities.TaskTemplate.list() });
   const activeTemplates = templates.filter(t => t.status !== 'inactive');
