@@ -49,9 +49,9 @@ export default function Dashboard() {
   }).length;
   const completedToday = tasks.filter(t => t.completed_date === format(today, 'yyyy-MM-dd')).length;
   const activeCustomers = customers.filter(c => c.status === 'active');
-  const peakUrgent = activeCustomers.filter(c => {
-    if (!(c.services || []).includes('peak_licensing') || !c.peak_license_end) return false;
-    const d = differenceInDays(new Date(c.peak_license_end), today);
+  const peakUrgent = peakLicenses.filter(l => {
+    if (l.license_status === 'cancelled' || !l.expiry_date) return false;
+    const d = differenceInDays(new Date(l.expiry_date), today);
     return d >= 0 && d <= 30;
   }).length;
   const activeBillings = billings.filter(b => b.status !== 'cancelled');
