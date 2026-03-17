@@ -29,7 +29,7 @@ export default function Customers() {
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
   const ac = useAccessControl(currentUser);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('active');
   const [deptFilter, setDeptFilter] = useState('all');
   const [groupFilter, setGroupFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
