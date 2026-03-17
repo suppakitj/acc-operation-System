@@ -129,19 +129,21 @@ export default function PeakAccount() {
     });
   }, [enriched, activeTab]);
 
-  // Additional filters
+  // Additional filters + sort by expiry ascending
   const filtered = useMemo(() => {
-    return tabFiltered.filter(l => {
-      if (search) {
-        const s = search.toLowerCase();
-        if (!l.customer_name?.toLowerCase().includes(s)) return false;
-      }
-      if (pkgFilter !== 'all' && l.package_type !== pkgFilter) return false;
-      if (payerFilter !== 'all' && l.payer_type !== payerFilter) return false;
-      if (statusFilter !== 'all' && l.license_status !== statusFilter) return false;
-      if (staffFilter !== 'all' && l.created_by !== staffFilter) return false;
-      return true;
-    });
+    return tabFiltered
+      .filter(l => {
+        if (search) {
+          const s = search.toLowerCase();
+          if (!l.customer_name?.toLowerCase().includes(s)) return false;
+        }
+        if (pkgFilter !== 'all' && l.package_type !== pkgFilter) return false;
+        if (payerFilter !== 'all' && l.payer_type !== payerFilter) return false;
+        if (statusFilter !== 'all' && l.license_status !== statusFilter) return false;
+        if (staffFilter !== 'all' && l.created_by !== staffFilter) return false;
+        return true;
+      })
+      .sort((a, b) => (a.daysLeft ?? 99999) - (b.daysLeft ?? 99999));
   }, [tabFiltered, search, pkgFilter, payerFilter, statusFilter, staffFilter]);
 
   // Reset page on filter change
