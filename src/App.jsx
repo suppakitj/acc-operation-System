@@ -25,6 +25,7 @@ import AuditLog from './pages/AuditLog';
 import AppSettings from './pages/AppSettings';
 import DatabaseBackup from './pages/DatabaseBackup';
 import ServiceMaster from './pages/ServiceMaster';
+import HolidayMaster from './pages/HolidayMaster';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -68,6 +69,7 @@ const AuthenticatedApp = () => {
         <Route path="/AuditLog" element={<AuditLog />} />
         <Route path="/AppSettings" element={<AppSettings />} />
         <Route path="/ServiceMaster" element={<ServiceMaster />} />
+        <Route path="/HolidayMaster" element={<HolidayMaster />} />
         <Route path="/DatabaseBackup" element={<DatabaseBackup />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />

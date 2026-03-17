@@ -28,6 +28,7 @@ const DEFAULT_MATRIX = [
   { key: 'cross_group', label: 'ดูข้ามกลุ่ม', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
   { key: 'peak', label: 'Licensing Peak Account', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
   { key: 'service_master', label: 'จัดการ Service Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
+  { key: 'holiday_master', label: 'จัดการ Holiday Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
 ];
 
 const PERM_CYCLE = ['yes', 'dept', 'own', 'edit_only', 'no'];

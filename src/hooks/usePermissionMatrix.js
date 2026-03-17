@@ -18,6 +18,7 @@ const DEFAULT_MATRIX = {
   cross_group:    { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
   peak:           { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no',  staff: 'no' },
   service_master: { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  holiday_master: { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
 };
 
 const PermissionMatrixContext = createContext(DEFAULT_MATRIX);
