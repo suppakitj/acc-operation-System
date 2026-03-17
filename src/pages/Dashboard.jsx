@@ -31,6 +31,10 @@ export default function Dashboard() {
     queryKey: ['schedules'],
     queryFn: () => base44.entities.Schedule.list('-date', 200),
   });
+  const { data: peakLicenses = [] } = useQuery({
+    queryKey: ['peakLicenses'],
+    queryFn: () => base44.entities.PeakLicense.list('-created_date', 500),
+  });
 
   // Stats calculations
   const openTasks = tasks.filter(t => t.status !== 'completed' && t.status !== 'cancelled').length;
