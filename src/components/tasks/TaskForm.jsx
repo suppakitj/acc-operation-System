@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, ClipboardList } from 'lucide-react';
@@ -104,10 +105,12 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions }) {
         <div className="md:col-span-2 space-y-1.5"><Label>{t('task_name')} *</Label><Input value={form.title} onChange={e => update('title', e.target.value)} /></div>
 
         <div className="space-y-1.5"><Label>{t('customer')}</Label>
-          <Select value={form.customer_id} onValueChange={v => { const c = customers.find(c => c.id === v); setForm(p => ({ ...p, customer_id: v, customer_name: c?.company_name || '' })); }}>
-            <SelectTrigger><SelectValue placeholder={t('select_customer')} /></SelectTrigger>
-            <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>)}</SelectContent>
-          </Select>
+          <SearchableSelect
+            value={form.customer_id}
+            onValueChange={v => { const c = customers.find(c => c.id === v); setForm(p => ({ ...p, customer_id: v, customer_name: c?.company_name || '' })); }}
+            options={customers.map(c => ({ value: c.id, label: c.company_name }))}
+            placeholder={t('select_customer')}
+          />
         </div>
 
         <div className="space-y-1.5"><Label>{t('service_type')}</Label>
@@ -118,10 +121,13 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions }) {
         </div>
 
         <div className="space-y-1.5"><Label>{t('assigned_to')}</Label>
-          <Select value={form.assigned_to} onValueChange={v => { const u = users.find(u => u.email === v); setForm(p => ({ ...p, assigned_to: v, assigned_name: u?.full_name || '' })); }} disabled={!canEditAssignee && !!task}>
-            <SelectTrigger><SelectValue placeholder={t('select_assignee')} /></SelectTrigger>
-            <SelectContent>{users.map(u => <SelectItem key={u.id} value={u.email}>{u.full_name}</SelectItem>)}</SelectContent>
-          </Select>
+          <SearchableSelect
+            value={form.assigned_to}
+            onValueChange={v => { const u = users.find(u => u.email === v); setForm(p => ({ ...p, assigned_to: v, assigned_name: u?.full_name || '' })); }}
+            options={users.map(u => ({ value: u.email, label: u.full_name || u.email }))}
+            placeholder={t('select_assignee')}
+            disabled={!canEditAssignee && !!task}
+          />
         </div>
 
         <div className="space-y-1.5"><Label>{t('department')}</Label>

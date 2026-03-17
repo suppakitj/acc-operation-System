@@ -1,6 +1,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Search } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
@@ -49,13 +50,13 @@ export default function TaskFilters({ filters, setFilters, customers = [], users
             <SelectItem value="urgent">{t('priority_urgent')}</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={filters.owner} onValueChange={v => update('owner', v)}>
-          <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs"><SelectValue placeholder="All Owners" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Owners</SelectItem>
-            {users.map(u => <SelectItem key={u.id} value={u.email}>{u.full_name}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          value={filters.owner}
+          onValueChange={v => update('owner', v)}
+          options={[{ value: 'all', label: 'All Owners' }, ...users.map(u => ({ value: u.email, label: u.full_name || u.email }))]}
+          placeholder="All Owners"
+          className="w-full sm:w-[130px] h-8 text-xs"
+        />
         <span className="text-xs text-muted-foreground self-center hidden md:block ml-auto whitespace-nowrap">{filters._count} of {filters._total}</span>
       </div>
       {/* Row 2 */}
@@ -71,13 +72,13 @@ export default function TaskFilters({ filters, setFilters, customers = [], users
             <SelectItem value="peak_licensing">{t('service_peak')}</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={filters.client} onValueChange={v => update('client', v)}>
-          <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs"><SelectValue placeholder="All Clients" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Clients</SelectItem>
-            {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          value={filters.client}
+          onValueChange={v => update('client', v)}
+          options={[{ value: 'all', label: 'All Clients' }, ...customers.map(c => ({ value: c.id, label: c.company_name }))]}
+          placeholder="All Clients"
+          className="w-full sm:w-[130px] h-8 text-xs"
+        />
         <Select value={filters.taskType} onValueChange={v => update('taskType', v)}>
           <SelectTrigger className="w-full sm:w-[110px] h-8 text-xs"><SelectValue placeholder="All Types" /></SelectTrigger>
           <SelectContent>

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '../LanguageContext';
 
@@ -151,22 +152,22 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
         <h3 className="text-sm font-semibold mb-3 text-primary">ผู้รับผิดชอบ</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-1"><Label>หัวหน้าดูแล</Label>
-            <Select value={form.supervisor || '_none'} onValueChange={v => v === '_none' ? setForm(p => ({...p, supervisor: '', supervisor_name: ''})) : setUserField('supervisor', 'supervisor_name', v)} disabled={readOnly}>
-              <SelectTrigger><SelectValue placeholder="เลือกหัวหน้า" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="_none">— ไม่ระบุ —</SelectItem>
-                {users.filter(u => u.role !== 'staff').map(u => <SelectItem key={u.email} value={u.email}>{u.full_name} ({u.email})</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={form.supervisor || '_none'}
+              onValueChange={v => v === '_none' ? setForm(p => ({...p, supervisor: '', supervisor_name: ''})) : setUserField('supervisor', 'supervisor_name', v)}
+              options={[{ value: '_none', label: '— ไม่ระบุ —' }, ...users.filter(u => u.role !== 'staff').map(u => ({ value: u.email, label: `${u.full_name} (${u.email})` }))]}
+              placeholder="เลือกหัวหน้า"
+              disabled={readOnly}
+            />
           </div>
           <div className="space-y-1"><Label>เจ้าหน้าที่หลัก</Label>
-            <Select value={form.primary_officer || '_none'} onValueChange={v => v === '_none' ? setForm(p => ({...p, primary_officer: '', primary_officer_name: ''})) : setUserField('primary_officer', 'primary_officer_name', v)} disabled={readOnly}>
-              <SelectTrigger><SelectValue placeholder="เลือกเจ้าหน้าที่" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="_none">— ไม่ระบุ —</SelectItem>
-                {users.map(u => <SelectItem key={u.email} value={u.email}>{u.full_name} ({u.email})</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={form.primary_officer || '_none'}
+              onValueChange={v => v === '_none' ? setForm(p => ({...p, primary_officer: '', primary_officer_name: ''})) : setUserField('primary_officer', 'primary_officer_name', v)}
+              options={[{ value: '_none', label: '— ไม่ระบุ —' }, ...users.map(u => ({ value: u.email, label: `${u.full_name} (${u.email})` }))]}
+              placeholder="เลือกเจ้าหน้าที่"
+              disabled={readOnly}
+            />
           </div>
         </div>
       </div>
