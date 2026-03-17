@@ -30,6 +30,7 @@ export function useAccessControl(user) {
     const canViewBilling         = p('view_billing') === 'yes';
     const canViewBillingDept     = p('view_billing') === 'dept';
     const canViewPeakAccount     = p('peak') !== 'no';
+    const canManageServiceMaster = p('service_master') !== 'no';
     const crossGroup             = p('cross_group') === 'yes';
 
     // ─── task-level permissions ──────────────────────────────
@@ -78,6 +79,7 @@ export function useAccessControl(user) {
       if (p('customer') !== 'no')        menus.push('customers');
       if (p('template') !== 'no')        menus.push('templates');
       if (p('peak') !== 'no')            menus.push('peak');
+      if (p('service_master') !== 'no')  menus.push('service_master');
       if (p('view_billing') !== 'no')    menus.push('billing');
       if (p('user_master') !== 'no')     menus.push('users');
       if (p('role_mgmt') !== 'no')       menus.push('roles');
@@ -96,7 +98,7 @@ export function useAccessControl(user) {
       role, email, userDepartments: depts,
       canManageUsers, canManageRoles, canManageCustomers,
       canAddCustomer, canDeleteCustomer, canEditCustomer,
-      canManageTemplates, canManageTemplatesDept,
+      canManageTemplates, canManageTemplatesDept, canManageServiceMaster,
       canViewBilling, canViewBillingDept,
       canViewPeakAccount, canViewAllSchedules,
       canEditAssignee, canAddTask, canChangeDueDate, canChangeStatus,
@@ -112,7 +114,7 @@ function empty() {
     role: '', email: '', userDepartments: [],
     canManageUsers: false, canManageRoles: false, canManageCustomers: false,
     canAddCustomer: false, canDeleteCustomer: false, canEditCustomer: false,
-    canManageTemplates: false, canManageTemplatesDept: false,
+    canManageTemplates: false, canManageTemplatesDept: false, canManageServiceMaster: false,
     canViewBilling: false, canViewBillingDept: false,
     canViewPeakAccount: false, canViewAllSchedules: false,
     canEditAssignee: false, canAddTask: false,

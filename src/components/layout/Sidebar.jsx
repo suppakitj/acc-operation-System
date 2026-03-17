@@ -4,7 +4,7 @@ import {
   LayoutDashboard, CheckSquare, Calendar, Users, Building2,
   Bell, CreditCard, MessageCircle, Shield,
   Settings, ChevronLeft, ChevronRight, Key, ClipboardList,
-  BarChart3, History, X, Database
+  BarChart3, History, X, Database, Briefcase
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -22,6 +22,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'schedule', label: t('menu_schedule'), icon: Calendar, path: '/Schedule' },
     { id: 'customers', label: t('menu_customers'), icon: Building2, path: '/Customers' },
     { id: 'templates', label: t('menu_templates'), icon: ClipboardList, path: '/TaskTemplates' },
+    { id: 'service_master', label: 'Service Master', icon: Briefcase, path: '/ServiceMaster' },
     { id: 'peak', label: t('menu_peak'), icon: Key, path: '/PeakAccount' },
     { id: 'billing', label: t('menu_billing'), icon: CreditCard, path: '/Billing' },
     { id: 'notifications', label: t('menu_notifications'), icon: Bell, path: '/Notifications' },

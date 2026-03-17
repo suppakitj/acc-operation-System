@@ -17,6 +17,7 @@ const DEFAULT_MATRIX = {
   view_schedule:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'dept',staff: 'dept' },
   cross_group:    { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
   peak:           { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no',  staff: 'no' },
+  service_master: { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
 };
 
 const PermissionMatrixContext = createContext(DEFAULT_MATRIX);
