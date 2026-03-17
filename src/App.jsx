@@ -26,6 +26,7 @@ import AppSettings from './pages/AppSettings';
 import DatabaseBackup from './pages/DatabaseBackup';
 import ServiceMaster from './pages/ServiceMaster';
 import HolidayMaster from './pages/HolidayMaster';
+import TeamAnalytics from './pages/TeamAnalytics';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -70,6 +71,7 @@ const AuthenticatedApp = () => {
         <Route path="/AppSettings" element={<AppSettings />} />
         <Route path="/ServiceMaster" element={<ServiceMaster />} />
         <Route path="/HolidayMaster" element={<HolidayMaster />} />
+        <Route path="/TeamAnalytics" element={<TeamAnalytics />} />
         <Route path="/DatabaseBackup" element={<DatabaseBackup />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
