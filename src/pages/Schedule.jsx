@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List } from 'lucide-react';
-import { format, addMonths, subMonths, addWeeks, subWeeks, startOfMonth, endOfMonth } from 'date-fns';
+import { format, addMonths, subMonths, addWeeks, subWeeks, startOfMonth, endOfMonth, addDays, differenceInDays } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
 
@@ -72,10 +72,32 @@ export default function Schedule() {
     return filteredSchedules.filter(s => s.date >= ms && s.date <= me).length;
   }, [filteredSchedules, currentDate]);
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Schedule.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['schedules'] }); setShowForm(false); },
-  });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleCreate = async () => {
+    setIsSaving(true);
+    const startDate = form.date;
+    const endDate = form.date_end || startDate;
+    const days = differenceInDays(new Date(endDate), new Date(startDate));
+
+    if (days <= 0) {
+      // Single day
+      const { date_end, ...data } = form;
+      await base44.entities.Schedule.create(data);
+    } else {
+      // Multiple days - bulk create
+      const records = [];
+      for (let i = 0; i <= days; i++) {
+        const d = format(addDays(new Date(startDate), i), 'yyyy-MM-dd');
+        const { date_end, ...rest } = form;
+        records.push({ ...rest, date: d });
+      }
+      await base44.entities.Schedule.bulkCreate(records);
+    }
+    queryClient.invalidateQueries({ queryKey: ['schedules'] });
+    setShowForm(false);
+    setIsSaving(false);
+  };
 
   const navigate = (dir) => {
     if (view === 'week') {
@@ -90,6 +112,7 @@ export default function Schedule() {
   const openForm = () => {
     setForm({
       title: '', description: '', date: format(selectedDate || new Date(), 'yyyy-MM-dd'),
+      date_end: '',
       start_time: '', end_time: '', type: 'meeting', status: 'scheduled',
       assigned_to: '', assigned_name: '', customer_id: '', customer_name: '', department: '',
     });
@@ -194,7 +217,15 @@ export default function Schedule() {
           <div className="space-y-4">
             <div className="space-y-1.5"><Label>{t('title')} *</Label><Input value={form.title || ''} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5"><Label>{t('date')}</Label><Input type="date" value={form.date || ''} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></div>
+              <div className="space-y-1.5"><Label>วันเริ่มต้น</Label><Input type="date" value={form.date || ''} onChange={e => setForm(p => ({ ...p, date: e.target.value, date_end: p.date_end && p.date_end < e.target.value ? e.target.value : p.date_end }))} /></div>
+              <div className="space-y-1.5"><Label>วันสิ้นสุด</Label><Input type="date" value={form.date_end || ''} min={form.date || ''} onChange={e => setForm(p => ({ ...p, date_end: e.target.value }))} placeholder="เลือกถ้ามากกว่า 1 วัน" /></div>
+            </div>
+            {form.date && form.date_end && form.date_end > form.date && (
+              <p className="text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-md">
+                จะสร้าง {differenceInDays(new Date(form.date_end), new Date(form.date)) + 1} รายการ (วันละ 1 รายการ)
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5"><Label>ประเภท</Label>
                 <Select value={form.type || 'meeting'} onValueChange={v => setForm(p => ({ ...p, type: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -227,8 +258,8 @@ export default function Schedule() {
               </div>
             </div>
             <div className="space-y-1.5"><Label>{t('description')}</Label><Textarea value={form.description || ''} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={2} /></div>
-            <Button onClick={() => createMutation.mutate(form)} disabled={!form.title || createMutation.isPending} className="w-full">
-              {createMutation.isPending ? t('saving') : t('save')}
+            <Button onClick={handleCreate} disabled={!form.title || isSaving} className="w-full">
+              {isSaving ? t('saving') : t('save')}
             </Button>
           </div>
         </DialogContent>
