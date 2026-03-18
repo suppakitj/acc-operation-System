@@ -33,6 +33,11 @@ export function useAccessControl(user) {
     const canManageServiceMaster = p('service_master') !== 'no';
     const canManageHolidays      = p('holiday_master') !== 'no';
     const crossGroup             = p('cross_group') === 'yes';
+    const canViewStaffDashboard  = p('staff_dashboard') !== 'no';
+    const canViewTeamAnalytics   = p('team_analytics') !== 'no';
+    const canViewReports         = p('reports') !== 'no';
+    const canViewAuditLog        = p('audit_log') !== 'no';
+    const canViewDbBackup        = p('db_backup') !== 'no';
 
     // ─── task-level permissions ──────────────────────────────
     const canEditAssignee = p('edit_assignee') !== 'no';
@@ -100,11 +105,12 @@ export function useAccessControl(user) {
       // line_chat → always visible
       menus.push('line_chat');
 
-      // team_analytics, reports, audit, backup → same as cross_group (admin-level)
+      // All menu visibility now from matrix
       if (p('staff_dashboard') !== 'no') menus.push('staff_dashboard');
-      menus.push('team_analytics');
-      if (role === 'admin' || crossGroup) menus.push('reports', 'audit');
-      if (role === 'admin') menus.push('backup');
+      if (p('team_analytics') !== 'no')  menus.push('team_analytics');
+      if (p('reports') !== 'no')         menus.push('reports');
+      if (p('audit_log') !== 'no')       menus.push('audit');
+      if (p('db_backup') !== 'no')       menus.push('backup');
 
       return menus;
     };
@@ -120,6 +126,7 @@ export function useAccessControl(user) {
       filterByDepartment, canAccessDepartment,
       getVisibleMenuIds,
       canSeeAll: role === 'admin' || crossGroup,
+      canViewStaffDashboard, canViewTeamAnalytics, canViewReports, canViewAuditLog, canViewDbBackup,
     };
   }, [user, matrix]);
 }
@@ -137,5 +144,6 @@ function empty() {
     filterByDepartment: () => [], canAccessDepartment: () => false,
     getVisibleMenuIds: () => ['dashboard', 'notifications', 'settings'],
     canSeeAll: false,
+    canViewStaffDashboard: false, canViewTeamAnalytics: false, canViewReports: false, canViewAuditLog: false, canViewDbBackup: false,
   };
 }
