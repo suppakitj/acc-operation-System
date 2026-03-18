@@ -263,6 +263,7 @@ export default function Schedule() {
               onScheduleClick={handleScheduleClick}
               users={users}
               holidaysByDate={holidaysByDate}
+              onDragEnd={handleScheduleDragEnd}
             />
           )}
           {view === 'week' && (
