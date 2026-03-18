@@ -69,10 +69,16 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
           )}
 
           {!isEdit && (
-            <div className="space-y-1.5">
-              <Label>Email *</Label>
-              <Input type="email" value={form.email || ''} onChange={e => update('email', e.target.value)} placeholder="user@company.com" />
-            </div>
+            <>
+              <div className="space-y-1.5">
+                <Label>ชื่อ-นามสกุล *</Label>
+                <Input value={form.full_name || ''} onChange={e => update('full_name', e.target.value)} placeholder="เช่น สมชาย ใจดี" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Email *</Label>
+                <Input type="email" value={form.email || ''} onChange={e => update('email', e.target.value)} placeholder="user@company.com" />
+              </div>
+            </>
           )}
 
           <div className="space-y-1.5">
@@ -134,7 +140,7 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
             </Select>
           </div>
 
-          <Button onClick={handleSave} disabled={isSaving || (!isEdit && !form.email)} className="w-full">
+          <Button onClick={handleSave} disabled={isSaving || (!isEdit && (!form.email || !form.full_name))} className="w-full">
             {isSaving ? t('saving') : t('save')}
           </Button>
         </div>
