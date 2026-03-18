@@ -35,7 +35,7 @@ export default function StaffDashboard() {
   const { data: users = [], isLoading: loadingUsers, error: usersError } = useQuery({
     queryKey: ['users'],
     queryFn: () => base44.entities.User.list(),
-    enabled: ac.canManageUsers || ac.role === 'admin' || ac.role === 'management' || ac.role === 'manager',
+    enabled: ac.canViewStaffDashboard || ac.canManageUsers,
   });
 
   const today = new Date();
@@ -125,10 +125,8 @@ export default function StaffDashboard() {
 
   const isLoading = loadingTasks || loadingUsers;
 
-  // Check access - only admin, management, manager can view
-  const canView = ac.role === 'admin' || ac.role === 'management' || ac.role === 'manager';
-  
-  if (!canView && currentUser) {
+  // Check access from Permission Matrix
+  if (!ac.canViewStaffDashboard && currentUser) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
