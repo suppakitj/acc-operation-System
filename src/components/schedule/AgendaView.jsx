@@ -3,7 +3,15 @@ import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { TYPE_DOT_COLORS, TYPE_BG_COLORS } from './ScheduleLegend';
 import { Clock, MapPin, User } from 'lucide-react';
 
-export default function AgendaView({ currentMonth, schedules, onScheduleClick }) {
+function resolveNames(emails, users) {
+  if (!Array.isArray(emails)) return emails;
+  return emails.map(email => {
+    const u = users.find(u => u.email === email);
+    return u?.initials || u?.nickname || u?.full_name || email;
+  });
+}
+
+export default function AgendaView({ currentMonth, schedules, onScheduleClick, users = [] }) {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
 
@@ -47,7 +55,7 @@ export default function AgendaView({ currentMonth, schedules, onScheduleClick })
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{s.start_time}{s.end_time ? ` - ${s.end_time}` : ''}</span>
                     )}
                     {s.assigned_name && (Array.isArray(s.assigned_name) ? s.assigned_name.length > 0 : true) && (
-                      <span className="flex items-center gap-1"><User className="w-3 h-3" />{Array.isArray(s.assigned_name) ? s.assigned_name.join(', ') : s.assigned_name}</span>
+                      <span className="flex items-center gap-1"><User className="w-3 h-3" />{Array.isArray(s.assigned_to) ? resolveNames(s.assigned_to, users).join(', ') : s.assigned_name}</span>
                     )}
                     {s.customer_name && (
                       <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{s.customer_name}</span>

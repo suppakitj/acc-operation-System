@@ -225,6 +225,7 @@ export default function Schedule() {
               onSelectDate={setSelectedDate}
               selectedDate={selectedDate}
               onScheduleClick={handleScheduleClick}
+              users={users}
             />
           )}
           {view === 'week' && (
@@ -234,11 +235,12 @@ export default function Schedule() {
               onSelectDate={setSelectedDate}
               selectedDate={selectedDate}
               onScheduleClick={handleScheduleClick}
+              users={users}
             />
           )}
           {view === 'agenda' && (
             <div className="p-4">
-              <AgendaView currentMonth={currentDate} schedules={filteredSchedules} onScheduleClick={handleScheduleClick} />
+              <AgendaView currentMonth={currentDate} schedules={filteredSchedules} onScheduleClick={handleScheduleClick} users={users} />
             </div>
           )}
         </CardContent>

@@ -4,7 +4,15 @@ import { TYPE_DOT_COLORS, TYPE_BG_COLORS } from './ScheduleLegend';
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7:00 - 19:00
 
-export default function WeekView({ currentMonth, schedules, onSelectDate, selectedDate, onScheduleClick }) {
+function resolveNames(emails, users) {
+  if (!Array.isArray(emails)) return emails;
+  return emails.map(email => {
+    const u = users.find(u => u.email === email);
+    return u?.initials || u?.nickname || u?.full_name || email;
+  });
+}
+
+export default function WeekView({ currentMonth, schedules, onSelectDate, selectedDate, onScheduleClick, users = [] }) {
   const weekStart = startOfWeek(currentMonth, { weekStartsOn: 0 });
   const weekEnd = endOfWeek(currentMonth, { weekStartsOn: 0 });
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
@@ -41,7 +49,7 @@ export default function WeekView({ currentMonth, schedules, onSelectDate, select
                   <div key={s.id}
                     onClick={(e) => { e.stopPropagation(); onScheduleClick?.(s); }}
                     className={`text-[10px] px-1.5 py-0.5 rounded mb-0.5 truncate ${bg} hover:ring-1 hover:ring-primary/40 cursor-pointer`}>
-                    {(Array.isArray(s.assigned_name) ? s.assigned_name.join(', ') : s.assigned_name) || s.title}
+                    {(Array.isArray(s.assigned_to) ? resolveNames(s.assigned_to, users).join(', ') : s.assigned_name) || s.title}
                     {s.start_time && <span className="text-muted-foreground ml-1">{s.start_time}</span>}
                   </div>
                 );
