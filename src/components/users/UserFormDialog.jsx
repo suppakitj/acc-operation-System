@@ -15,7 +15,7 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
   const isEdit = !!user;
 
   const [form, setForm] = useState({
-    username: '', phone: '', position: '',
+    username: '', nickname: '', initials: '', phone: '', position: '',
     role: 'staff', departments: [], department: '',
     user_status: 'active',
   });
@@ -24,6 +24,8 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
     if (user) {
       setForm({
         username: user.username || '',
+        nickname: user.nickname || '',
+        initials: user.initials || '',
         phone: user.phone || '',
         position: user.position || '',
         role: user.role || 'staff',
@@ -32,7 +34,7 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
         user_status: user.user_status || 'active',
       });
     } else {
-      setForm({ username: '', phone: '', position: '', role: 'staff', departments: [], department: '', user_status: 'active' });
+      setForm({ username: '', nickname: '', initials: '', phone: '', position: '', role: 'staff', departments: [], department: '', user_status: 'active' });
     }
   }, [user, open]);
 
@@ -76,6 +78,17 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
           <div className="space-y-1.5">
             <Label>Username</Label>
             <Input value={form.username} onChange={e => update('username', e.target.value)} placeholder="username" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>ชื่อเล่น</Label>
+              <Input value={form.nickname} onChange={e => update('nickname', e.target.value)} placeholder="เช่น นุ้ย, แอน" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>ชื่อย่อ</Label>
+              <Input value={form.initials} onChange={e => update('initials', e.target.value)} placeholder="เช่น NP, AK" />
+            </div>
           </div>
 
           <div className="space-y-1.5">
