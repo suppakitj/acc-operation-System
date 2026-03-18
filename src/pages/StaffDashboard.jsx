@@ -6,7 +6,8 @@ import { useUserList } from '../hooks/useUserList';
 import { format, startOfMonth, endOfMonth, parseISO } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import StaffSummaryCards from '../components/staff-dashboard/StaffSummaryCards';
 import StaffRow from '../components/staff-dashboard/StaffRow';
 
