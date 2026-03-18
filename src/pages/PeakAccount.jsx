@@ -9,6 +9,7 @@ import { Plus, Search, Settings, CheckCircle, Clock, AlertTriangle, AlertOctagon
 import { format, differenceInDays, parseISO, addDays, startOfMonth, endOfMonth } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
+import { useUserList } from '../hooks/useUserList';
 import PeakLicenseForm from '../components/peak/PeakLicenseForm';
 import PeakNotificationSettings from '../components/peak/PeakNotificationSettings';
 import TablePagination, { paginateData } from '../components/shared/TablePagination';
@@ -47,7 +48,7 @@ export default function PeakAccount() {
   const ac = useAccessControl(currentUser);
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'management';
   const queryClient = useQueryClient();
-  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list() });
+  const { data: users = [] } = useUserList();
 
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
@@ -65,10 +66,6 @@ export default function PeakAccount() {
     queryKey: ['peakLicenses'],
     queryFn: () => base44.entities.PeakLicense.list('-created_date', 500),
   });
-
-  if (!ac.canViewPeakAccount) {
-    return <div className="text-center py-12 text-muted-foreground">ไม่มีสิทธิ์เข้าถึงหน้านี้</div>;
-  }
 
   const createMutation = useMutation({
     mutationFn: (data) => {
