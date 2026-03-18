@@ -136,7 +136,10 @@ export default function PeakLicenseForm({ open, onOpenChange, license, onSubmit,
               </div>
               <div className="space-y-1">
                 <Label>ปีที่ต่ออายุ</Label>
-                <Input type="number" value={form.renewal_year || ''} onChange={e => update('renewal_year', parseInt(e.target.value) || '')} />
+                <Input type="number" value={form.renewal_year ?? ''} onChange={e => {
+                  const val = e.target.value;
+                  update('renewal_year', val === '' ? null : parseInt(val));
+                }} />
               </div>
             </div>
           </div>
