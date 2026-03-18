@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, differenceInDays } from 'date-fns';
@@ -26,6 +26,31 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
   const today = new Date();
   const allSelected = tasks.length > 0 && selected.length === tasks.length;
 
+  const [colWidths, setColWidths] = useState({});
+  const resizing = useRef(null);
+
+  const onMouseDown = useCallback((e, colKey) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const th = e.target.closest('th');
+    const startX = e.clientX;
+    const startW = th.offsetWidth;
+    resizing.current = { colKey, startX, startW };
+
+    const onMouseMove = (ev) => {
+      const diff = ev.clientX - resizing.current.startX;
+      const newW = Math.max(60, resizing.current.startW + diff);
+      setColWidths(prev => ({ ...prev, [resizing.current.colKey]: newW }));
+    };
+    const onMouseUp = () => {
+      resizing.current = null;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
+
   const toggleAll = () => setSelected(allSelected ? [] : tasks.map(t => t.id));
   const toggleOne = (id) => setSelected(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
@@ -34,29 +59,54 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
     else onSort(field, 'asc');
   };
 
-  const SortHeader = ({ field, children, className = '' }) => (
-    <th className={`px-2 py-2 text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground select-none ${className}`}
+  const ResizeHandle = ({ colKey }) => (
+    <div
+      className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 z-10"
+      onMouseDown={(e) => onMouseDown(e, colKey)}
+    />
+  );
+
+  const SortHeader = ({ field, children, className = '', colKey }) => (
+    <th className={`px-2 py-2 text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground select-none relative ${className}`}
+      style={colWidths[colKey || field] ? { width: colWidths[colKey || field], minWidth: colWidths[colKey || field] } : undefined}
       onClick={() => handleSort(field)}>
       {children} {sortField === field ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+      <ResizeHandle colKey={colKey || field} />
     </th>
   );
 
   return (
     <div className="overflow-x-auto border rounded-lg bg-card">
-      <table className="w-full text-left">
+      <table className="w-full text-left" style={{ tableLayout: Object.keys(colWidths).length > 0 ? 'fixed' : 'auto' }}>
         <thead className="border-b bg-muted/30">
           <tr>
             <th className="w-10 px-2 py-2"><Checkbox checked={allSelected} onCheckedChange={toggleAll} /></th>
-            <SortHeader field="title" className="min-w-[120px]">TASK</SortHeader>
-            <SortHeader field="customer_name" className="min-w-[130px] hidden md:table-cell">CLIENT</SortHeader>
-            <th className="px-2 py-2 text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase hidden lg:table-cell">DEPT / CAT</th>
-            <SortHeader field="assigned_name" className="hidden lg:table-cell">OWNER</SortHeader>
-            <SortHeader field="due_date" className="min-w-[90px]">DUE</SortHeader>
-            <th className="px-2 py-2 text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase hidden sm:table-cell">PRIORITY</th>
-            <SortHeader field="status" className="min-w-[90px]">STATUS</SortHeader>
-            <th className="px-2 py-2 text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase hidden xl:table-cell">PERIOD</th>
-            <th className="px-2 py-2 text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase hidden xl:table-cell">TYPE</th>
-            <SortHeader field="updated_date" className="hidden lg:table-cell">UPDATED</SortHeader>
+            <SortHeader field="title" colKey="task" className="min-w-[120px]">TASK</SortHeader>
+            <SortHeader field="customer_name" colKey="client" className="min-w-[130px] hidden md:table-cell">CLIENT</SortHeader>
+            <th className="px-2 py-2 text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase hidden lg:table-cell relative"
+              style={colWidths['dept'] ? { width: colWidths['dept'], minWidth: colWidths['dept'] } : undefined}>
+              DEPT / CAT
+              <ResizeHandle colKey="dept" />
+            </th>
+            <SortHeader field="assigned_name" colKey="owner" className="hidden lg:table-cell">OWNER</SortHeader>
+            <SortHeader field="due_date" colKey="due" className="min-w-[90px]">DUE</SortHeader>
+            <th className="px-2 py-2 text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase hidden sm:table-cell relative"
+              style={colWidths['priority'] ? { width: colWidths['priority'], minWidth: colWidths['priority'] } : undefined}>
+              PRIORITY
+              <ResizeHandle colKey="priority" />
+            </th>
+            <SortHeader field="status" colKey="status" className="min-w-[90px]">STATUS</SortHeader>
+            <th className="px-2 py-2 text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase hidden xl:table-cell relative"
+              style={colWidths['period'] ? { width: colWidths['period'], minWidth: colWidths['period'] } : undefined}>
+              PERIOD
+              <ResizeHandle colKey="period" />
+            </th>
+            <th className="px-2 py-2 text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase hidden xl:table-cell relative"
+              style={colWidths['type'] ? { width: colWidths['type'], minWidth: colWidths['type'] } : undefined}>
+              TYPE
+              <ResizeHandle colKey="type" />
+            </th>
+            <SortHeader field="updated_date" colKey="updated" className="hidden lg:table-cell">UPDATED</SortHeader>
           </tr>
         </thead>
         <tbody>
