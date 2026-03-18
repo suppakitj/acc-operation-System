@@ -4,7 +4,7 @@ import {
   LayoutDashboard, CheckSquare, Calendar, Users, Building2,
   Bell, CreditCard, MessageCircle, Shield,
   Settings, ChevronLeft, ChevronRight, Key, ClipboardList,
-  BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp
+  BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -28,6 +28,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'billing', label: t('menu_billing'), icon: CreditCard, path: '/Billing' },
     { id: 'notifications', label: t('menu_notifications'), icon: Bell, path: '/Notifications' },
     { id: 'line_chat', label: t('menu_line_chat'), icon: MessageCircle, path: '/LineChat' },
+    { id: 'staff_dashboard', label: 'Staff Dashboard', icon: UsersRound, path: '/StaffDashboard' },
     { id: 'team_analytics', label: 'Team Analytics', icon: TrendingUp, path: '/TeamAnalytics' },
     { id: 'reports', label: t('menu_reports'), icon: BarChart3, path: '/Reports' },
     { id: 'users', label: t('menu_users'), icon: Users, path: '/UserManagement' },
