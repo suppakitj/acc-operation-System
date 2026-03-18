@@ -52,7 +52,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
       <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-sidebar-primary flex items-center justify-center shrink-0">
-            <span className="text-sidebar-primary-foreground font-bold text-sm">A</span>
+            <span className="text-sidebar-primary-foreground font-bold text-sm">{user?.initials || 'A'}</span>
           </div>
           {(!collapsed || mobileOpen) && (
             <div className="min-w-0">
