@@ -55,7 +55,14 @@ export default function UserManagement() {
 
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
   const ac = useAccessControl(currentUser);
-  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list() });
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      // Use backend function to bypass User entity security rules
+      const res = await base44.functions.invoke('listUsers', {});
+      return res.data?.users || [];
+    },
+  });
 
   if (!ac.canManageUsers) {
     return <div className="text-center py-12 text-muted-foreground">เฉพาะ Admin เท่านั้นที่จัดการผู้ใช้ได้</div>;
