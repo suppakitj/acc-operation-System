@@ -196,11 +196,30 @@ export default function StaffDashboard() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground text-sm">ไม่พบข้อมูลพนักงาน</div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map(staff => (
-            <StaffRow key={staff.email} staff={staff} />
-          ))}
-        </div>
+        <>
+          <div className="space-y-3">
+            {paged.map(staff => (
+              <StaffRow key={staff.email} staff={staff} />
+            ))}
+          </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-xs text-muted-foreground">
+                แสดง {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filtered.length)} จาก {filtered.length} คน
+              </span>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-xs px-2">{page + 1} / {totalPages}</span>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
