@@ -21,7 +21,7 @@ const SVC_STYLES = {
 };
 const SVC_LABELS = { accounting: 'Accounting', payroll: 'Payroll', tax_consulting: 'Tax', audit: 'Audit', peak_licensing: 'Peak' };
 
-export default function TaskTable({ tasks, selected, setSelected, onRowClick, sortField, sortDir, onSort }) {
+export default function TaskTable({ tasks, selected, setSelected, onRowClick, sortField, sortDir, onSort, users = [] }) {
   const { t } = useLanguage();
   const today = new Date();
   const allSelected = tasks.length > 0 && selected.length === tasks.length;
@@ -97,7 +97,10 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
                   )}
                 </td>
                 <td className="px-2 py-2.5 hidden lg:table-cell">
-                  <p className="text-xs">{task.assigned_name || '-'}</p>
+                  <p className="text-xs">{(() => {
+                    const u = users.find(u => u.email === task.assigned_to);
+                    return u?.initials || u?.nickname || task.assigned_name || '-';
+                  })()}</p>
                 </td>
                 <td className="px-2 py-2.5">
                   <p className={`text-xs font-medium ${isOverdue ? 'text-red-600' : ''}`}>

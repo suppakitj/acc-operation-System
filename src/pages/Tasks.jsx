@@ -138,13 +138,14 @@ export default function Tasks() {
       ) : (
         <>
           <TaskTable
-            tasks={paged}
-            selected={selected}
-            setSelected={setSelected}
-            onRowClick={(task) => { setEditingTask(task); setShowForm(true); }}
-            sortField={sortField}
-            sortDir={sortDir}
-            onSort={(field, dir) => { setSortField(field); setSortDir(dir); }}
+           tasks={paged}
+           selected={selected}
+           setSelected={setSelected}
+           onRowClick={(task) => { setEditingTask(task); setShowForm(true); }}
+           sortField={sortField}
+           sortDir={sortDir}
+           onSort={(field, dir) => { setSortField(field); setSortDir(dir); }}
+           users={users}
           />
           <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
         </>
