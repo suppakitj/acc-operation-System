@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SearchableSelect from '../components/ui/SearchableSelect';
+import MultiUserSelect from '../components/ui/MultiUserSelect';
 import { Plus, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List } from 'lucide-react';
 import { format, addMonths, subMonths, addWeeks, subWeeks, startOfMonth, endOfMonth, addDays, differenceInDays } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
