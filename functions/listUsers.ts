@@ -25,6 +25,8 @@ Deno.serve(async (req) => {
       user_status: u.user_status,
       username: u.username,
       phone: u.phone,
+      nickname: u.nickname,
+      initials: u.initials,
       created_date: u.created_date,
       updated_date: u.updated_date,
     }));
