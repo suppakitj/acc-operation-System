@@ -98,7 +98,8 @@ export function useAccessControl(user) {
       menus.push('line_chat');
 
       // team_analytics, reports, audit, backup → same as cross_group (admin-level)
-      menus.push('staff_dashboard', 'team_analytics');
+      if (p('staff_dashboard') !== 'no') menus.push('staff_dashboard');
+      menus.push('team_analytics');
       if (crossGroup) menus.push('reports', 'audit');
       if (role === 'admin') menus.push('backup');
 
