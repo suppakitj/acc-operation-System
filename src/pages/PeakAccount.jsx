@@ -153,6 +153,10 @@ export default function PeakAccount() {
 
   const paged = paginateData(filtered, page, pageSize);
 
+  if (!ac.canViewPeakAccount) {
+    return <div className="text-center py-12 text-muted-foreground">ไม่มีสิทธิ์เข้าถึงหน้านี้</div>;
+  }
+
   // Unique staff from licenses
   const staffList = useMemo(() => {
     const emails = [...new Set(licenses.map(l => l.created_by).filter(Boolean))];
