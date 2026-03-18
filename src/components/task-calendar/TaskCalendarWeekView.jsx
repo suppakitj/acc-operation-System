@@ -16,7 +16,7 @@ const STATUS_LABELS = {
   completed: 'เสร็จแล้ว', cancelled: 'ยกเลิก',
 };
 
-export default function TaskCalendarWeekView({ currentDate, tasksByDate, onDragEnd }) {
+export default function TaskCalendarWeekView({ currentDate, tasksByDate, holidaysByDate = {}, onDragEnd }) {
   const weekDays = useMemo(() => {
     const start = startOfWeek(currentDate, { weekStartsOn: 0 });
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
@@ -44,6 +44,7 @@ export default function TaskCalendarWeekView({ currentDate, tasksByDate, onDragE
         {weekDays.map((day, idx) => {
           const dateKey = format(day, 'yyyy-MM-dd');
           const dayTasks = tasksByDate[dateKey] || [];
+          const holiday = holidaysByDate[dateKey];
           return (
             <Droppable key={dateKey} droppableId={dateKey}>
               {(provided, snapshot) => (
@@ -53,9 +54,16 @@ export default function TaskCalendarWeekView({ currentDate, tasksByDate, onDragE
                   className={cn(
                     "min-h-[300px] border-r border-b p-1.5 transition-colors",
                     snapshot.isDraggingOver && "bg-primary/10",
-                    idx === 0 && "bg-red-50/50", idx === 6 && "bg-blue-50/50"
+                    holiday && "bg-red-50/70",
+                    !holiday && idx === 0 && "bg-red-50/50",
+                    !holiday && idx === 6 && "bg-blue-50/50"
                   )}
                 >
+                  {holiday && (
+                    <div className="text-[9px] text-red-600 font-medium truncate mb-1 px-0.5" title={holiday.name_th}>
+                      🔴 {holiday.name_th}
+                    </div>
+                  )}
                   <div className="space-y-1">
                     {dayTasks.map((task, taskIdx) => (
                       <Draggable key={task.id} draggableId={task.id} index={taskIdx}>

@@ -18,9 +18,10 @@ const STATUS_LABELS = {
 
 const PRIORITY_LABELS = { urgent: 'เร่งด่วน', high: 'สูง', medium: 'ปานกลาง', low: 'ต่ำ' };
 
-export default function TaskCalendarDayView({ currentDate, tasksByDate, onDragEnd }) {
+export default function TaskCalendarDayView({ currentDate, tasksByDate, holidaysByDate = {}, onDragEnd }) {
   const dateKey = format(currentDate, 'yyyy-MM-dd');
   const dayTasks = tasksByDate[dateKey] || [];
+  const holiday = holidaysByDate[dateKey];
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
@@ -38,6 +39,14 @@ export default function TaskCalendarDayView({ currentDate, tasksByDate, onDragEn
           </div>
           <span className="ml-auto text-sm text-muted-foreground">{dayTasks.length} งาน</span>
         </div>
+
+        {holiday && (
+          <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg mb-3">
+            <span className="text-red-500 text-sm">🔴</span>
+            <span className="text-sm font-medium text-red-700">{holiday.name_th}</span>
+            {holiday.name_en && <span className="text-xs text-red-500">({holiday.name_en})</span>}
+          </div>
+        )}
 
         <Droppable droppableId={dateKey}>
           {(provided, snapshot) => (
