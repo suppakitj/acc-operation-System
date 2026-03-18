@@ -135,16 +135,19 @@ export default function Schedule() {
       title: '', description: '', date: format(selectedDate || new Date(), 'yyyy-MM-dd'),
       date_end: '',
       start_time: '', end_time: '', type: 'meeting', status: 'scheduled',
-      assigned_to: currentUser?.email || '',
-      assigned_name: currentUser?.full_name || currentUser?.email || '',
+      assigned_to: currentUser?.email ? [currentUser.email] : [],
+      assigned_name: currentUser?.full_name ? [currentUser.full_name] : [],
       customer_id: '', customer_name: '', department: '',
     });
     setShowForm(true);
   };
 
-  const handleUserSelect = (email) => {
-    const u = users.find(u => u.email === email);
-    setForm(p => ({ ...p, assigned_to: email, assigned_name: u?.full_name || email }));
+  const handleUsersChange = (emails) => {
+    const names = emails.map(email => {
+      const u = users.find(u => u.email === email);
+      return u?.full_name || email;
+    });
+    setForm(p => ({ ...p, assigned_to: emails, assigned_name: names }));
   };
 
   const handleCustomerSelect = (id) => {
@@ -281,10 +284,10 @@ export default function Schedule() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5"><Label>ผู้รับผิดชอบ</Label>
-                <SearchableSelect
-                  value={form.assigned_to || 'none'}
-                  onValueChange={v => v === 'none' ? setForm(p => ({ ...p, assigned_to: '', assigned_name: '' })) : handleUserSelect(v)}
-                  options={[{ value: 'none', label: '-' }, ...users.map(u => ({ value: u.email, label: u.full_name || u.email }))]}
+                <MultiUserSelect
+                  values={Array.isArray(form.assigned_to) ? form.assigned_to : (form.assigned_to ? [form.assigned_to] : [])}
+                  onValuesChange={handleUsersChange}
+                  options={users.map(u => ({ value: u.email, label: u.full_name || u.email }))}
                   placeholder="เลือกผู้รับผิดชอบ"
                   disabled={!ac.canEditAssignee}
                 />
