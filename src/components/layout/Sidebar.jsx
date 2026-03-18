@@ -43,6 +43,44 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const allowedIds = ac.getVisibleMenuIds();
   const visibleMenuItems = menuItems.filter(item => allowedIds.includes(item.id));
 
+  // Menu groups
+  const menuGroups = [
+    { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'staff_dashboard', 'reports', 'team_analytics'] },
+    { key: 'work', label: 'งาน', icon: Folder, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'service_master', 'holiday_master'] },
+    { key: 'clients', label: 'ลูกค้า', icon: Contact, ids: ['customers', 'peak', 'billing'] },
+    { key: 'comms', label: 'สื่อสาร', icon: MessageSquare, ids: ['notifications', 'line_chat'] },
+    { key: 'system', label: 'ระบบ', icon: Cog, ids: ['users', 'roles', 'audit', 'backup', 'settings'] },
+  ];
+
+  // Build visible groups
+  const visibleGroups = menuGroups
+    .map(g => ({ ...g, items: visibleMenuItems.filter(m => g.ids.includes(m.id)) }))
+    .filter(g => g.items.length > 0);
+
+  // Find which group the current page belongs to
+  const activeGroupKey = visibleGroups.find(g => g.items.some(m => m.path === location.pathname))?.key;
+
+  // Collapsible state — auto-expand active group
+  const [expandedGroups, setExpandedGroups] = useState(() => {
+    const saved = localStorage.getItem('sidebar_groups');
+    if (saved) return JSON.parse(saved);
+    return { overview: true, work: true, clients: true, comms: true, system: false };
+  });
+
+  useEffect(() => {
+    if (activeGroupKey && !expandedGroups[activeGroupKey]) {
+      setExpandedGroups(prev => ({ ...prev, [activeGroupKey]: true }));
+    }
+  }, [activeGroupKey]);
+
+  useEffect(() => {
+    localStorage.setItem('sidebar_groups', JSON.stringify(expandedGroups));
+  }, [expandedGroups]);
+
+  const toggleGroup = (key) => {
+    setExpandedGroups(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
   const handleNavClick = () => {
     if (mobileOpen) setMobileOpen(false);
   };
