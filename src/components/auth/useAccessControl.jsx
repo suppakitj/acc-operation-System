@@ -85,7 +85,8 @@ export function useAccessControl(user) {
     const getVisibleMenuIds = () => {
       const menus = ['dashboard', 'notifications', 'settings'];
 
-      if (p('view_task') !== 'no')       menus.push('tasks', 'task_calendar');
+      if (p('view_task') !== 'no')       menus.push('tasks');
+      if (p('task_calendar') !== 'no')   menus.push('task_calendar');
       if (p('view_schedule') !== 'no')   menus.push('schedule');
       if (p('customer') !== 'no')        menus.push('customers');
       if (p('template') !== 'no')        menus.push('templates');
