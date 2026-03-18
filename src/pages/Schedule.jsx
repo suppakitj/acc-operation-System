@@ -63,7 +63,10 @@ export default function Schedule() {
             !(s.title || '').toLowerCase().includes(q)) return false;
       }
       if (filters.department !== 'all' && s.department !== filters.department) return false;
-      if (filters.employee !== 'all' && s.assigned_to !== filters.employee) return false;
+      if (filters.employee !== 'all') {
+        const assignees = Array.isArray(s.assigned_to) ? s.assigned_to : (s.assigned_to ? [s.assigned_to] : []);
+        if (!assignees.includes(filters.employee)) return false;
+      }
       if (filters.type !== 'all' && s.type !== filters.type) return false;
       if (filters.customer !== 'all' && s.customer_id !== filters.customer) return false;
       return true;
