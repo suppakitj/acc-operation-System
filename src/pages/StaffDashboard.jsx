@@ -123,6 +123,15 @@ export default function StaffDashboard() {
 
   const isLoading = loadingTasks || loadingUsers;
 
+  // Pagination
+  const PAGE_SIZE = 10;
+  const [page, setPage] = useState(0);
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  // Reset page when filters change
+  useMemo(() => setPage(0), [search, deptFilter]);
+
   // Check access from Permission Matrix
   if (!ac.canViewStaffDashboard && currentUser) {
     return (
