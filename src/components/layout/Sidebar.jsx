@@ -19,6 +19,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const menuItems = [
     { id: 'dashboard', label: t('menu_dashboard'), icon: LayoutDashboard, path: '/Dashboard' },
     { id: 'staff_dashboard', label: 'Staff Dashboard', icon: UsersRound, path: '/StaffDashboard' },
+    { id: 'reports', label: t('menu_reports'), icon: BarChart3, path: '/Reports' },
     { id: 'tasks', label: t('menu_tasks'), icon: CheckSquare, path: '/Tasks' },
     { id: 'task_calendar', label: 'Task Calendar', icon: CalendarDays, path: '/TaskCalendar' },
     { id: 'schedule', label: t('menu_schedule'), icon: Calendar, path: '/Schedule' },
@@ -31,7 +32,6 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'notifications', label: t('menu_notifications'), icon: Bell, path: '/Notifications' },
     { id: 'line_chat', label: t('menu_line_chat'), icon: MessageCircle, path: '/LineChat' },
     { id: 'team_analytics', label: 'Team Analytics', icon: TrendingUp, path: '/TeamAnalytics' },
-    { id: 'reports', label: t('menu_reports'), icon: BarChart3, path: '/Reports' },
     { id: 'users', label: t('menu_users'), icon: Users, path: '/UserManagement' },
     { id: 'roles', label: t('menu_roles'), icon: Shield, path: '/RoleManagement' },
     { id: 'audit', label: t('menu_audit'), icon: History, path: '/AuditLog' },
