@@ -28,6 +28,7 @@ import ServiceMaster from './pages/ServiceMaster';
 import HolidayMaster from './pages/HolidayMaster';
 import TeamAnalytics from './pages/TeamAnalytics';
 import StaffDashboard from './pages/StaffDashboard';
+import TaskCalendar from './pages/TaskCalendar';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -74,6 +75,7 @@ const AuthenticatedApp = () => {
         <Route path="/HolidayMaster" element={<HolidayMaster />} />
         <Route path="/TeamAnalytics" element={<TeamAnalytics />} />
         <Route path="/StaffDashboard" element={<StaffDashboard />} />
+        <Route path="/TaskCalendar" element={<TaskCalendar />} />
         <Route path="/DatabaseBackup" element={<DatabaseBackup />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
