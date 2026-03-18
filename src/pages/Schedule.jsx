@@ -244,7 +244,7 @@ export default function Schedule() {
             <MonthView
               currentMonth={currentDate}
               schedules={filteredSchedules}
-              onSelectDate={setSelectedDate}
+              onSelectDate={handleSelectDate}
               selectedDate={selectedDate}
               onScheduleClick={handleScheduleClick}
               users={users}
@@ -255,7 +255,7 @@ export default function Schedule() {
             <WeekView
               currentMonth={currentDate}
               schedules={filteredSchedules}
-              onSelectDate={setSelectedDate}
+              onSelectDate={handleSelectDate}
               selectedDate={selectedDate}
               onScheduleClick={handleScheduleClick}
               users={users}
