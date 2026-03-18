@@ -40,7 +40,7 @@ const DEFAULT_MATRIX = [
   { key: 'db_backup', label: 'Backup Database', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
 ];
 
-const PERM_CYCLE = ['yes', 'dept', 'own', 'edit_only', 'no'];
+const PERM_CYCLE = ['yes', 'dept', 'own', 'edit_only', 'view_only', 'no'];
 
 function PermCell({ value, editable, onClick }) {
   const content = (() => {
@@ -49,6 +49,7 @@ function PermCell({ value, editable, onClick }) {
     if (value === 'dept') return <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px] px-1.5">เฉพาะแผนก</Badge>;
     if (value === 'own') return <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 text-[10px] px-1.5">เฉพาะงานตัวเอง</Badge>;
     if (value === 'edit_only') return <Badge variant="secondary" className="bg-orange-50 text-orange-700 text-[10px] px-1.5">แก้ไขเท่านั้น</Badge>;
+    if (value === 'view_only') return <Badge variant="secondary" className="bg-teal-50 text-teal-700 text-[10px] px-1.5">ดูอย่างเดียว</Badge>;
     return <Minus className="w-4 h-4 text-muted-foreground mx-auto" />;
   })();
   if (!editable) return content;
@@ -224,7 +225,7 @@ export default function RoleManagement() {
         {isEditingMatrix && (
           <div className="px-6 pb-2">
             <p className="text-[11px] text-muted-foreground bg-yellow-50 border border-yellow-200 rounded px-2 py-1">
-              คลิกที่ช่องเพื่อสลับค่า: ✅ ใช่ → 🏢 เฉพาะแผนก → 👤 เฉพาะงานตัวเอง → ✏️ แก้ไขเท่านั้น → ❌ ไม่ → ✅ ใช่
+              คลิกที่ช่องเพื่อสลับค่า: ✅ ใช่ → 🏢 เฉพาะแผนก → 👤 เฉพาะงานตัวเอง → ✏️ แก้ไขเท่านั้น → 👁 ดูอย่างเดียว → ❌ ไม่ → ✅ ใช่
             </p>
           </div>
         )}
