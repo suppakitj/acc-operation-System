@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Palette, Check, Globe, Shield, Clock } from 'lucide-react';
+import { Palette, Check, Globe, Shield, Clock, User, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../components/LanguageContext';
@@ -79,11 +80,20 @@ export default function AppSettings() {
   const [selectedTheme, setSelectedTheme] = useState(user?.theme || 'default');
   const [notifEmail, setNotifEmail] = useState(user?.notification_email !== false);
   const [notifLine, setNotifLine] = useState(user?.notification_line !== false);
+  const [nickname, setNickname] = useState(user?.nickname || '');
+  const [initials, setInitials] = useState(user?.initials || '');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setNickname(user.nickname || '');
+      setInitials(user.initials || '');
+    }
+  }, [user]);
 
   const handleSave = async () => {
     setSaving(true);
-    await base44.auth.updateMe({ theme: selectedTheme, notification_email: notifEmail, notification_line: notifLine });
+    await base44.auth.updateMe({ theme: selectedTheme, notification_email: notifEmail, notification_line: notifLine, nickname, initials });
     document.documentElement.classList.remove('theme-emerald', 'theme-purple', 'theme-rose', 'dark');
     if (selectedTheme === 'dark') document.documentElement.classList.add('dark');
     else if (selectedTheme !== 'default') document.documentElement.classList.add(`theme-${selectedTheme}`);
@@ -98,6 +108,30 @@ export default function AppSettings() {
         <h1 className="text-xl md:text-2xl font-bold">{t('settings_title')}</h1>
         <p className="text-sm text-muted-foreground">{t('settings_subtitle')}</p>
       </div>
+
+      {/* Profile */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2"><User className="w-4 h-4" /> โปรไฟล์ของคุณ (Your Profile)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>ชื่อ-นามสกุล</Label>
+            <Input value={user?.full_name || ''} disabled className="bg-muted/50 cursor-not-allowed" />
+            <p className="text-[11px] text-muted-foreground">ไม่สามารถแก้ไขได้</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>ชื่อเล่น</Label>
+              <Input value={nickname} onChange={e => setNickname(e.target.value)} placeholder="เช่น นุ้ย, แอน" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>ชื่อย่อ</Label>
+              <Input value={initials} onChange={e => setInitials(e.target.value)} placeholder="เช่น NP, AK" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Language */}
       <Card>
