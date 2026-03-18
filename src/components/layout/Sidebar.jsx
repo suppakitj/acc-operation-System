@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, CheckSquare, Calendar, Users, Building2,
   Bell, CreditCard, MessageCircle, Shield,
   Settings, ChevronLeft, ChevronRight, Key, ClipboardList,
-  BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays
+  BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays,
+  ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
