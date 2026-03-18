@@ -8,7 +8,7 @@ function resolveNames(emails, users) {
   if (!Array.isArray(emails)) return emails;
   return emails.map(email => {
     const u = users.find(u => u.email === email);
-    return u?.initials || u?.nickname || u?.full_name || email;
+    return u?.initials || u?.nickname || email.split('@')[0];
   });
 }
 
