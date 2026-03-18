@@ -62,7 +62,7 @@ export default function AgendaView({ currentMonth, schedules, onScheduleClick, u
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{s.start_time}{s.end_time ? ` - ${s.end_time}` : ''}</span>
                     )}
                     {s.assigned_name && (Array.isArray(s.assigned_name) ? s.assigned_name.length > 0 : true) && (
-                      <span className="flex items-center gap-1"><User className="w-3 h-3" />{Array.isArray(s.assigned_to) ? resolveNames(s.assigned_to, users).join(', ') : s.assigned_name}</span>
+                      <span className="flex items-center gap-1"><User className="w-3 h-3" />{s.assigned_to ? resolveNames(s.assigned_to, users).join(', ') : s.assigned_name}</span>
                     )}
                     {s.customer_name && (
                       <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{s.customer_name}</span>
