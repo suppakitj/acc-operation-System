@@ -22,13 +22,20 @@ export default function StaffDashboard() {
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
 
+  const { data: currentUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
+  const ac = useAccessControl(currentUser);
+
   const { data: tasks = [], isLoading: loadingTasks } = useQuery({
     queryKey: ['tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 1000),
   });
-  const { data: users = [], isLoading: loadingUsers } = useQuery({
+  const { data: users = [], isLoading: loadingUsers, error: usersError } = useQuery({
     queryKey: ['users'],
     queryFn: () => base44.entities.User.list(),
+    enabled: ac.canManageUsers || ac.role === 'admin' || ac.role === 'management' || ac.role === 'manager',
   });
 
   const today = new Date();
