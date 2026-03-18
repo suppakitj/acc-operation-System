@@ -146,6 +146,20 @@ export default function Schedule() {
     setEditingSchedule(null);
   };
 
+  const handleScheduleDragEnd = async (result) => {
+    const { draggableId, destination } = result;
+    if (!destination) return;
+    const newDate = destination.droppableId; // 'yyyy-MM-dd'
+    const schedule = filteredSchedules.find(s => s.id === draggableId);
+    if (!schedule || schedule.date === newDate) return;
+    // Optimistic update
+    queryClient.setQueryData(['schedules'], (old) =>
+      (old || []).map(s => s.id === draggableId ? { ...s, date: newDate } : s)
+    );
+    await base44.entities.Schedule.update(draggableId, { date: newDate });
+    queryClient.invalidateQueries({ queryKey: ['schedules'] });
+  };
+
   const navigate = (dir) => {
     if (view === 'week') {
       setCurrentDate(dir === 'next' ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1));
