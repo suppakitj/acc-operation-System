@@ -71,6 +71,7 @@ export default function UserManagement() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users-admin'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setShowForm(false);
       setEditingUser(null);
