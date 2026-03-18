@@ -54,7 +54,8 @@ export function useAccessControl(user) {
 
     // ─── data filtering ──────────────────────────────────────
     const filterByDepartment = (records, deptField = 'department') => {
-      if (crossGroup || p('view_task') === 'yes') return records;
+      // Admin always sees all data
+      if (role === 'admin' || crossGroup || p('view_task') === 'yes') return records;
       return records.filter(r => {
         const rd = r[deptField];
         if (!rd) return true;
@@ -63,7 +64,8 @@ export function useAccessControl(user) {
     };
 
     const canAccessDepartment = (dept) => {
-      if (crossGroup || p('view_task') === 'yes') return true;
+      // Admin always has access to all departments
+      if (role === 'admin' || crossGroup || p('view_task') === 'yes') return true;
       if (!dept) return true;
       return depts.includes(dept);
     };
@@ -100,7 +102,7 @@ export function useAccessControl(user) {
       // team_analytics, reports, audit, backup → same as cross_group (admin-level)
       if (p('staff_dashboard') !== 'no') menus.push('staff_dashboard');
       menus.push('team_analytics');
-      if (crossGroup) menus.push('reports', 'audit');
+      if (role === 'admin' || crossGroup) menus.push('reports', 'audit');
       if (role === 'admin') menus.push('backup');
 
       return menus;
@@ -116,7 +118,7 @@ export function useAccessControl(user) {
       canEditAssignee, canAddTask, canChangeDueDate, canChangeStatus,
       filterByDepartment, canAccessDepartment,
       getVisibleMenuIds,
-      canSeeAll: crossGroup,
+      canSeeAll: role === 'admin' || crossGroup,
     };
   }, [user, matrix]);
 }
