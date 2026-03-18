@@ -4,14 +4,13 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const users = await base44.asServiceRole.entities.User.list();
 
-    const safeUsers = users.map(u => ({
+    const result = users.map(u => ({
       id: u.id,
       email: u.email,
       full_name: u.full_name,
@@ -29,9 +28,8 @@ Deno.serve(async (req) => {
       updated_date: u.updated_date,
     }));
 
-    return Response.json({ users: safeUsers });
+    return Response.json({ users: result });
   } catch (error) {
-    console.error('listUsers error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
