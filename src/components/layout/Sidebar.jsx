@@ -15,8 +15,6 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const location = useLocation();
   const { t } = useLanguage();
   const ac = useAccessControl(user);
-  // Debug: log visible menus
-  console.log('Sidebar user:', user?.email, 'role:', user?.role, 'visibleMenus:', ac.getVisibleMenuIds());
 
   const menuItems = [
     { id: 'dashboard', label: t('menu_dashboard'), icon: LayoutDashboard, path: '/Dashboard' },
