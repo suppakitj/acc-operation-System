@@ -83,11 +83,7 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
             <th className="w-10 px-2 py-2"><Checkbox checked={allSelected} onCheckedChange={toggleAll} /></th>
             <SortHeader field="title" colKey="task" className="min-w-[120px]">TASK</SortHeader>
             <SortHeader field="customer_name" colKey="client" className="min-w-[130px] hidden md:table-cell">CLIENT</SortHeader>
-            <th className="px-2 py-2 text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase hidden lg:table-cell relative"
-              style={colWidths['dept'] ? { width: colWidths['dept'], minWidth: colWidths['dept'] } : undefined}>
-              DEPT / CAT
-              <ResizeHandle colKey="dept" />
-            </th>
+
             <SortHeader field="assigned_name" colKey="owner" className="hidden lg:table-cell">OWNER</SortHeader>
             <SortHeader field="due_date" colKey="due" className="min-w-[90px]">DUE</SortHeader>
             <th className="px-2 py-2 text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase hidden sm:table-cell relative"
@@ -136,16 +132,7 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
                 <td className="px-2 py-2.5 hidden md:table-cell">
                   <p className="text-xs truncate max-w-[140px]">{task.customer_name || '-'}</p>
                 </td>
-                <td className="px-2 py-2.5 hidden lg:table-cell">
-                  {task.service_type && (
-                    <div>
-                      <Badge variant="secondary" className={`text-[10px] ${SVC_STYLES[task.service_type] || ''}`}>
-                        {SVC_LABELS[task.service_type] || task.service_type}
-                      </Badge>
-                      {task.department && <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">{task.department}</p>}
-                    </div>
-                  )}
-                </td>
+
                 <td className="px-2 py-2.5 hidden lg:table-cell">
                   <p className="text-xs">{(() => {
                     const u = users.find(u => u.email === task.assigned_to);
