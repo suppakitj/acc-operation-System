@@ -49,6 +49,20 @@ export default function TaskCalendar() {
     queryFn: () => base44.entities.Task.list('-due_date', 500),
   });
 
+  const { data: holidays = [] } = useQuery({
+    queryKey: ['holidays'],
+    queryFn: () => base44.entities.HolidayMaster.filter({ status: 'active' }),
+  });
+
+  // Build holiday lookup by date
+  const holidaysByDate = useMemo(() => {
+    const map = {};
+    holidays.forEach(h => {
+      if (h.date) map[h.date] = h;
+    });
+    return map;
+  }, [holidays]);
+
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
     onSuccess: () => {
@@ -261,30 +275,39 @@ export default function TaskCalendar() {
                 {calendarDays.map((day, idx) => {
                   const dateKey = format(day, 'yyyy-MM-dd');
                   const dayTasks = tasksByDate[dateKey] || [];
+                  const holiday = holidaysByDate[dateKey];
                   const isCurrentMonth = isSameMonth(day, currentMonth);
                   const isCurrentDay = isToday(day);
 
                   return (
-                    <Droppable key={dateKey} droppableId={dateKey}>
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.droppableProps}
-                          className={cn(
-                            "min-h-[120px] border-r border-b last:border-r-0 p-1 transition-colors",
-                            !isCurrentMonth && "bg-muted/30",
-                            snapshot.isDraggingOver && "bg-primary/10",
-                            idx % 7 === 0 && "bg-red-50/50",
-                            idx % 7 === 6 && "bg-blue-50/50"
-                          )}
-                        >
-                          <div className={cn(
-                            "text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full",
-                            isCurrentDay && "bg-primary text-primary-foreground",
-                            !isCurrentMonth && "text-muted-foreground"
-                          )}>
-                            {format(day, 'd')}
-                          </div>
+                   <Droppable key={dateKey} droppableId={dateKey}>
+                     {(provided, snapshot) => (
+                       <div
+                         ref={provided.innerRef}
+                         {...provided.droppableProps}
+                         className={cn(
+                           "min-h-[120px] border-r border-b last:border-r-0 p-1 transition-colors",
+                           !isCurrentMonth && "bg-muted/30",
+                           snapshot.isDraggingOver && "bg-primary/10",
+                           holiday && "bg-red-50/70",
+                           !holiday && idx % 7 === 0 && "bg-red-50/50",
+                           !holiday && idx % 7 === 6 && "bg-blue-50/50"
+                         )}
+                       >
+                         <div className="flex items-center gap-1 mb-1">
+                           <div className={cn(
+                             "text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full",
+                             isCurrentDay && "bg-primary text-primary-foreground",
+                             !isCurrentMonth && "text-muted-foreground"
+                           )}>
+                             {format(day, 'd')}
+                           </div>
+                           {holiday && (
+                             <span className="text-[9px] text-red-600 font-medium truncate" title={holiday.name_th}>
+                               {holiday.name_th}
+                             </span>
+                           )}
+                         </div>
 
                           <div className="space-y-1">
                             {dayTasks.slice(0, 4).map((task, taskIdx) => (
@@ -322,10 +345,10 @@ export default function TaskCalendar() {
             </DragDropContext>
           )}
           {view === 'week' && (
-            <TaskCalendarWeekView currentDate={currentMonth} tasksByDate={tasksByDate} onDragEnd={handleDragEnd} />
+            <TaskCalendarWeekView currentDate={currentMonth} tasksByDate={tasksByDate} holidaysByDate={holidaysByDate} onDragEnd={handleDragEnd} />
           )}
           {view === 'day' && (
-            <TaskCalendarDayView currentDate={currentMonth} tasksByDate={tasksByDate} onDragEnd={handleDragEnd} />
+            <TaskCalendarDayView currentDate={currentMonth} tasksByDate={tasksByDate} holidaysByDate={holidaysByDate} onDragEnd={handleDragEnd} />
           )}
         </CardContent>
       </Card>
