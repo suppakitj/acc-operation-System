@@ -134,13 +134,7 @@ export default function PeakLicenseForm({ open, onOpenChange, license, onSubmit,
                 <Label>วันหมดอายุ (อัตโนมัติ +365 วัน)</Label>
                 <Input type="date" value={form.expiry_date || ''} onChange={e => update('expiry_date', e.target.value)} className="bg-muted/50" />
               </div>
-              <div className="space-y-1">
-                <Label>ปีที่ต่ออายุ</Label>
-                <Input type="number" value={form.renewal_year ?? ''} onChange={e => {
-                  const val = e.target.value;
-                  update('renewal_year', val === '' ? null : parseInt(val));
-                }} />
-              </div>
+
             </div>
           </div>
 
