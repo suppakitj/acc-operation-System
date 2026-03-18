@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SearchableSelect from '@/components/ui/SearchableSelect';
+import MultiUserSelect from '@/components/ui/MultiUserSelect';
 import { Trash2 } from 'lucide-react';
 
 const TYPE_LABELS = {
@@ -42,13 +43,12 @@ export default function ScheduleEditDialog({ schedule, open, onOpenChange, onSav
   }));
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleUserSelect = (email) => {
-    if (email === 'none') {
-      setForm(p => ({ ...p, assigned_to: '', assigned_name: '' }));
-      return;
-    }
-    const u = users.find(u => u.email === email);
-    setForm(p => ({ ...p, assigned_to: email, assigned_name: u?.full_name || email }));
+  const handleUsersChange = (emails) => {
+    const names = emails.map(email => {
+      const u = users.find(u => u.email === email);
+      return u?.full_name || email;
+    });
+    setForm(p => ({ ...p, assigned_to: emails, assigned_name: names }));
   };
 
   const handleCustomerSelect = (id) => {
@@ -127,10 +127,10 @@ export default function ScheduleEditDialog({ schedule, open, onOpenChange, onSav
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">ผู้รับผิดชอบ</Label>
-              <SearchableSelect
-                value={form.assigned_to || 'none'}
-                onValueChange={handleUserSelect}
-                options={[{ value: 'none', label: '-' }, ...users.map(u => ({ value: u.email, label: u.full_name || u.email }))]}
+              <MultiUserSelect
+                values={Array.isArray(form.assigned_to) ? form.assigned_to : (form.assigned_to ? [form.assigned_to] : [])}
+                onValuesChange={handleUsersChange}
+                options={users.map(u => ({ value: u.email, label: u.full_name || u.email }))}
                 placeholder="เลือกผู้รับผิดชอบ"
                 disabled={!canEdit || !canEditAssignee}
               />
