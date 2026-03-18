@@ -107,7 +107,7 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
         </thead>
         <tbody>
           {tasks.length === 0 ? (
-            <tr><td colSpan={11} className="text-center py-12 text-sm text-muted-foreground">{t('no_data')}</td></tr>
+            <tr><td colSpan={10} className="text-center py-12 text-sm text-muted-foreground">{t('no_data')}</td></tr>
           ) : tasks.map(task => {
             const isOverdue = task.due_date && task.status !== 'completed' && task.status !== 'cancelled' && new Date(task.due_date) < today;
             const daysLate = isOverdue ? differenceInDays(today, new Date(task.due_date)) : 0;
