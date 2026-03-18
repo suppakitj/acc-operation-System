@@ -30,9 +30,11 @@ export default function WeekView({ currentMonth, schedules, onSelectDate, select
         {days.map(day => {
           const dateKey = format(day, 'yyyy-MM-dd');
           const holiday = holidaysByDate[dateKey];
+          const isSun = day.getDay() === 0;
+          const isSat = day.getDay() === 6;
           return (
-            <div key={day.toISOString()} className={`py-2 text-center border-r last:border-r-0 ${holiday ? 'bg-red-50/70' : isToday(day) ? 'bg-primary/5' : ''}`}>
-              <div className="text-[10px] text-muted-foreground">{format(day, 'EEE').toUpperCase()}</div>
+            <div key={day.toISOString()} className={`py-2 text-center border-r last:border-r-0 ${holiday ? 'bg-red-50/70' : isToday(day) ? 'bg-primary/5' : isSun ? 'bg-red-50/40' : isSat ? 'bg-blue-50/40' : ''}`}>
+              <div className={`text-[10px] ${isSun ? 'text-red-500' : isSat ? 'text-blue-500' : 'text-muted-foreground'}`}>{format(day, 'EEE').toUpperCase()}</div>
               <div className={`text-sm font-medium ${isToday(day) ? 'bg-primary text-primary-foreground rounded-full w-7 h-7 flex items-center justify-center mx-auto' : ''}`}>
                 {format(day, 'd')}
               </div>
@@ -52,8 +54,10 @@ export default function WeekView({ currentMonth, schedules, onSelectDate, select
           const list = getForDay(day);
           const wDateKey = format(day, 'yyyy-MM-dd');
           const wHoliday = holidaysByDate[wDateKey];
+          const wIsSun = day.getDay() === 0;
+          const wIsSat = day.getDay() === 6;
           return (
-            <div key={day.toISOString()} className={`border-r border-b p-1 min-h-[80px] cursor-pointer hover:bg-muted/20 ${wHoliday ? 'bg-red-50/50' : ''}`} onClick={() => onSelectDate(day)}>
+            <div key={day.toISOString()} className={`border-r border-b p-1 min-h-[80px] cursor-pointer hover:bg-muted/20 ${wHoliday ? 'bg-red-50/50' : wIsSun ? 'bg-red-50/40' : wIsSat ? 'bg-blue-50/40' : ''}`} onClick={() => onSelectDate(day)}>
               {list.map(s => {
                 const bg = TYPE_BG_COLORS[s.type] || TYPE_BG_COLORS.other;
                 return (
