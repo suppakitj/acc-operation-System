@@ -7,12 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Search, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
+import { useAccessControl } from '../components/auth/useAccessControl';
 import TablePagination, { paginateData } from '../components/shared/TablePagination';
 
 const ACTION_COLORS = { create: 'bg-green-100 text-green-700', update: 'bg-blue-100 text-blue-700', delete: 'bg-red-100 text-red-700' };
 
 export default function AuditLog() {
   const { t } = useLanguage();
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const ac = useAccessControl(currentUser);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -23,6 +26,18 @@ export default function AuditLog() {
   useEffect(() => { setPage(1); }, [search]);
 
   const paged = paginateData(filtered, page, pageSize);
+
+  if (!ac.canViewAuditLog && currentUser) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <History className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <h2 className="text-lg font-semibold mb-1">ไม่มีสิทธิ์เข้าถึง</h2>
+          <p className="text-sm text-muted-foreground">คุณไม่มีสิทธิ์ดูหน้า Audit Log</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">

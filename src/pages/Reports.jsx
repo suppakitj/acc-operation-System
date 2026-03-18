@@ -4,11 +4,28 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { useLanguage } from '../components/LanguageContext';
+import { useAccessControl } from '../components/auth/useAccessControl';
+import { BarChart3 } from 'lucide-react';
 
 const COLORS = ['#1e3a5f', '#f59e0b', '#22c55e', '#8b5cf6', '#ef4444'];
 
 export default function Reports() {
   const { t } = useLanguage();
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const ac = useAccessControl(currentUser);
+
+  if (!ac.canViewReports && currentUser) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <h2 className="text-lg font-semibold mb-1">ไม่มีสิทธิ์เข้าถึง</h2>
+          <p className="text-sm text-muted-foreground">คุณไม่มีสิทธิ์ดูหน้ารายงาน</p>
+        </div>
+      </div>
+    );
+  }
+
   const { data: allTasks = [] } = useQuery({ queryKey: ['tasks'], queryFn: () => base44.entities.Task.list('-created_date', 500) });
   const { data: allBillings = [] } = useQuery({ queryKey: ['billings'], queryFn: () => base44.entities.Billing.list('-created_date', 500) });
   const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });

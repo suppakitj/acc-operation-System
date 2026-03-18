@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { BarChart3, Building2, CalendarDays } from 'lucide-react';
+import { BarChart3, Building2, CalendarDays, TrendingUp } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { useAccessControl } from '../components/auth/useAccessControl';
 import TeamSummaryCards from '../components/analytics/TeamSummaryCards';
 import ProductivityTrend from '../components/analytics/ProductivityTrend';
 import AvgCompletionTime from '../components/analytics/AvgCompletionTime';
@@ -24,6 +25,8 @@ const DEPT_OPTIONS = [
 ];
 
 export default function TeamAnalytics() {
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const ac = useAccessControl(currentUser);
   const [deptFilter, setDeptFilter] = useState('all');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
@@ -36,6 +39,18 @@ export default function TeamAnalytics() {
     if (deptFilter === 'all') return tasks;
     return tasks.filter(t => t.department === deptFilter);
   }, [tasks, deptFilter]);
+
+  if (!ac.canViewTeamAnalytics && currentUser) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <h2 className="text-lg font-semibold mb-1">ไม่มีสิทธิ์เข้าถึง</h2>
+          <p className="text-sm text-muted-foreground">คุณไม่มีสิทธิ์ดูหน้า Team Analytics</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

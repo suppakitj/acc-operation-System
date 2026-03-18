@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useAccessControl } from '../components/auth/useAccessControl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,13 +53,13 @@ function downloadFile(content, filename) {
 
 export default function DatabaseBackup() {
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
-  const isAdmin = currentUser?.role === 'admin';
+  const ac = useAccessControl(currentUser);
 
   const [downloading, setDownloading] = useState({}); // { entityKey: true }
   const [completed, setCompleted] = useState({}); // { entityKey: count }
   const [isBackingUp, setIsBackingUp] = useState(false);
 
-  if (!isAdmin) {
+  if (!ac.canViewDbBackup && currentUser) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
         <ShieldAlert className="w-12 h-12 text-muted-foreground" />
