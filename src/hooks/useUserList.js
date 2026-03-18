@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 
 export function useUserList() {
   return useQuery({
-    queryKey: ['users-list'],
+    queryKey: ['users'],
     queryFn: async () => {
       const res = await base44.functions.invoke('listUsers', {});
       return res.data?.users || [];
