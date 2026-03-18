@@ -55,14 +55,7 @@ export default function UserManagement() {
 
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
   const ac = useAccessControl(currentUser);
-  const { data: users = [] } = useQuery({
-    queryKey: ['users-admin'],
-    queryFn: async () => {
-      const res = await base44.functions.invoke('listUsers', {});
-      return res.data?.users || [];
-    },
-    enabled: ac.canManageUsers,
-  });
+  const { data: users = [] } = useUserList();
 
   if (!ac.canManageUsers) {
     return <div className="text-center py-12 text-muted-foreground">เฉพาะ Admin เท่านั้นที่จัดการผู้ใช้ได้</div>;

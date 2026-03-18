@@ -33,11 +33,7 @@ export default function StaffDashboard() {
     queryKey: ['tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 1000),
   });
-  const { data: users = [], isLoading: loadingUsers, error: usersError } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
-    enabled: ac.canViewStaffDashboard || ac.canManageUsers,
-  });
+  const { data: users = [], isLoading: loadingUsers } = useUserList();
 
   const today = new Date();
   const monthStart = startOfMonth(today);
