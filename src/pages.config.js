@@ -47,8 +47,52 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import AppSettings from './pages/AppSettings';
+import AuditLog from './pages/AuditLog';
+import Billing from './pages/Billing';
+import Customers from './pages/Customers';
+import Dashboard from './pages/Dashboard';
+import DatabaseBackup from './pages/DatabaseBackup';
+import HolidayMaster from './pages/HolidayMaster';
+import LineChat from './pages/LineChat';
+import Notifications from './pages/Notifications';
+import PeakAccount from './pages/PeakAccount';
+import Reports from './pages/Reports';
+import RoleManagement from './pages/RoleManagement';
+import Schedule from './pages/Schedule';
+import ServiceMaster from './pages/ServiceMaster';
+import StaffDashboard from './pages/StaffDashboard';
+import TaskCalendar from './pages/TaskCalendar';
+import TaskTemplates from './pages/TaskTemplates';
+import Tasks from './pages/Tasks';
+import TeamAnalytics from './pages/TeamAnalytics';
+import UserManagement from './pages/UserManagement';
 
-export const pagesConfig = {
-	Pages: {}
+
+export const PAGES = {
+    "AppSettings": AppSettings,
+    "AuditLog": AuditLog,
+    "Billing": Billing,
+    "Customers": Customers,
+    "Dashboard": Dashboard,
+    "DatabaseBackup": DatabaseBackup,
+    "HolidayMaster": HolidayMaster,
+    "LineChat": LineChat,
+    "Notifications": Notifications,
+    "PeakAccount": PeakAccount,
+    "Reports": Reports,
+    "RoleManagement": RoleManagement,
+    "Schedule": Schedule,
+    "ServiceMaster": ServiceMaster,
+    "StaffDashboard": StaffDashboard,
+    "TaskCalendar": TaskCalendar,
+    "TaskTemplates": TaskTemplates,
+    "Tasks": Tasks,
+    "TeamAnalytics": TeamAnalytics,
+    "UserManagement": UserManagement,
 }
 
+export const pagesConfig = {
+    mainPage: "Dashboard",
+    Pages: PAGES,
+};

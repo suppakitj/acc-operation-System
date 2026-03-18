@@ -88,10 +88,6 @@ export default function PeakAccount() {
     else createMutation.mutate(data);
   };
 
-  if (!ac.canViewPeakAccount) {
-    return <div className="text-center py-12 text-muted-foreground">ไม่มีสิทธิ์เข้าถึงหน้านี้</div>;
-  }
-
   const today = new Date();
   const thisMonthStart = startOfMonth(today);
   const thisMonthEnd = endOfMonth(today);
