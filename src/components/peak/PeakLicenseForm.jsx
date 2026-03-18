@@ -194,7 +194,11 @@ export default function PeakLicenseForm({ open, onOpenChange, license, onSubmit,
             </div>
           )}
 
-          <Button onClick={() => onSubmit(form)} disabled={isSaving || !form.customer_id || !form.payment_date} className="w-full">
+          <Button onClick={() => {
+            const cleaned = { ...form };
+            if (cleaned.renewal_year === null || cleaned.renewal_year === '') delete cleaned.renewal_year;
+            onSubmit(cleaned);
+          }} disabled={isSaving || !form.customer_id || !form.payment_date} className="w-full">
             {isSaving ? 'กำลังบันทึก...' : (license ? 'อัปเดต License' : 'สร้าง License')}
           </Button>
         </div>
