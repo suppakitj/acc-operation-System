@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, Search, GripVertical } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameMonth, isSameDay, isToday } from 'date-fns';
+import { ChevronLeft, ChevronRight, Search, GripVertical, Calendar, LayoutGrid, CalendarDays } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, addWeeks, subWeeks, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import TaskCalendarWeekView from '../components/task-calendar/TaskCalendarWeekView';
+import TaskCalendarDayView from '../components/task-calendar/TaskCalendarDayView';
 
 const PRIORITY_COLORS = {
   urgent: 'bg-red-100 border-red-400 text-red-700',
@@ -39,6 +41,7 @@ const SERVICE_LABELS = {
 export default function TaskCalendar() {
   const queryClient = useQueryClient();
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [view, setView] = useState('month'); // month, week, day
   const [filters, setFilters] = useState({ search: '', status: 'active', service: 'all' });
 
   const { data: tasks = [], isLoading } = useQuery({
@@ -123,8 +126,30 @@ export default function TaskCalendar() {
   };
 
   const navigate = (dir) => {
-    setCurrentMonth(dir === 'next' ? addMonths(currentMonth, 1) : subMonths(currentMonth, 1));
+    if (view === 'month') {
+      setCurrentMonth(dir === 'next' ? addMonths(currentMonth, 1) : subMonths(currentMonth, 1));
+    } else if (view === 'week') {
+      setCurrentMonth(dir === 'next' ? addWeeks(currentMonth, 1) : subWeeks(currentMonth, 1));
+    } else {
+      setCurrentMonth(dir === 'next' ? addDays(currentMonth, 1) : addDays(currentMonth, -1));
+    }
   };
+
+  const getHeaderLabel = () => {
+    if (view === 'month') return format(currentMonth, 'MMMM yyyy', { locale: th });
+    if (view === 'week') {
+      const ws = startOfWeek(currentMonth, { weekStartsOn: 0 });
+      const we = endOfWeek(currentMonth, { weekStartsOn: 0 });
+      return `${format(ws, 'd MMM', { locale: th })} - ${format(we, 'd MMM yyyy', { locale: th })}`;
+    }
+    return format(currentMonth, 'EEEE d MMMM yyyy', { locale: th });
+  };
+
+  const viewButtons = [
+    { key: 'month', icon: Calendar, label: 'Month' },
+    { key: 'week', icon: LayoutGrid, label: 'Week' },
+    { key: 'day', icon: CalendarDays, label: 'Day' },
+  ];
 
   const dayNames = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
 
@@ -132,16 +157,33 @@ export default function TaskCalendar() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Task Calendar</h1>
-          <p className="text-sm text-muted-foreground">ลากวางงานเพื่อเปลี่ยน Due Date</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">Task Calendar</h1>
+            <p className="text-sm text-muted-foreground">ลากวางงานเพื่อเปลี่ยน Due Date</p>
+          </div>
+          <div className="flex items-center gap-0.5 bg-muted rounded-lg p-1">
+            {viewButtons.map(({ key, icon: Icon, label }) => (
+              <button
+                key={key}
+                onClick={() => setView(key)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                  view === key ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => navigate('prev')}>
             <ChevronLeft className="w-5 h-5" />
           </Button>
           <h2 className="text-lg font-semibold min-w-[160px] text-center">
-            {format(currentMonth, 'MMMM yyyy', { locale: th })}
+            {getHeaderLabel()}
           </h2>
           <Button variant="ghost" size="icon" onClick={() => navigate('next')}>
             <ChevronRight className="w-5 h-5" />
@@ -199,86 +241,92 @@ export default function TaskCalendar() {
       {/* Calendar */}
       <Card>
         <CardContent className="p-0">
-          <DragDropContext onDragEnd={handleDragEnd}>
-            {/* Day headers */}
-            <div className="grid grid-cols-7 border-b">
-              {dayNames.map((name, i) => (
-                <div key={i} className={cn(
-                  "py-2 text-center text-sm font-medium border-r last:border-r-0",
-                  i === 0 && "text-red-500",
-                  i === 6 && "text-blue-500"
-                )}>
-                  {name}
-                </div>
-              ))}
-            </div>
+          {view === 'month' && (
+            <DragDropContext onDragEnd={handleDragEnd}>
+              {/* Day headers */}
+              <div className="grid grid-cols-7 border-b">
+                {dayNames.map((name, i) => (
+                  <div key={i} className={cn(
+                    "py-2 text-center text-sm font-medium border-r last:border-r-0",
+                    i === 0 && "text-red-500",
+                    i === 6 && "text-blue-500"
+                  )}>
+                    {name}
+                  </div>
+                ))}
+              </div>
 
-            {/* Calendar grid */}
-            <div className="grid grid-cols-7">
-              {calendarDays.map((day, idx) => {
-                const dateKey = format(day, 'yyyy-MM-dd');
-                const dayTasks = tasksByDate[dateKey] || [];
-                const isCurrentMonth = isSameMonth(day, currentMonth);
-                const isCurrentDay = isToday(day);
+              {/* Calendar grid */}
+              <div className="grid grid-cols-7">
+                {calendarDays.map((day, idx) => {
+                  const dateKey = format(day, 'yyyy-MM-dd');
+                  const dayTasks = tasksByDate[dateKey] || [];
+                  const isCurrentMonth = isSameMonth(day, currentMonth);
+                  const isCurrentDay = isToday(day);
 
-                return (
-                  <Droppable key={dateKey} droppableId={dateKey}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={cn(
-                          "min-h-[120px] border-r border-b last:border-r-0 p-1 transition-colors",
-                          !isCurrentMonth && "bg-muted/30",
-                          snapshot.isDraggingOver && "bg-primary/10",
-                          idx % 7 === 0 && "bg-red-50/50",
-                          idx % 7 === 6 && "bg-blue-50/50"
-                        )}
-                      >
-                        {/* Date number */}
-                        <div className={cn(
-                          "text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full",
-                          isCurrentDay && "bg-primary text-primary-foreground",
-                          !isCurrentMonth && "text-muted-foreground"
-                        )}>
-                          {format(day, 'd')}
-                        </div>
-
-                        {/* Tasks */}
-                        <div className="space-y-1">
-                          {dayTasks.slice(0, 4).map((task, taskIdx) => (
-                            <Draggable key={task.id} draggableId={task.id} index={taskIdx}>
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  className={cn(
-                                    "text-[10px] px-1.5 py-1 rounded border-l-2 truncate cursor-grab active:cursor-grabbing transition-shadow",
-                                    PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.medium,
-                                    snapshot.isDragging && "shadow-lg ring-2 ring-primary/30"
-                                  )}
-                                  title={`${task.title}\n${task.customer_name || ''}\n${STATUS_LABELS[task.status] || task.status}`}
-                                >
-                                  <span className="font-medium">{task.title}</span>
-                                </div>
-                              )}
-                            </Draggable>
-                          ))}
-                          {dayTasks.length > 4 && (
-                            <div className="text-[10px] text-muted-foreground text-center">
-                              +{dayTasks.length - 4} งาน
-                            </div>
+                  return (
+                    <Droppable key={dateKey} droppableId={dateKey}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={cn(
+                            "min-h-[120px] border-r border-b last:border-r-0 p-1 transition-colors",
+                            !isCurrentMonth && "bg-muted/30",
+                            snapshot.isDraggingOver && "bg-primary/10",
+                            idx % 7 === 0 && "bg-red-50/50",
+                            idx % 7 === 6 && "bg-blue-50/50"
                           )}
+                        >
+                          <div className={cn(
+                            "text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full",
+                            isCurrentDay && "bg-primary text-primary-foreground",
+                            !isCurrentMonth && "text-muted-foreground"
+                          )}>
+                            {format(day, 'd')}
+                          </div>
+
+                          <div className="space-y-1">
+                            {dayTasks.slice(0, 4).map((task, taskIdx) => (
+                              <Draggable key={task.id} draggableId={task.id} index={taskIdx}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    className={cn(
+                                      "text-[10px] px-1.5 py-1 rounded border-l-2 truncate cursor-grab active:cursor-grabbing transition-shadow",
+                                      PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.medium,
+                                      snapshot.isDragging && "shadow-lg ring-2 ring-primary/30"
+                                    )}
+                                    title={`${task.title}\n${task.customer_name || ''}\n${STATUS_LABELS[task.status] || task.status}`}
+                                  >
+                                    <span className="font-medium">{task.title}</span>
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                            {dayTasks.length > 4 && (
+                              <div className="text-[10px] text-muted-foreground text-center">
+                                +{dayTasks.length - 4} งาน
+                              </div>
+                            )}
+                          </div>
+                          {provided.placeholder}
                         </div>
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                );
-              })}
-            </div>
-          </DragDropContext>
+                      )}
+                    </Droppable>
+                  );
+                })}
+              </div>
+            </DragDropContext>
+          )}
+          {view === 'week' && (
+            <TaskCalendarWeekView currentDate={currentMonth} tasksByDate={tasksByDate} onDragEnd={handleDragEnd} />
+          )}
+          {view === 'day' && (
+            <TaskCalendarDayView currentDate={currentMonth} tasksByDate={tasksByDate} onDragEnd={handleDragEnd} />
+          )}
         </CardContent>
       </Card>
 
