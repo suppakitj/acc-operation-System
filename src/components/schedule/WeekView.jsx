@@ -12,7 +12,7 @@ function resolveNames(emails, users) {
   });
 }
 
-export default function WeekView({ currentMonth, schedules, onSelectDate, selectedDate, onScheduleClick, users = [] }) {
+export default function WeekView({ currentMonth, schedules, onSelectDate, selectedDate, onScheduleClick, users = [], holidaysByDate = {} }) {
   const weekStart = startOfWeek(currentMonth, { weekStartsOn: 0 });
   const weekEnd = endOfWeek(currentMonth, { weekStartsOn: 0 });
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
@@ -27,22 +27,33 @@ export default function WeekView({ currentMonth, schedules, onSelectDate, select
       {/* Header */}
       <div className="grid grid-cols-8 border-b">
         <div className="py-2 text-center text-xs text-muted-foreground border-r" />
-        {days.map(day => (
-          <div key={day.toISOString()} className={`py-2 text-center border-r last:border-r-0 ${isToday(day) ? 'bg-primary/5' : ''}`}>
-            <div className="text-[10px] text-muted-foreground">{format(day, 'EEE').toUpperCase()}</div>
-            <div className={`text-sm font-medium ${isToday(day) ? 'bg-primary text-primary-foreground rounded-full w-7 h-7 flex items-center justify-center mx-auto' : ''}`}>
-              {format(day, 'd')}
+        {days.map(day => {
+          const dateKey = format(day, 'yyyy-MM-dd');
+          const holiday = holidaysByDate[dateKey];
+          return (
+            <div key={day.toISOString()} className={`py-2 text-center border-r last:border-r-0 ${holiday ? 'bg-red-50/70' : isToday(day) ? 'bg-primary/5' : ''}`}>
+              <div className="text-[10px] text-muted-foreground">{format(day, 'EEE').toUpperCase()}</div>
+              <div className={`text-sm font-medium ${isToday(day) ? 'bg-primary text-primary-foreground rounded-full w-7 h-7 flex items-center justify-center mx-auto' : ''}`}>
+                {format(day, 'd')}
+              </div>
+              {holiday && (
+                <div className="text-[8px] text-red-600 font-medium truncate px-1" title={holiday.name_th}>
+                  {holiday.name_th}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       {/* All-day / schedule rows */}
       <div className="grid grid-cols-8">
         <div className="border-r border-b p-1 text-[10px] text-muted-foreground flex items-start justify-end pr-2 pt-2">All day</div>
         {days.map(day => {
           const list = getForDay(day);
+          const wDateKey = format(day, 'yyyy-MM-dd');
+          const wHoliday = holidaysByDate[wDateKey];
           return (
-            <div key={day.toISOString()} className="border-r border-b p-1 min-h-[80px] cursor-pointer hover:bg-muted/20" onClick={() => onSelectDate(day)}>
+            <div key={day.toISOString()} className={`border-r border-b p-1 min-h-[80px] cursor-pointer hover:bg-muted/20 ${wHoliday ? 'bg-red-50/50' : ''}`} onClick={() => onSelectDate(day)}>
               {list.map(s => {
                 const bg = TYPE_BG_COLORS[s.type] || TYPE_BG_COLORS.other;
                 return (

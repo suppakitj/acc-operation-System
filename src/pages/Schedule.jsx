@@ -49,8 +49,15 @@ export default function Schedule() {
 
   const { data: allSchedules = [] } = useQuery({ queryKey: ['schedules'], queryFn: () => base44.entities.Schedule.list('-date', 500) });
   const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 200) });
+  const { data: holidays = [] } = useQuery({ queryKey: ['holidays'], queryFn: () => base44.entities.HolidayMaster.filter({ status: 'active' }) });
   const customers = allCustomers.filter(c => c.status === 'active');
   const { data: users = [] } = useUserList();
+
+  const holidaysByDate = useMemo(() => {
+    const map = {};
+    holidays.forEach(h => { if (h.date) map[h.date] = h; });
+    return map;
+  }, [holidays]);
 
   const baseSchedules = ac.canViewAllSchedules ? allSchedules : ac.filterByDepartment(allSchedules);
 
@@ -226,6 +233,7 @@ export default function Schedule() {
               selectedDate={selectedDate}
               onScheduleClick={handleScheduleClick}
               users={users}
+              holidaysByDate={holidaysByDate}
             />
           )}
           {view === 'week' && (
@@ -236,11 +244,12 @@ export default function Schedule() {
               selectedDate={selectedDate}
               onScheduleClick={handleScheduleClick}
               users={users}
+              holidaysByDate={holidaysByDate}
             />
           )}
           {view === 'agenda' && (
             <div className="p-4">
-              <AgendaView currentMonth={currentDate} schedules={filteredSchedules} onScheduleClick={handleScheduleClick} users={users} />
+              <AgendaView currentMonth={currentDate} schedules={filteredSchedules} onScheduleClick={handleScheduleClick} users={users} holidaysByDate={holidaysByDate} />
             </div>
           )}
         </CardContent>

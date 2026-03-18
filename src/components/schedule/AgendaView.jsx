@@ -11,7 +11,7 @@ function resolveNames(emails, users) {
   });
 }
 
-export default function AgendaView({ currentMonth, schedules, onScheduleClick, users = [] }) {
+export default function AgendaView({ currentMonth, schedules, onScheduleClick, users = [], holidaysByDate = {} }) {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
 
@@ -34,11 +34,16 @@ export default function AgendaView({ currentMonth, schedules, onScheduleClick, u
 
   return (
     <div className="divide-y">
-      {dates.map(date => (
-        <div key={date} className="flex gap-4 py-3">
+      {dates.map(date => {
+        const holiday = holidaysByDate[date];
+        return (
+        <div key={date} className={`flex gap-4 py-3 ${holiday ? 'bg-red-50/50' : ''}`}>
           <div className="w-20 shrink-0 text-right">
             <div className="text-sm font-semibold">{format(parseISO(date), 'MMM d')}</div>
             <div className="text-[10px] text-muted-foreground">{format(parseISO(date), 'EEE')}</div>
+            {holiday && (
+              <div className="text-[9px] text-red-600 font-medium mt-0.5">{holiday.name_th}</div>
+            )}
           </div>
           <div className="flex-1 space-y-2">
             {grouped[date].map(s => {
@@ -66,7 +71,8 @@ export default function AgendaView({ currentMonth, schedules, onScheduleClick, u
             })}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

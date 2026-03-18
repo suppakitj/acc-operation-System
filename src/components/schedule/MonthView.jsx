@@ -12,7 +12,7 @@ function resolveNames(emails, users) {
   });
 }
 
-export default function MonthView({ currentMonth, schedules, onSelectDate, selectedDate, onScheduleClick, users = [] }) {
+export default function MonthView({ currentMonth, schedules, onSelectDate, selectedDate, onScheduleClick, users = [], holidaysByDate = {} }) {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -48,6 +48,8 @@ export default function MonthView({ currentMonth, schedules, onSelectDate, selec
         ))}
         {days.map(day => {
           const list = getForDay(day);
+          const dateKey = format(day, 'yyyy-MM-dd');
+          const holiday = holidaysByDate[dateKey];
           const today = isToday(day);
           const selected = selectedDate && isSameDay(day, selectedDate);
           const isSat = day.getDay() === 6;
@@ -57,12 +59,17 @@ export default function MonthView({ currentMonth, schedules, onSelectDate, selec
             <div
               key={day.toISOString()}
               onClick={() => onSelectDate(day)}
-              className={`min-h-[100px] border-r border-b p-1.5 cursor-pointer transition-colors hover:bg-muted/30 ${selected ? 'bg-primary/5' : ''} ${today ? 'bg-blue-50/50' : ''}`}
+              className={`min-h-[100px] border-r border-b p-1.5 cursor-pointer transition-colors hover:bg-muted/30 ${selected ? 'bg-primary/5' : ''} ${holiday ? 'bg-red-50/70' : today ? 'bg-blue-50/50' : ''}`}
             >
               <div className="flex items-center gap-1 mb-1">
                 <span className={`text-sm ${today ? 'bg-primary text-primary-foreground rounded-full w-7 h-7 flex items-center justify-center font-bold' : ''} ${isSat ? 'text-blue-600' : ''} ${isSun ? 'text-red-500' : ''}`}>
                   {format(day, 'd')}
                 </span>
+                {holiday && (
+                  <span className="text-[9px] text-red-600 font-medium truncate" title={holiday.name_th}>
+                    {holiday.name_th}
+                  </span>
+                )}
               </div>
               <div className="space-y-0.5">
                 {list.slice(0, MAX_DISPLAY).map(s => {
