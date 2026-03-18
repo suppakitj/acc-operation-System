@@ -12,6 +12,12 @@ Deno.serve(async (req) => {
     // Use service role to list all users (bypasses User entity security rules)
     const users = await base44.asServiceRole.entities.User.list();
 
+    // Debug: log first user's keys to see available fields
+    if (users.length > 0) {
+      console.log('User keys:', Object.keys(users[0]));
+      console.log('First user sample:', JSON.stringify(users[0]).slice(0, 500));
+    }
+
     // Return all user data fields needed by frontend
     const safeUsers = users.map(u => ({
       id: u.id,
