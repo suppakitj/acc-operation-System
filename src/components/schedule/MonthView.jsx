@@ -35,8 +35,8 @@ export default function MonthView({ currentMonth, schedules, onSelectDate, selec
     <div>
       {/* Day headers */}
       <div className="grid grid-cols-7 border-b">
-        {DAY_NAMES.map(d => (
-          <div key={d} className="py-2 text-center text-xs font-medium text-muted-foreground border-r last:border-r-0">
+        {DAY_NAMES.map((d, i) => (
+          <div key={d} className={`py-2 text-center text-xs font-medium border-r last:border-r-0 ${i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-muted-foreground'}`}>
             {d}
           </div>
         ))}
@@ -59,7 +59,7 @@ export default function MonthView({ currentMonth, schedules, onSelectDate, selec
             <div
               key={day.toISOString()}
               onClick={() => onSelectDate(day)}
-              className={`min-h-[100px] border-r border-b p-1.5 cursor-pointer transition-colors hover:bg-muted/30 ${selected ? 'bg-primary/5' : ''} ${holiday ? 'bg-red-50/70' : today ? 'bg-blue-50/50' : ''}`}
+              className={`min-h-[100px] border-r border-b p-1.5 cursor-pointer transition-colors hover:bg-muted/30 ${selected ? 'bg-primary/5' : ''} ${holiday ? 'bg-red-50/70' : today ? 'bg-blue-50/50' : isSun ? 'bg-red-50/40' : isSat ? 'bg-blue-50/40' : ''}`}
             >
               <div className="flex items-center gap-1 mb-1">
                 <span className={`text-sm ${today ? 'bg-primary text-primary-foreground rounded-full w-7 h-7 flex items-center justify-center font-bold' : ''} ${isSat ? 'text-blue-600' : ''} ${isSun ? 'text-red-500' : ''}`}>
