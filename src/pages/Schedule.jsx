@@ -58,7 +58,8 @@ export default function Schedule() {
     return baseSchedules.filter(s => {
       if (filters.search) {
         const q = filters.search.toLowerCase();
-        if (!(s.assigned_name || '').toLowerCase().includes(q) &&
+        const names = Array.isArray(s.assigned_name) ? s.assigned_name.join(' ') : (s.assigned_name || '');
+        if (!names.toLowerCase().includes(q) &&
             !(s.customer_name || '').toLowerCase().includes(q) &&
             !(s.title || '').toLowerCase().includes(q)) return false;
       }
