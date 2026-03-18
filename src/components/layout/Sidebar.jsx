@@ -14,9 +14,9 @@ import { useAccessControl } from '../auth/useAccessControl';
 export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, setMobileOpen }) {
   const location = useLocation();
   const { t } = useLanguage();
-  // Debug: log user role
-  console.log('Sidebar user:', user?.email, 'role:', user?.role, 'data.role:', user?.data?.role);
   const ac = useAccessControl(user);
+  // Debug: log visible menus
+  console.log('Sidebar user:', user?.email, 'role:', user?.role, 'visibleMenus:', ac.getVisibleMenuIds());
 
   const menuItems = [
     { id: 'dashboard', label: t('menu_dashboard'), icon: LayoutDashboard, path: '/Dashboard' },
