@@ -108,25 +108,61 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
 
       {/* Nav */}
       <ScrollArea className="flex-1 py-3 px-2">
-        <nav className="space-y-0.5">
-          {visibleMenuItems.map(item => {
-            const isActive = location.pathname === item.path;
+        <nav className="space-y-1">
+          {visibleGroups.map(group => {
+            const isExpanded = expandedGroups[group.key] !== false;
+            const hasActive = group.items.some(m => m.path === location.pathname);
+            const GroupIcon = group.icon;
+
             return (
-              <Link
-                key={item.id}
-                to={item.path}
-                onClick={handleNavClick}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200",
-                  isActive
-                    ? "bg-sidebar-primary/15 text-sidebar-primary"
-                    : "text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+              <div key={group.key}>
+                {/* Group header */}
+                {(!collapsed || mobileOpen) ? (
+                  <button
+                    onClick={() => toggleGroup(group.key)}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] font-semibold uppercase tracking-wider transition-colors",
+                      hasActive ? "text-sidebar-primary" : "text-sidebar-foreground/45 hover:text-sidebar-foreground/70"
+                    )}
+                  >
+                    <GroupIcon className="w-3.5 h-3.5 shrink-0" />
+                    <span className="flex-1 text-left">{group.label}</span>
+                    <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-200", !isExpanded && "-rotate-90")} />
+                  </button>
+                ) : (
+                  <div className="flex justify-center py-1.5">
+                    <div className={cn("w-5 h-px rounded", hasActive ? "bg-sidebar-primary/60" : "bg-sidebar-foreground/15")} />
+                  </div>
                 )}
-                title={collapsed && !mobileOpen ? item.label : undefined}
-              >
-                <item.icon className={cn("w-[18px] h-[18px] shrink-0", isActive && "text-sidebar-primary")} />
-                {(!collapsed || mobileOpen) && <span className="truncate">{item.label}</span>}
-              </Link>
+
+                {/* Group items */}
+                <div className={cn(
+                  "space-y-0.5 overflow-hidden transition-all duration-200",
+                  (!collapsed || mobileOpen) ? (isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0") : ""
+                )}>
+                  {group.items.map(item => {
+                    const isActive = location.pathname === item.path;
+                    return (
+                      <Link
+                        key={item.id}
+                        to={item.path}
+                        onClick={handleNavClick}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg text-[13px] font-medium transition-all duration-200",
+                          (!collapsed || mobileOpen) ? "px-3 py-2 ml-2" : "px-3 py-2.5",
+                          isActive
+                            ? "bg-sidebar-primary/15 text-sidebar-primary"
+                            : "text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+                        )}
+                        title={collapsed && !mobileOpen ? item.label : undefined}
+                      >
+                        <item.icon className={cn("w-[18px] h-[18px] shrink-0", isActive && "text-sidebar-primary")} />
+                        {(!collapsed || mobileOpen) && <span className="truncate">{item.label}</span>}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </nav>
