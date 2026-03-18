@@ -4,12 +4,14 @@ import { TYPE_DOT_COLORS } from './ScheduleLegend';
 
 const DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
+function resolveName(email, users) {
+  const u = users.find(u => u.email === email);
+  return u?.initials || u?.nickname || email?.split('@')[0] || '';
+}
+
 function resolveNames(emails, users) {
-  if (!Array.isArray(emails)) return emails;
-  return emails.map(email => {
-    const u = users.find(u => u.email === email);
-    return u?.initials || u?.nickname || email.split('@')[0];
-  });
+  if (!Array.isArray(emails)) return emails ? [resolveName(emails, users)] : [];
+  return emails.map(email => resolveName(email, users));
 }
 
 export default function MonthView({ currentMonth, schedules, onSelectDate, selectedDate, onScheduleClick, users = [], holidaysByDate = {} }) {
@@ -85,7 +87,7 @@ export default function MonthView({ currentMonth, schedules, onSelectDate, selec
                       onClick={(e) => { e.stopPropagation(); onScheduleClick?.(s); }}
                       className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] truncate ${bgColor} hover:ring-1 hover:ring-primary/40 cursor-pointer`}>
                       <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
-                      <span className="truncate">{(Array.isArray(s.assigned_to) ? resolveNames(s.assigned_to, users).join(', ') : s.assigned_name) || s.title}</span>
+                      <span className="truncate">{(s.assigned_to ? resolveNames(s.assigned_to, users).join(', ') : '') || s.title}</span>
                     </div>
                   );
                 })}

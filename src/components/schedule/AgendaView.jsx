@@ -3,12 +3,14 @@ import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { TYPE_DOT_COLORS, TYPE_BG_COLORS } from './ScheduleLegend';
 import { Clock, MapPin, User } from 'lucide-react';
 
+function resolveName(email, users) {
+  const u = users.find(u => u.email === email);
+  return u?.initials || u?.nickname || email?.split('@')[0] || '';
+}
+
 function resolveNames(emails, users) {
-  if (!Array.isArray(emails)) return emails;
-  return emails.map(email => {
-    const u = users.find(u => u.email === email);
-    return u?.initials || u?.nickname || email.split('@')[0];
-  });
+  if (!Array.isArray(emails)) return emails ? [resolveName(emails, users)] : [];
+  return emails.map(email => resolveName(email, users));
 }
 
 export default function AgendaView({ currentMonth, schedules, onScheduleClick, users = [], holidaysByDate = {} }) {
