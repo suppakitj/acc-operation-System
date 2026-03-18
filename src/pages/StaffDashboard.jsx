@@ -125,6 +125,21 @@ export default function StaffDashboard() {
 
   const isLoading = loadingTasks || loadingUsers;
 
+  // Check access - only admin, management, manager can view
+  const canView = ac.role === 'admin' || ac.role === 'management' || ac.role === 'manager';
+  
+  if (!canView && currentUser) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <h2 className="text-lg font-semibold mb-1">ไม่มีสิทธิ์เข้าถึง</h2>
+          <p className="text-sm text-muted-foreground">หน้านี้สำหรับ Admin, Management และ Manager เท่านั้น</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}
