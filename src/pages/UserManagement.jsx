@@ -11,6 +11,7 @@ import { useLanguage } from '../components/LanguageContext';
 import UserTable from '../components/users/UserTable';
 import UserFormDialog from '../components/users/UserFormDialog';
 import { useAccessControl } from '../components/auth/useAccessControl';
+import { useUserList } from '../hooks/useUserList';
 
 // Employee ID prefixes per department
 const DEPT_PREFIX = {
@@ -64,7 +65,6 @@ export default function UserManagement() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users-admin'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setShowForm(false);
       setEditingUser(null);
