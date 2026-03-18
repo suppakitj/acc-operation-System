@@ -14,6 +14,8 @@ import { useAccessControl } from '../auth/useAccessControl';
 export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, setMobileOpen }) {
   const location = useLocation();
   const { t } = useLanguage();
+  // Debug: log user role
+  console.log('Sidebar user:', user?.email, 'role:', user?.role, 'data.role:', user?.data?.role);
   const ac = useAccessControl(user);
 
   const menuItems = [
