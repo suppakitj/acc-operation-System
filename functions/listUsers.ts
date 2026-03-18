@@ -12,11 +12,11 @@ Deno.serve(async (req) => {
     // Use service role to list all users (bypasses User entity security rules)
     const users = await base44.asServiceRole.entities.User.list();
 
-    // Debug: log first user's keys
-    if (users.length > 0) {
-      const u0 = users[0];
-      console.log('Keys:', Object.keys(u0).join(','));
-      console.log('nickname:', u0.nickname, 'initials:', u0.initials);
+    // Debug: find suppakit user
+    const debug = users.find(u => u.email?.includes('suppakit'));
+    if (debug) {
+      console.log('suppakit keys:', Object.keys(debug).join(','));
+      console.log('nickname:', debug.nickname, 'initials:', debug.initials, 'data:', debug.data);
     }
 
     // Return all user data fields needed by frontend
