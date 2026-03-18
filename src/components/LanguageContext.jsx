@@ -20,7 +20,7 @@ const translations = {
     // Sidebar
     menu_dashboard: 'แดชบอร์ด',
     menu_tasks: 'จัดการงาน',
-    menu_schedule: 'ตารางงาน',
+    menu_schedule: 'ตารางกิจกรรม',
     menu_customers: 'ลูกค้า',
     menu_templates: 'เทมเพลตงาน',
     menu_peak: 'Peak Account',
