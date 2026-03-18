@@ -42,6 +42,21 @@ export default function Schedule() {
   const [view, setView] = useState('month'); // month, week, agenda
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
+
+  const handleSelectDate = (date) => {
+    setSelectedDate(date);
+    if (ac.canAddSchedule) {
+      setForm({
+        title: '', description: '', date: format(date, 'yyyy-MM-dd'),
+        date_end: '',
+        start_time: '', end_time: '', type: 'meeting', status: 'scheduled',
+        assigned_to: currentUser?.email ? [currentUser.email] : [],
+        assigned_name: currentUser?.full_name ? [currentUser.full_name] : [],
+        customer_id: '', customer_name: '', department: '',
+      });
+      setShowForm(true);
+    }
+  };
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({});
   const [filters, setFilters] = useState({ search: '', department: 'all', employee: 'all', type: 'all', customer: 'all' });
