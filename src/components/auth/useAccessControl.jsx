@@ -21,17 +21,22 @@ export function useAccessControl(user) {
     const canManageUsers         = p('user_master') === 'yes';
     const canManageRoles         = p('role_mgmt') === 'yes';
     const customerPerm           = p('customer');
-    const canManageCustomers     = customerPerm !== 'no';
+    const canManageCustomers     = customerPerm !== 'no' && customerPerm !== 'view_only';
     const canAddCustomer         = customerPerm === 'yes' || customerPerm === 'dept';
     const canDeleteCustomer      = customerPerm === 'yes';
-    const canEditCustomer        = customerPerm !== 'no'; // edit_only, yes, dept all can edit
+    const canEditCustomer        = customerPerm !== 'no' && customerPerm !== 'view_only'; // edit_only, yes, dept all can edit
+    const canViewCustomer        = customerPerm !== 'no'; // view_only can still view
     const canManageTemplates     = p('template') === 'yes';
     const canManageTemplatesDept = p('template') === 'dept';
-    const canViewBilling         = p('view_billing') === 'yes';
+    const canViewBilling         = p('view_billing') === 'yes' || p('view_billing') === 'view_only';
     const canViewBillingDept     = p('view_billing') === 'dept';
+    const canEditBilling         = p('view_billing') !== 'no' && p('view_billing') !== 'view_only';
     const canViewPeakAccount     = p('peak') !== 'no';
-    const canManageServiceMaster = p('service_master') !== 'no';
-    const canManageHolidays      = p('holiday_master') !== 'no';
+    const canEditPeakAccount     = p('peak') !== 'no' && p('peak') !== 'view_only';
+    const canManageServiceMaster = p('service_master') !== 'no' && p('service_master') !== 'view_only';
+    const canViewServiceMaster   = p('service_master') !== 'no';
+    const canManageHolidays      = p('holiday_master') !== 'no' && p('holiday_master') !== 'view_only';
+    const canViewHolidays        = p('holiday_master') !== 'no';
     const crossGroup             = p('cross_group') === 'yes';
     const canViewStaffDashboard  = p('staff_dashboard') !== 'no';
     const canViewTeamAnalytics   = p('team_analytics') !== 'no';
@@ -118,10 +123,13 @@ export function useAccessControl(user) {
     return {
       role, email, userDepartments: depts,
       canManageUsers, canManageRoles, canManageCustomers,
-      canAddCustomer, canDeleteCustomer, canEditCustomer,
-      canManageTemplates, canManageTemplatesDept, canManageServiceMaster, canManageHolidays,
-      canViewBilling, canViewBillingDept,
-      canViewPeakAccount, canViewAllSchedules, canAddSchedule, canEditSchedule,
+      canAddCustomer, canDeleteCustomer, canEditCustomer, canViewCustomer,
+      canManageTemplates, canManageTemplatesDept,
+      canManageServiceMaster, canViewServiceMaster,
+      canManageHolidays, canViewHolidays,
+      canViewBilling, canViewBillingDept, canEditBilling,
+      canViewPeakAccount, canEditPeakAccount,
+      canViewAllSchedules, canAddSchedule, canEditSchedule,
       canEditAssignee, canAddTask, canChangeDueDate, canChangeStatus,
       filterByDepartment, canAccessDepartment,
       getVisibleMenuIds,
@@ -135,10 +143,13 @@ function empty() {
   return {
     role: '', email: '', userDepartments: [],
     canManageUsers: false, canManageRoles: false, canManageCustomers: false,
-    canAddCustomer: false, canDeleteCustomer: false, canEditCustomer: false,
-    canManageTemplates: false, canManageTemplatesDept: false, canManageServiceMaster: false, canManageHolidays: false,
-    canViewBilling: false, canViewBillingDept: false,
-    canViewPeakAccount: false, canViewAllSchedules: false, canAddSchedule: false, canEditSchedule: () => false,
+    canAddCustomer: false, canDeleteCustomer: false, canEditCustomer: false, canViewCustomer: false,
+    canManageTemplates: false, canManageTemplatesDept: false,
+    canManageServiceMaster: false, canViewServiceMaster: false,
+    canManageHolidays: false, canViewHolidays: false,
+    canViewBilling: false, canViewBillingDept: false, canEditBilling: false,
+    canViewPeakAccount: false, canEditPeakAccount: false,
+    canViewAllSchedules: false, canAddSchedule: false, canEditSchedule: () => false,
     canEditAssignee: false, canAddTask: false,
     canChangeDueDate: () => false, canChangeStatus: () => false,
     filterByDepartment: () => [], canAccessDepartment: () => false,
