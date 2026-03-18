@@ -52,7 +52,7 @@ export default function TopBar({ user, unreadCount, onMenuClick }) {
             <button className="flex items-center gap-2.5 hover:bg-muted rounded-lg py-1.5 px-2 transition-colors">
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
                 <span className="text-primary-foreground text-xs font-bold">
-                  {user?.full_name?.[0]?.toUpperCase() || 'U'}
+                  {user?.initials || user?.full_name?.[0]?.toUpperCase() || 'U'}
                 </span>
               </div>
               <div className="hidden md:block text-left">
