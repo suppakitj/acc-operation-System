@@ -33,6 +33,10 @@ const DEFAULT_MATRIX = [
   { key: 'holiday_master', label: 'จัดการ Holiday Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
   { key: 'staff_dashboard', label: 'Staff Dashboard', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
   { key: 'task_calendar', label: 'Task Calendar (Drag & Drop)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  { key: 'team_analytics', label: 'Team Analytics', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
+  { key: 'reports', label: 'รายงาน (Reports)', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
+  { key: 'audit_log', label: 'Audit Log', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
+  { key: 'db_backup', label: 'Backup Database', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
 ];
 
 const PERM_CYCLE = ['yes', 'dept', 'own', 'edit_only', 'no'];
