@@ -56,12 +56,12 @@ export default function UserManagement() {
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
   const ac = useAccessControl(currentUser);
   const { data: users = [] } = useQuery({
-    queryKey: ['users'],
+    queryKey: ['users-admin'],
     queryFn: async () => {
-      // Use backend function to bypass User entity security rules
       const res = await base44.functions.invoke('listUsers', {});
       return res.data?.users || [];
     },
+    enabled: ac.canManageUsers,
   });
 
   if (!ac.canManageUsers) {
