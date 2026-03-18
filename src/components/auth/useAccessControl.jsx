@@ -7,7 +7,7 @@ export function useAccessControl(user) {
   return useMemo(() => {
     if (!user) return empty();
 
-    const role = user.role || 'staff';
+    const role = user.role || user.data?.role || 'staff';
     const email = user.email || '';
 
     const depts = user.departments?.length
