@@ -41,7 +41,7 @@ export default function WeekView({ currentMonth, schedules, onSelectDate, select
                   <div key={s.id}
                     onClick={(e) => { e.stopPropagation(); onScheduleClick?.(s); }}
                     className={`text-[10px] px-1.5 py-0.5 rounded mb-0.5 truncate ${bg} hover:ring-1 hover:ring-primary/40 cursor-pointer`}>
-                    {s.assigned_name || s.title}
+                    {(Array.isArray(s.assigned_name) ? s.assigned_name.join(', ') : s.assigned_name) || s.title}
                     {s.start_time && <span className="text-muted-foreground ml-1">{s.start_time}</span>}
                   </div>
                 );
