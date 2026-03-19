@@ -20,7 +20,6 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const menuItems = [
     { id: 'dashboard', label: t('menu_dashboard'), icon: LayoutDashboard, path: '/Dashboard' },
     { id: 'staff_dashboard', label: 'Staff Dashboard', icon: UsersRound, path: '/StaffDashboard' },
-    { id: 'reports', label: t('menu_reports'), icon: BarChart3, path: '/Reports' },
     { id: 'tasks', label: t('menu_tasks'), icon: CheckSquare, path: '/Tasks' },
     { id: 'task_calendar', label: 'Task Calendar', icon: CalendarDays, path: '/TaskCalendar' },
     { id: 'schedule', label: t('menu_schedule'), icon: Calendar, path: '/Schedule' },
@@ -45,7 +44,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
 
   // Menu groups
   const menuGroups = [
-    { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'staff_dashboard', 'reports', 'team_analytics'] },
+    { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'staff_dashboard', 'team_analytics'] },
     { key: 'work', label: 'งาน', icon: Folder, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'service_master', 'holiday_master'] },
     { key: 'clients', label: 'ลูกค้า', icon: Contact, ids: ['customers', 'peak', 'billing'] },
     { key: 'comms', label: 'สื่อสาร', icon: MessageSquare, ids: ['notifications', 'line_chat'] },
