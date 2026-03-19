@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '../LanguageContext';
+import { Building2, Users, Phone, Briefcase, CreditCard, FileText } from 'lucide-react';
 
 const SERVICES = [
   { value: 'accounting', label: 'รับทำบัญชี' },
@@ -51,9 +52,34 @@ const PAYMENT_METHODS = [
   { value: 'other', label: 'อื่นๆ' },
 ];
 
+function SectionHeader({ icon: Icon, title }) {
+  return (
+    <div className="flex items-center gap-2 pb-2 mb-4 border-b border-border">
+      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+        <Icon className="w-4 h-4 text-primary" />
+      </div>
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+    </div>
+  );
+}
+
+function FieldWrapper({ label, required, error, children }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-medium">
+        {label}
+        {required && <span className="text-destructive ml-0.5">*</span>}
+      </Label>
+      {children}
+      {error && <p className="text-[11px] text-destructive">{error}</p>}
+    </div>
+  );
+}
+
 export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }) {
   const { t } = useLanguage();
   const { data: users = [] } = useUserList();
+  const [errors, setErrors] = useState({});
 
   const [form, setForm] = useState({
     company_name: '', company_name_en: '', tax_id: '', address: '',
@@ -61,13 +87,17 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
     supervisor: '', supervisor_name: '', primary_officer: '', primary_officer_name: '',
     contact_person: '', contact_email: '', contact_phone: '', line_id: '',
     services: [], peak_package: 'none', peak_license_start: '', peak_license_end: '',
-    credit_term: 30, billing_profile: { billing_name: '', billing_address: '', billing_tax_id: '', billing_email: '', payment_method: 'transfer' },
+    credit_term: 30, monthly_fee: null, yearly_fee: null,
+    billing_profile: { billing_name: '', billing_address: '', billing_tax_id: '', billing_email: '', payment_method: 'transfer' },
     status: 'active', notes: '',
     ...customer,
     billing_profile: { billing_name: '', billing_address: '', billing_tax_id: '', billing_email: '', payment_method: 'transfer', ...(customer?.billing_profile || {}) },
   });
 
-  const update = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+  const update = (key, value) => {
+    setForm(prev => ({ ...prev, [key]: value }));
+    if (errors[key]) setErrors(prev => ({ ...prev, [key]: null }));
+  };
   const updateBilling = (key, value) => setForm(prev => ({ ...prev, billing_profile: { ...prev.billing_profile, [key]: value } }));
 
   const toggleArr = (field, val) => {
@@ -81,27 +111,40 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
   };
 
   const handleSubmit = () => {
-    if (!form.company_name) return;
-    // Validate TAX ID
-    if (form.tax_id && form.tax_id.replace(/\D/g, '').length !== 13 && form.tax_id.length > 0) {
-      // Allow empty, but if filled must be 13 digits
+    const newErrors = {};
+    if (!form.company_name.trim()) newErrors.company_name = 'กรุณากรอกชื่อลูกค้า';
+    const digits = (form.tax_id || '').replace(/\D/g, '');
+    if (digits.length !== 13) newErrors.tax_id = 'กรุณากรอก TAX ID ให้ครบ 13 หลัก';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
     }
+    setErrors({});
     onSubmit(form);
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Section: ข้อมูลบริษัท */}
-      <div>
-        <h3 className="text-sm font-semibold mb-3 text-primary">ข้อมูลบริษัท</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="bg-card rounded-xl border p-4 md:p-5">
+        <SectionHeader icon={Building2} title="ข้อมูลบริษัท" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {customer?.customer_code && (
-            <div className="space-y-1"><Label>รหัสลูกค้า</Label><Input value={form.customer_code || ''} disabled className="bg-muted" /></div>
+            <FieldWrapper label="รหัสลูกค้า">
+              <Input value={form.customer_code || ''} disabled className="bg-muted" />
+            </FieldWrapper>
           )}
-          <div className="space-y-1"><Label>ชื่อลูกค้า *</Label><Input value={form.company_name} onChange={e => update('company_name', e.target.value)} disabled={readOnly} /></div>
-          <div className="space-y-1"><Label>ชื่อ (อังกฤษ)</Label><Input value={form.company_name_en} onChange={e => update('company_name_en', e.target.value)} disabled={readOnly} /></div>
-          <div className="space-y-1"><Label>TAX ID (13 หลัก)</Label><Input value={form.tax_id} onChange={e => update('tax_id', e.target.value)} maxLength={13} placeholder="0000000000000" disabled={readOnly} /></div>
-          <div className="space-y-1"><Label>สถานะ</Label>
+          <FieldWrapper label="ชื่อลูกค้า" required error={errors.company_name}>
+            <Input value={form.company_name} onChange={e => update('company_name', e.target.value)} disabled={readOnly} className={errors.company_name ? 'border-destructive' : ''} />
+          </FieldWrapper>
+          <FieldWrapper label="ชื่อ (อังกฤษ)">
+            <Input value={form.company_name_en} onChange={e => update('company_name_en', e.target.value)} disabled={readOnly} />
+          </FieldWrapper>
+          <FieldWrapper label="TAX ID (13 หลัก)" required error={errors.tax_id}>
+            <Input value={form.tax_id} onChange={e => update('tax_id', e.target.value.replace(/\D/g, ''))} maxLength={13} placeholder="0000000000000" disabled={readOnly} className={errors.tax_id ? 'border-destructive' : ''} />
+          </FieldWrapper>
+          <FieldWrapper label="สถานะ">
             <Select value={form.status} onValueChange={v => update('status', v)} disabled={readOnly}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -109,22 +152,26 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
                 <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
+          </FieldWrapper>
+          <div className="md:col-span-2">
+            <FieldWrapper label="ที่อยู่">
+              <Textarea value={form.address} onChange={e => update('address', e.target.value)} rows={2} disabled={readOnly} />
+            </FieldWrapper>
           </div>
-          <div className="md:col-span-2 space-y-1"><Label>ที่อยู่</Label><Textarea value={form.address} onChange={e => update('address', e.target.value)} rows={2} disabled={readOnly} /></div>
         </div>
       </div>
 
       {/* Section: การจำแนก */}
-      <div>
-        <h3 className="text-sm font-semibold mb-3 text-primary">การจำแนก</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1"><Label>กลุ่มลูกค้า</Label>
+      <div className="bg-card rounded-xl border p-4 md:p-5">
+        <SectionHeader icon={FileText} title="การจำแนก" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FieldWrapper label="กลุ่มลูกค้า">
             <Select value={form.customer_group} onValueChange={v => update('customer_group', v)} disabled={readOnly}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{CUSTOMER_GROUPS.map(g => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}</SelectContent>
             </Select>
-          </div>
-          <div className="space-y-1"><Label>กลุ่มงาน</Label>
+          </FieldWrapper>
+          <FieldWrapper label="กลุ่มงาน">
             <Select value={form.work_group || '_none'} onValueChange={v => update('work_group', v === '_none' ? '' : v)} disabled={readOnly}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -132,15 +179,15 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
                 {WORK_GROUPS.map(g => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}
               </SelectContent>
             </Select>
-          </div>
+          </FieldWrapper>
         </div>
-        <div className="mt-3 space-y-1">
-          <Label>แผนกรับผิดชอบ (เลือกได้หลายแผนก)</Label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="mt-4">
+          <Label className="text-xs font-medium">แผนกรับผิดชอบ (เลือกได้หลายแผนก)</Label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
             {DEPARTMENTS.map(d => (
-              <div key={d.value} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                <Checkbox checked={(form.departments || []).includes(d.value)} onCheckedChange={() => !readOnly && toggleArr('departments', d.value)} disabled={readOnly} />
-                <span className="text-xs">{d.label}</span>
+              <div key={d.value} className="flex items-center gap-2 p-2.5 rounded-lg border border-transparent hover:border-border hover:bg-muted/50 transition-all cursor-pointer" onClick={() => !readOnly && toggleArr('departments', d.value)}>
+                <Checkbox checked={(form.departments || []).includes(d.value)} disabled={readOnly} />
+                <span className="text-xs font-medium">{d.label}</span>
               </div>
             ))}
           </div>
@@ -148,10 +195,10 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
       </div>
 
       {/* Section: ผู้รับผิดชอบ */}
-      <div>
-        <h3 className="text-sm font-semibold mb-3 text-primary">ผู้รับผิดชอบ</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1"><Label>หัวหน้าดูแล</Label>
+      <div className="bg-card rounded-xl border p-4 md:p-5">
+        <SectionHeader icon={Users} title="ผู้รับผิดชอบ" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FieldWrapper label="หัวหน้าดูแล">
             <SearchableSelect
               value={form.supervisor || '_none'}
               onValueChange={v => v === '_none' ? setForm(p => ({...p, supervisor: '', supervisor_name: ''})) : setUserField('supervisor', 'supervisor_name', v)}
@@ -159,8 +206,8 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
               placeholder="เลือกหัวหน้า"
               disabled={readOnly}
             />
-          </div>
-          <div className="space-y-1"><Label>เจ้าหน้าที่หลัก</Label>
+          </FieldWrapper>
+          <FieldWrapper label="เจ้าหน้าที่หลัก">
             <SearchableSelect
               value={form.primary_officer || '_none'}
               onValueChange={v => v === '_none' ? setForm(p => ({...p, primary_officer: '', primary_officer_name: ''})) : setUserField('primary_officer', 'primary_officer_name', v)}
@@ -168,40 +215,49 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
               placeholder="เลือกเจ้าหน้าที่"
               disabled={readOnly}
             />
-          </div>
+          </FieldWrapper>
         </div>
       </div>
 
       {/* Section: ข้อมูลติดต่อ */}
-      <div>
-        <h3 className="text-sm font-semibold mb-3 text-primary">ข้อมูลติดต่อ</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1"><Label>ผู้ติดต่อ</Label><Input value={form.contact_person} onChange={e => update('contact_person', e.target.value)} disabled={readOnly} /></div>
-          <div className="space-y-1"><Label>อีเมล</Label><Input type="email" value={form.contact_email} onChange={e => update('contact_email', e.target.value)} disabled={readOnly} /></div>
-          <div className="space-y-1"><Label>เบอร์โทร</Label><Input value={form.contact_phone} onChange={e => update('contact_phone', e.target.value)} disabled={readOnly} /></div>
-          <div className="space-y-1"><Label>Line ID</Label><Input value={form.line_id} onChange={e => update('line_id', e.target.value)} disabled={readOnly} /></div>
-          <div className="md:col-span-2 space-y-1">
-            <Label>LINE Group ID</Label>
-            <Input value={form.line_group_id || ''} onChange={e => update('line_group_id', e.target.value)} placeholder="C..." disabled={readOnly} />
-            <p className="text-[11px] text-muted-foreground">Group ID ของกลุ่ม LINE สำหรับส่งแจ้งเตือนเข้ากลุ่มลูกค้า</p>
+      <div className="bg-card rounded-xl border p-4 md:p-5">
+        <SectionHeader icon={Phone} title="ข้อมูลติดต่อ" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FieldWrapper label="ผู้ติดต่อ">
+            <Input value={form.contact_person} onChange={e => update('contact_person', e.target.value)} disabled={readOnly} />
+          </FieldWrapper>
+          <FieldWrapper label="อีเมล">
+            <Input type="email" value={form.contact_email} onChange={e => update('contact_email', e.target.value)} disabled={readOnly} />
+          </FieldWrapper>
+          <FieldWrapper label="เบอร์โทร">
+            <Input value={form.contact_phone} onChange={e => update('contact_phone', e.target.value)} disabled={readOnly} />
+          </FieldWrapper>
+          <FieldWrapper label="Line ID">
+            <Input value={form.line_id} onChange={e => update('line_id', e.target.value)} disabled={readOnly} />
+          </FieldWrapper>
+          <div className="md:col-span-2">
+            <FieldWrapper label="LINE Group ID">
+              <Input value={form.line_group_id || ''} onChange={e => update('line_group_id', e.target.value)} placeholder="C..." disabled={readOnly} />
+              <p className="text-[11px] text-muted-foreground mt-1">Group ID ของกลุ่ม LINE สำหรับส่งแจ้งเตือนเข้ากลุ่มลูกค้า</p>
+            </FieldWrapper>
           </div>
         </div>
       </div>
 
       {/* Section: ประเภทบริการ */}
-      <div>
-        <h3 className="text-sm font-semibold mb-3 text-primary">ประเภทบริการ</h3>
+      <div className="bg-card rounded-xl border p-4 md:p-5">
+        <SectionHeader icon={Briefcase} title="ประเภทบริการ" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {SERVICES.map(s => (
-            <div key={s.value} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-              <Checkbox checked={(form.services || []).includes(s.value)} onCheckedChange={() => !readOnly && toggleArr('services', s.value)} disabled={readOnly} />
-              <span className="text-xs">{s.label}</span>
+            <div key={s.value} className="flex items-center gap-2 p-2.5 rounded-lg border border-transparent hover:border-border hover:bg-muted/50 transition-all cursor-pointer" onClick={() => !readOnly && toggleArr('services', s.value)}>
+              <Checkbox checked={(form.services || []).includes(s.value)} disabled={readOnly} />
+              <span className="text-xs font-medium">{s.label}</span>
             </div>
           ))}
         </div>
         {(form.services || []).includes('peak_licensing') && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 p-3 bg-muted/40 rounded-lg">
-            <div className="space-y-1"><Label>Peak Package</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 p-4 bg-muted/40 rounded-lg border border-dashed">
+            <FieldWrapper label="Peak Package">
               <Select value={form.peak_package} onValueChange={v => update('peak_package', v)} disabled={readOnly}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -211,38 +267,64 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
                   <SelectItem value="pro_plus">Pro Plus</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-1"><Label>เริ่ม License</Label><Input type="date" value={form.peak_license_start} onChange={e => update('peak_license_start', e.target.value)} disabled={readOnly} /></div>
-            <div className="space-y-1"><Label>หมดอายุ License</Label><Input type="date" value={form.peak_license_end} onChange={e => update('peak_license_end', e.target.value)} disabled={readOnly} /></div>
+            </FieldWrapper>
+            <FieldWrapper label="เริ่ม License">
+              <Input type="date" value={form.peak_license_start} onChange={e => update('peak_license_start', e.target.value)} disabled={readOnly} />
+            </FieldWrapper>
+            <FieldWrapper label="หมดอายุ License">
+              <Input type="date" value={form.peak_license_end} onChange={e => update('peak_license_end', e.target.value)} disabled={readOnly} />
+            </FieldWrapper>
           </div>
         )}
       </div>
 
       {/* Section: Billing Profile */}
-      <div>
-        <h3 className="text-sm font-semibold mb-3 text-primary">Billing Profile</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1"><Label>Credit Term (วัน)</Label><Input type="number" min={0} value={form.credit_term || ''} onChange={e => update('credit_term', parseInt(e.target.value) || 0)} disabled={readOnly} /></div>
-          <div className="space-y-1"><Label>Monthly Fee (THB)</Label><Input type="number" min={0} step="0.01" value={form.monthly_fee ?? ''} onChange={e => update('monthly_fee', e.target.value ? parseFloat(e.target.value) : null)} placeholder="0.00" disabled={readOnly} /></div>
-          <div className="space-y-1"><Label>Yearly Fee (THB)</Label><Input type="number" min={0} step="0.01" value={form.yearly_fee ?? ''} onChange={e => update('yearly_fee', e.target.value ? parseFloat(e.target.value) : null)} placeholder="0.00" disabled={readOnly} /></div>
-          <div className="space-y-1"><Label>วิธีชำระเงิน</Label>
+      <div className="bg-card rounded-xl border p-4 md:p-5">
+        <SectionHeader icon={CreditCard} title="Billing Profile" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FieldWrapper label="Credit Term (วัน)">
+            <Input type="number" min={0} value={form.credit_term || ''} onChange={e => update('credit_term', parseInt(e.target.value) || 0)} disabled={readOnly} />
+          </FieldWrapper>
+          <FieldWrapper label="Monthly Fee (THB)">
+            <Input type="number" min={0} step="0.01" value={form.monthly_fee ?? ''} onChange={e => update('monthly_fee', e.target.value ? parseFloat(e.target.value) : null)} placeholder="0.00" disabled={readOnly} />
+          </FieldWrapper>
+          <FieldWrapper label="Yearly Fee (THB)">
+            <Input type="number" min={0} step="0.01" value={form.yearly_fee ?? ''} onChange={e => update('yearly_fee', e.target.value ? parseFloat(e.target.value) : null)} placeholder="0.00" disabled={readOnly} />
+          </FieldWrapper>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-dashed">
+          <FieldWrapper label="วิธีชำระเงิน">
             <Select value={form.billing_profile?.payment_method || 'transfer'} onValueChange={v => updateBilling('payment_method', v)} disabled={readOnly}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{PAYMENT_METHODS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
             </Select>
+          </FieldWrapper>
+          <FieldWrapper label="ชื่อสำหรับออกบิล">
+            <Input value={form.billing_profile?.billing_name || ''} onChange={e => updateBilling('billing_name', e.target.value)} disabled={readOnly} />
+          </FieldWrapper>
+          <FieldWrapper label="อีเมลส่งบิล">
+            <Input type="email" value={form.billing_profile?.billing_email || ''} onChange={e => updateBilling('billing_email', e.target.value)} disabled={readOnly} />
+          </FieldWrapper>
+          <FieldWrapper label="TAX ID สำหรับออกบิล">
+            <Input value={form.billing_profile?.billing_tax_id || ''} onChange={e => updateBilling('billing_tax_id', e.target.value)} disabled={readOnly} />
+          </FieldWrapper>
+          <div className="md:col-span-2">
+            <FieldWrapper label="ที่อยู่ออกบิล">
+              <Textarea value={form.billing_profile?.billing_address || ''} onChange={e => updateBilling('billing_address', e.target.value)} rows={2} disabled={readOnly} />
+            </FieldWrapper>
           </div>
-          <div className="space-y-1"><Label>ชื่อสำหรับออกบิล</Label><Input value={form.billing_profile?.billing_name || ''} onChange={e => updateBilling('billing_name', e.target.value)} disabled={readOnly} /></div>
-          <div className="space-y-1"><Label>อีเมลส่งบิล</Label><Input type="email" value={form.billing_profile?.billing_email || ''} onChange={e => updateBilling('billing_email', e.target.value)} disabled={readOnly} /></div>
-          <div className="md:col-span-2 space-y-1"><Label>ที่อยู่ออกบิล</Label><Textarea value={form.billing_profile?.billing_address || ''} onChange={e => updateBilling('billing_address', e.target.value)} rows={2} disabled={readOnly} /></div>
-          <div className="space-y-1"><Label>TAX ID สำหรับออกบิล</Label><Input value={form.billing_profile?.billing_tax_id || ''} onChange={e => updateBilling('billing_tax_id', e.target.value)} disabled={readOnly} /></div>
         </div>
       </div>
 
       {/* Notes */}
-      <div className="space-y-1"><Label>หมายเหตุ</Label><Textarea value={form.notes} onChange={e => update('notes', e.target.value)} rows={2} disabled={readOnly} /></div>
+      <div className="bg-card rounded-xl border p-4 md:p-5">
+        <FieldWrapper label="หมายเหตุ">
+          <Textarea value={form.notes} onChange={e => update('notes', e.target.value)} rows={2} disabled={readOnly} />
+        </FieldWrapper>
+      </div>
 
       {!readOnly && (
-        <Button onClick={handleSubmit} disabled={isLoading || !form.company_name} className="w-full">
+        <Button onClick={handleSubmit} disabled={isLoading || !form.company_name} className="w-full h-11 text-sm font-semibold">
           {isLoading ? t('saving') : (customer ? t('update') : t('add_customer'))}
         </Button>
       )}
