@@ -82,20 +82,11 @@ export default function OcrUploadForm({ onSubmitted }) {
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label>ลูกค้า (ไม่บังคับ)</Label>
-        <Select value={customerId} onValueChange={setCustomerId}>
-          <SelectTrigger>
-            <SelectValue placeholder="เลือกลูกค้า..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={null}>ไม่ระบุ</SelectItem>
-            {customers.map(c => (
-              <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <CustomerSearchSelect
+        customers={customers}
+        value={customerId}
+        onChange={setCustomerId}
+      />
 
       <div className="space-y-1.5">
         <Label>หมายเหตุ</Label>
