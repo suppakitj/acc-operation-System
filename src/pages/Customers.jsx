@@ -31,9 +31,7 @@ export default function Customers() {
   const ac = useAccessControl(currentUser);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('active');
-  const [groupFilter, setGroupFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [ownerFilter, setOwnerFilter] = useState('all');
+  const [deptFilter2, setDeptFilter2] = useState('all');
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [page, setPage] = useState(1);
@@ -61,13 +59,6 @@ export default function Customers() {
     else createMutation.mutate(data);
   };
 
-  // Unique owners for filter
-  const owners = useMemo(() => {
-    const set = new Set();
-    customers.forEach(c => { if (c.primary_officer_name) set.add(c.primary_officer_name); });
-    return [...set].sort();
-  }, [customers]);
-
   // Stats
   const stats = useMemo(() => {
     const active = customers.filter(c => c.status === 'active').length;
@@ -84,15 +75,12 @@ export default function Customers() {
         if (!c.company_name?.toLowerCase().includes(s) && !c.customer_code?.toLowerCase().includes(s) && !c.tax_id?.includes(s)) return false;
       }
       if (statusFilter !== 'all' && c.status !== statusFilter) return false;
-      if (groupFilter !== 'all' && c.customer_group !== groupFilter) return false;
-      if (typeFilter !== 'all' && !(c.services || []).includes(typeFilter)) return false;
-      if (ownerFilter === 'none' && c.primary_officer_name) return false;
-      if (ownerFilter !== 'all' && ownerFilter !== 'none' && c.primary_officer_name !== ownerFilter) return false;
+      if (deptFilter2 !== 'all' && !(c.departments || []).includes(deptFilter2)) return false;
       return true;
     });
-  }, [customers, search, statusFilter, groupFilter, typeFilter, ownerFilter]);
+  }, [customers, search, statusFilter, deptFilter2]);
 
-  useEffect(() => { setPage(1); }, [search, statusFilter, groupFilter, typeFilter, ownerFilter]);
+  useEffect(() => { setPage(1); }, [search, statusFilter, deptFilter2]);
 
   const paged = paginateData(filtered, page, pageSize);
 
@@ -138,30 +126,16 @@ export default function Customers() {
             <SelectItem value="inactive">Inactive</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={groupFilter} onValueChange={setGroupFilter}>
+        <Select value={deptFilter2} onValueChange={setDeptFilter2}>
           <SelectTrigger className="w-[130px] h-9 text-xs rounded-full"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Groups</SelectItem>
-            {Object.entries(GROUP_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[120px] h-9 text-xs rounded-full"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="all">ทุกแผนก</SelectItem>
+            <SelectItem value="management">Management</SelectItem>
             <SelectItem value="accounting">บัญชี</SelectItem>
-            <SelectItem value="payroll">เงินเดือน</SelectItem>
-            <SelectItem value="tax_consulting">ภาษี</SelectItem>
+            <SelectItem value="consulting">ที่ปรึกษา</SelectItem>
             <SelectItem value="audit">Audit</SelectItem>
-            <SelectItem value="peak_licensing">Peak</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={ownerFilter} onValueChange={setOwnerFilter}>
-          <SelectTrigger className="w-[130px] h-9 text-xs rounded-full"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Owners</SelectItem>
-            <SelectItem value="none">No Owner</SelectItem>
-            {owners.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+            <SelectItem value="billing">Billing</SelectItem>
+            <SelectItem value="it">IT</SelectItem>
           </SelectContent>
         </Select>
       </div>
