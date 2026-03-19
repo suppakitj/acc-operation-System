@@ -34,7 +34,7 @@ function SortHeader({ label, field, sort, onSort, width, onResizeStart }) {
 }
 
 export default function CustomerTable({ customers, tasks = [], onRowClick }) {
-  const [sort, setSort] = useState({ field: 'company_name', dir: 'asc' });
+  const [sort, setSort] = useState({ field: 'code', dir: 'asc' });
   const [colWidths, setColWidths] = useState(DEFAULT_WIDTHS);
   const resizing = useRef(null);
 
