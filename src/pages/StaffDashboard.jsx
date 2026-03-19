@@ -117,7 +117,7 @@ export default function StaffDashboard() {
       if (overdueFilter === 'no_overdue' && s.overdue.length > 0) return false;
       return true;
     });
-  }, [staffStats, search, deptFilter]);
+  }, [staffStats, search, deptFilter, overdueFilter]);
 
   // Overall stats
   const totalPending = filtered.reduce((s, x) => s + x.pending.length, 0);
