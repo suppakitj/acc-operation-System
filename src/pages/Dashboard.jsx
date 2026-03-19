@@ -140,7 +140,7 @@ export default function Dashboard() {
       {/* Row 1 — 3 equal charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <CompletionRateDonut tasks={filteredTasks} />
-        <OverdueTrendChart tasks={tasks} />
+        <OverdueTrendChart tasks={filteredTasks} />
         <EmployeeProductivity tasks={filteredTasks} users={users} />
       </div>
 
