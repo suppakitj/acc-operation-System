@@ -46,6 +46,7 @@ export default function ManusSettings() {
       const items = [
         { key: 'manus_api_key', value: apiKey, description: 'Manus.im API Key' },
         { key: 'manus_webhook_secret', value: webhookSecret, description: 'Webhook verification secret' },
+        { key: 'manus_webhook_url', value: webhookUrlInput, description: 'Manus webhook function URL (ได้จาก Dashboard → Code → Functions)' },
       ];
       for (const item of items) {
         const existingId = getId(item.key);
