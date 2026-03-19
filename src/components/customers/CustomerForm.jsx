@@ -223,6 +223,8 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
         <h3 className="text-sm font-semibold mb-3 text-primary">Billing Profile</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-1"><Label>Credit Term (วัน)</Label><Input type="number" min={0} value={form.credit_term || ''} onChange={e => update('credit_term', parseInt(e.target.value) || 0)} disabled={readOnly} /></div>
+          <div className="space-y-1"><Label>Monthly Fee (THB)</Label><Input type="number" min={0} step="0.01" value={form.monthly_fee ?? ''} onChange={e => update('monthly_fee', e.target.value ? parseFloat(e.target.value) : null)} placeholder="0.00" disabled={readOnly} /></div>
+          <div className="space-y-1"><Label>Yearly Fee (THB)</Label><Input type="number" min={0} step="0.01" value={form.yearly_fee ?? ''} onChange={e => update('yearly_fee', e.target.value ? parseFloat(e.target.value) : null)} placeholder="0.00" disabled={readOnly} /></div>
           <div className="space-y-1"><Label>วิธีชำระเงิน</Label>
             <Select value={form.billing_profile?.payment_method || 'transfer'} onValueChange={v => updateBilling('payment_method', v)} disabled={readOnly}>
               <SelectTrigger><SelectValue /></SelectTrigger>
