@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, FileText, Loader2, X, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import CustomerSearchSelect from './CustomerSearchSelect';
 
 export default function OcrUploadForm({ onSubmitted }) {
   const [file, setFile] = useState(null);
