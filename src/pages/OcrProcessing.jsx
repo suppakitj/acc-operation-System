@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,8 +13,16 @@ export default function OcrProcessing() {
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ['ocr-jobs'],
     queryFn: () => base44.entities.OcrJob.list('-created_date', 50),
-    refetchInterval: 15000, // Auto refresh every 15s
+    refetchInterval: 15000,
   });
+
+  // Real-time: auto-refresh when OcrJob is updated (e.g. via webhook)
+  useEffect(() => {
+    const unsubscribe = base44.entities.OcrJob.subscribe(() => {
+      queryClient.invalidateQueries({ queryKey: ['ocr-jobs'] });
+    });
+    return unsubscribe;
+  }, [queryClient]);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['ocr-jobs'] });
 
