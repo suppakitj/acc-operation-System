@@ -37,7 +37,7 @@ export default function OcrProcessing() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold">OCR Bank Statement</h1>
+          <h1 className="text-xl md:text-2xl font-bold">OCR</h1>
           <p className="text-sm text-muted-foreground">อัปโหลด PDF → แปลงเป็น Excel อัตโนมัติ → บันทึกใน Google Drive</p>
         </div>
         <Button variant="outline" size="sm" onClick={refresh}>
