@@ -55,6 +55,8 @@ export default function GoogleDriveSettings() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <GoogleDriveOAuthStatus />
+
         <p className="text-xs text-muted-foreground">
           ตั้งค่า Folder ID ของ Google Drive สำหรับรับไฟล์ที่ upload และเก็บผลลัพธ์จาก Manus
         </p>
