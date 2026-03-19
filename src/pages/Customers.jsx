@@ -121,9 +121,7 @@ export default function Customers() {
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[120px] h-9 text-xs rounded-full"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
           </SelectContent>
         </Select>
         <Select value={deptFilter2} onValueChange={setDeptFilter2}>
