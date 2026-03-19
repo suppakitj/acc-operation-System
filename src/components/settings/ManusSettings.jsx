@@ -236,7 +236,7 @@ export default function ManusSettings() {
             size="sm"
             variant={webhookId ? 'outline' : 'default'}
             onClick={() => registerMutation.mutate()}
-            disabled={registerMutation.isPending || !apiKey}
+            disabled={registerMutation.isPending || !apiKey || !webhookUrl}
             className="w-full"
           >
             {registerMutation.isPending ? (
@@ -250,6 +250,9 @@ export default function ManusSettings() {
 
           {!apiKey && (
             <p className="text-[11px] text-red-500">กรุณากรอก API Key และบันทึกก่อนลงทะเบียน Webhook</p>
+          )}
+          {apiKey && !webhookUrl && (
+            <p className="text-[11px] text-red-500">กรุณากรอก Webhook Function URL และบันทึกก่อนลงทะเบียน</p>
           )}
         </div>
       </CardContent>
