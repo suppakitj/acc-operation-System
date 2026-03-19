@@ -267,8 +267,13 @@ export default function LineOASettings() {
             <span className="font-semibold">Webhook URL</span>
             <span className="text-muted-foreground font-normal"> — Configure this in your LINE Developers Console</span>
           </Label>
-          <Input value={webhookUrl} readOnly className="bg-muted/50 text-muted-foreground cursor-text" onClick={e => { e.target.select(); navigator.clipboard.writeText(webhookUrl); toast.info('Copied!'); }} />
-          <p className="text-[11px] text-muted-foreground">Auto-generated: {webhookUrl}</p>
+          <div className="flex gap-2">
+            <Input value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://..." className="flex-1" />
+            <Button type="button" size="sm" variant="outline" className="text-xs shrink-0" onClick={() => { navigator.clipboard.writeText(webhookUrl); toast.info('Copied!'); }}>
+              Copy
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">ใส่ URL ที่ต้องการ แล้วกด "บันทึก" — จากนั้นนำ URL นี้ไปตั้งค่าใน LINE Developers Console</p>
         </div>
 
         {/* Save Button */}
