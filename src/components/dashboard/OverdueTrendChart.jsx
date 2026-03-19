@@ -2,14 +2,14 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp } from 'lucide-react';
-import { subMonths, format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 
 export default function OverdueTrendChart({ tasks }) {
   const data = useMemo(() => {
-    const today = new Date();
+    const year = new Date().getFullYear();
     const months = [];
-    for (let i = 5; i >= 0; i--) {
-      const m = subMonths(today, i);
+    for (let i = 0; i < 12; i++) {
+      const m = new Date(year, i, 1);
       const start = startOfMonth(m);
       const end = endOfMonth(m);
 
