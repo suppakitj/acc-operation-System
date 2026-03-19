@@ -5,7 +5,7 @@ import {
   Bell, CreditCard, MessageCircle, Shield,
   Settings, ChevronLeft, ChevronRight, Key, ClipboardList,
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays,
-  ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog
+  ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, ScanLine
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -35,6 +35,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'users', label: t('menu_users'), icon: Users, path: '/UserManagement' },
     { id: 'roles', label: t('menu_roles'), icon: Shield, path: '/RoleManagement' },
     { id: 'audit', label: t('menu_audit'), icon: History, path: '/AuditLog' },
+    { id: 'ocr', label: 'OCR Bank Statement', icon: ScanLine, path: '/OcrProcessing' },
     { id: 'backup', label: 'Backup DB', icon: Database, path: '/DatabaseBackup' },
     { id: 'settings', label: t('menu_settings'), icon: Settings, path: '/AppSettings' },
   ];
@@ -48,6 +49,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { key: 'work', label: 'งาน', icon: Folder, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'service_master', 'holiday_master'] },
     { key: 'clients', label: 'ลูกค้า', icon: Contact, ids: ['customers', 'peak', 'billing'] },
     { key: 'comms', label: 'สื่อสาร', icon: MessageSquare, ids: ['notifications', 'line_chat'] },
+    { key: 'tools', label: 'เครื่องมือ', icon: ScanLine, ids: ['ocr'] },
     { key: 'system', label: 'ระบบ', icon: Cog, ids: ['users', 'roles', 'audit', 'backup', 'settings'] },
   ];
 
