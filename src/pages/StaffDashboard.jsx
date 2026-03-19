@@ -23,6 +23,7 @@ const DEPT_LABELS = {
 export default function StaffDashboard() {
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
+  const [overdueFilter, setOverdueFilter] = useState('all');
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -112,6 +113,8 @@ export default function StaffDashboard() {
         const depts = s.departments.length > 0 ? s.departments : (s.department ? [s.department] : []);
         if (!depts.includes(deptFilter)) return false;
       }
+      if (overdueFilter === 'overdue' && s.overdue.length === 0) return false;
+      if (overdueFilter === 'no_overdue' && s.overdue.length > 0) return false;
       return true;
     });
   }, [staffStats, search, deptFilter]);
@@ -130,7 +133,7 @@ export default function StaffDashboard() {
   const paged = filtered.slice(page * pageSize, (page + 1) * pageSize);
 
   // Reset page when filters change
-  useMemo(() => setPage(0), [search, deptFilter, pageSize]);
+  useMemo(() => setPage(0), [search, deptFilter, overdueFilter, pageSize]);
 
   // Check access from Permission Matrix
   if (!ac.canViewStaffDashboard && currentUser) {
@@ -186,6 +189,16 @@ export default function StaffDashboard() {
             {Object.entries(DEPT_LABELS).map(([k, v]) => (
               <SelectItem key={k} value={k}>{v}</SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select value={overdueFilter} onValueChange={setOverdueFilter}>
+          <SelectTrigger className="w-[170px] h-9 text-xs">
+            <SelectValue placeholder="ทั้งหมด" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">งานทั้งหมด</SelectItem>
+            <SelectItem value="overdue">เฉพาะมีงานเกินกำหนด</SelectItem>
+            <SelectItem value="no_overdue">ไม่มีงานเกินกำหนด</SelectItem>
           </SelectContent>
         </Select>
       </div>
