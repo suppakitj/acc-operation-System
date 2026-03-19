@@ -14,6 +14,8 @@ import { useLanguage } from '../components/LanguageContext';
 import LineOASettings from '../components/settings/LineOASettings';
 import EmailSettings from '../components/settings/EmailSettings';
 import O365EmailSettings from '../components/settings/O365EmailSettings';
+import GoogleDriveSettings from '../components/settings/GoogleDriveSettings';
+import ManusSettings from '../components/settings/ManusSettings';
 
 const THEMES = [
   { id: 'default', label: 'Navy Blue', color: 'bg-[#1e3a5f]' },
@@ -196,6 +198,12 @@ export default function AppSettings() {
 
       {/* LINE OA Settings — Admin Only */}
       {(user?.role === 'admin' || user?.role === 'management') && <LineOASettings />}
+
+      {/* Google Drive Settings — Admin Only */}
+      {(user?.role === 'admin' || user?.role === 'management') && <GoogleDriveSettings />}
+
+      {/* Manus.im Settings — Admin Only */}
+      {(user?.role === 'admin' || user?.role === 'management') && <ManusSettings />}
 
       {/* Admin Only — Session Timeout */}
       {(user?.role === 'admin' || user?.role === 'management') && <SessionTimeoutSettings />}
