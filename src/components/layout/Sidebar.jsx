@@ -35,7 +35,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'users', label: t('menu_users'), icon: Users, path: '/UserManagement' },
     { id: 'roles', label: t('menu_roles'), icon: Shield, path: '/RoleManagement' },
     { id: 'audit', label: t('menu_audit'), icon: History, path: '/AuditLog' },
-    { id: 'ocr', label: 'OCR Bank Statement', icon: ScanLine, path: '/OcrProcessing' },
+    { id: 'ocr', label: 'OCR', icon: ScanLine, path: '/OcrProcessing' },
     { id: 'backup', label: 'Backup DB', icon: Database, path: '/DatabaseBackup' },
     { id: 'settings', label: t('menu_settings'), icon: Settings, path: '/AppSettings' },
   ];
