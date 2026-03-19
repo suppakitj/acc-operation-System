@@ -1,7 +1,12 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
+
+const LEGEND = [
+  { label: 'Overdue', color: 'bg-amber-400' },
+  { label: '', color: 'bg-red-500' },
+  { label: '', color: 'bg-red-300' },
+];
 
 export default function AtRiskEmployees({ tasks }) {
   const today = new Date();
@@ -24,35 +29,39 @@ export default function AtRiskEmployees({ tasks }) {
   }, [tasks]);
 
   return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-red-500" />
-          At Risk Employees
-        </CardTitle>
+    <Card className="shadow-sm border">
+      <CardHeader className="pb-2 pt-4 px-5">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-semibold">At Risk Employees</CardTitle>
+          <div className="flex items-center gap-2">
+            {LEGEND.map((l, i) => (
+              <div key={i} className={`w-3 h-3 rounded-sm ${l.color}`} />
+            ))}
+          </div>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-5 pb-4">
         {atRisk.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">ไม่มีพนักงานที่มีงานเกินกำหนด</p>
         ) : (
-          <div className="space-y-2">
-            {atRisk.map(e => (
-              <div key={e.name} className="flex items-center gap-3 p-2 rounded-lg hover:bg-red-50/50 transition-colors">
-                <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                  <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{e.name}</p>
-                  <p className="text-[10px] text-muted-foreground">avg {e.avgDelay} days late</p>
-                </div>
-                <div className="shrink-0">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
-                    {e.overdue} overdue
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b text-muted-foreground">
+                <th className="text-left py-2 font-medium">Employee</th>
+                <th className="text-right py-2 font-medium">Overdue Tasks</th>
+                <th className="text-right py-2 font-medium">Avg. Delay</th>
+              </tr>
+            </thead>
+            <tbody>
+              {atRisk.map(e => (
+                <tr key={e.name} className="border-b last:border-b-0">
+                  <td className="py-2.5 font-medium truncate max-w-[140px]">{e.name}</td>
+                  <td className="py-2.5 text-right font-semibold">{e.overdue}</td>
+                  <td className="py-2.5 text-right text-muted-foreground">{e.avgDelay} days</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </CardContent>
     </Card>

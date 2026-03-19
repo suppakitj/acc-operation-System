@@ -1,12 +1,6 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Medal } from 'lucide-react';
-
-const RANK_STYLES = [
-  'bg-amber-100 text-amber-700',
-  'bg-slate-100 text-slate-600',
-  'bg-orange-100 text-orange-600',
-];
+import { User } from 'lucide-react';
 
 export default function TopPerformers({ tasks }) {
   const performers = useMemo(() => {
@@ -25,35 +19,41 @@ export default function TopPerformers({ tasks }) {
   }, [tasks]);
 
   return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-amber-500" />
-          Top Performers
-        </CardTitle>
+    <Card className="shadow-sm border">
+      <CardHeader className="pb-2 pt-4 px-5">
+        <CardTitle className="text-sm font-semibold">Top Performers</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-5 pb-4">
         {performers.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">ไม่มีข้อมูล</p>
         ) : (
-          <div className="space-y-2">
-            {performers.map((p, i) => (
-              <div key={p.name} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/40 transition-colors">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${RANK_STYLES[i] || 'bg-muted text-muted-foreground'}`}>
-                  {i + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{p.name}</p>
-                  <p className="text-[10px] text-muted-foreground">{p.completed} completed</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className={`text-sm font-bold ${p.efficiency >= 80 ? 'text-emerald-600' : p.efficiency >= 50 ? 'text-amber-600' : 'text-red-500'}`}>
-                    {p.efficiency}%
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b text-muted-foreground">
+                <th className="text-left py-2 font-medium w-10">Rank</th>
+                <th className="text-left py-2 font-medium">Employee</th>
+                <th className="text-right py-2 font-medium">Tasks Completed</th>
+                <th className="text-right py-2 font-medium">Efficiency</th>
+              </tr>
+            </thead>
+            <tbody>
+              {performers.map((p, i) => (
+                <tr key={p.name} className="border-b last:border-b-0">
+                  <td className="py-2.5 font-semibold text-center">{i + 1}</td>
+                  <td className="py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <User className="w-3 h-3 text-muted-foreground" />
+                      </div>
+                      <span className="font-medium truncate">{p.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-2.5 text-right font-medium">{p.completed}</td>
+                  <td className="py-2.5 text-right font-medium">{p.efficiency}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </CardContent>
     </Card>
