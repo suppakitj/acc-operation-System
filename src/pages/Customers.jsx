@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -92,7 +92,7 @@ export default function Customers() {
     });
   }, [customers, search, statusFilter, groupFilter, typeFilter, ownerFilter]);
 
-  React.useEffect(() => { setPage(1); }, [search, statusFilter, groupFilter, typeFilter, ownerFilter]);
+  useEffect(() => { setPage(1); }, [search, statusFilter, groupFilter, typeFilter, ownerFilter]);
 
   const paged = paginateData(filtered, page, pageSize);
 
