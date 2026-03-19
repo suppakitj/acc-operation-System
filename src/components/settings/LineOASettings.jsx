@@ -47,6 +47,7 @@ export default function LineOASettings() {
     setAccessToken(getVal('line_access_token'));
     setLineUserId(getVal('line_user_id'));
     setLineGroupId(getVal('line_group_id'));
+    setWebhookUrl(getVal('line_webhook_url') || 'https://acc-precision-hub.base44.app/functions/lineWebhook');
     // Load department group IDs
     const dg = {};
     DEPT_LIST.forEach(d => {
