@@ -32,7 +32,7 @@ export default function AtRiskEmployees({ tasks }) {
     <Card className="shadow-sm border">
       <CardHeader className="pb-2 pt-4 px-5">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-semibold">Top Overdue</CardTitle>
+          <CardTitle className="text-sm font-semibold">Top 5 Overdue — พนักงานที่เกินกำหนดมากสุด (2026)</CardTitle>
           <div className="flex items-center gap-2">
             {LEGEND.map((l, i) => (
               <div key={i} className={`w-3 h-3 rounded-sm ${l.color}`} />
