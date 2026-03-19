@@ -69,6 +69,7 @@ export default function OcrJobList({ jobs, onRefresh }) {
                   onClick={() => handlePoll(job.id)}
                   disabled={pollingId === job.id}
                   className="text-xs"
+                  title="ตรวจสอบแบบ manual (หรือรอ Webhook อัตโนมัติ)"
                 >
                   {pollingId === job.id ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
