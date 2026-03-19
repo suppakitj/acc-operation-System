@@ -53,6 +53,14 @@ export default function Tasks() {
   });
 
   const handleSubmit = (data) => {
+    // Auto set completed_date when status changes to completed
+    if (data.status === 'completed' && !data.completed_date) {
+      data.completed_date = format(new Date(), 'yyyy-MM-dd');
+    }
+    // Clear completed_date if status is no longer completed
+    if (data.status !== 'completed') {
+      data.completed_date = null;
+    }
     if (editingTask) updateMutation.mutate({ id: editingTask.id, data });
     else createMutation.mutate(data);
   };
