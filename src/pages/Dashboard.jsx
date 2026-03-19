@@ -1,111 +1,152 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
-import { format, differenceInDays } from 'date-fns';
-import { ClipboardList, AlertTriangle, Clock, CheckCircle2, Key, CreditCard, FileWarning, CalendarDays } from 'lucide-react';
+import { format, differenceInDays, startOfMonth, endOfMonth } from 'date-fns';
+import { ClipboardList, AlertTriangle, Clock, FileCheck, Filter } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import DashboardStatCard from '../components/dashboard/DashboardStatCard';
-import OverdueTasks from '../components/dashboard/OverdueTasks';
-import TodaySchedule from '../components/dashboard/TodaySchedule';
-import TaskStatusBarChart from '../components/dashboard/TaskStatusBarChart';
-import DueIn7Days from '../components/dashboard/DueIn7Days';
-import RecentTasks from '../components/dashboard/RecentTasks';
-import { useLanguage } from '../components/LanguageContext';
+import CompletionRateDonut from '../components/dashboard/CompletionRateDonut';
+import OverdueTrendChart from '../components/dashboard/OverdueTrendChart';
+import EmployeeProductivity from '../components/dashboard/EmployeeProductivity';
+import TopPerformers from '../components/dashboard/TopPerformers';
+import AtRiskEmployees from '../components/dashboard/AtRiskEmployees';
+import RecentActivity from '../components/dashboard/RecentActivity';
+import TaskDistributionPie from '../components/dashboard/TaskDistributionPie';
+import WorkloadByTeam from '../components/dashboard/WorkloadByTeam';
+
+const DEPT_LABELS = {
+  management: 'Management',
+  accounting: 'Accounting',
+  consulting: 'Consulting',
+  audit: 'Audit',
+  billing: 'Billing',
+  it: 'IT',
+};
 
 export default function Dashboard() {
-  const { t } = useLanguage();
   const today = new Date();
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 500),
   });
-  const { data: customers = [] } = useQuery({
-    queryKey: ['customers'],
-    queryFn: () => base44.entities.Customer.list(),
-  });
-  const { data: billings = [] } = useQuery({
-    queryKey: ['billings'],
-    queryFn: () => base44.entities.Billing.list('-created_date', 200),
-  });
-  const { data: schedules = [] } = useQuery({
-    queryKey: ['schedules'],
-    queryFn: () => base44.entities.Schedule.list('-date', 200),
-  });
-  const { data: peakLicenses = [] } = useQuery({
-    queryKey: ['peakLicenses'],
-    queryFn: () => base44.entities.PeakLicense.list('-created_date', 500),
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list(),
   });
 
-  // Stats calculations
-  const openTasks = tasks.filter(t => t.status !== 'completed' && t.status !== 'cancelled').length;
-  const overdueTasks = tasks.filter(t => {
+  // Filters
+  const [deptFilter, setDeptFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateRange, setDateRange] = useState('this_month');
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(t => {
+      if (deptFilter !== 'all' && t.department !== deptFilter) return false;
+      if (statusFilter !== 'all' && t.status !== statusFilter) return false;
+      if (dateRange === 'this_month') {
+        const start = startOfMonth(today);
+        const end = endOfMonth(today);
+        const created = new Date(t.created_date);
+        // Include tasks created this month OR still open
+        if (t.status === 'completed' || t.status === 'cancelled') {
+          if (created < start || created > end) return false;
+        }
+      }
+      return true;
+    });
+  }, [tasks, deptFilter, statusFilter, dateRange]);
+
+  // Stats
+  const totalTasks = filteredTasks.filter(t => t.status !== 'cancelled').length;
+  const dueTodayStr = format(today, 'yyyy-MM-dd');
+  const dueToday = filteredTasks.filter(t => t.due_date === dueTodayStr && t.status !== 'completed' && t.status !== 'cancelled').length;
+  const overdueTasks = filteredTasks.filter(t => {
     if (!t.due_date || t.status === 'completed' || t.status === 'cancelled') return false;
     return new Date(t.due_date) < today;
   }).length;
-  const dueIn3Days = tasks.filter(t => {
-    if (!t.due_date || t.status === 'completed' || t.status === 'cancelled') return false;
-    const d = differenceInDays(new Date(t.due_date), today);
-    return d >= 0 && d <= 3;
-  }).length;
-  const completedToday = tasks.filter(t => t.completed_date === format(today, 'yyyy-MM-dd')).length;
-  const activeCustomers = customers.filter(c => c.status === 'active');
-  const peakUrgent = peakLicenses.filter(l => {
-    if (l.license_status === 'cancelled' || !l.expiry_date) return false;
-    const d = differenceInDays(new Date(l.expiry_date), today);
-    return d >= 0 && d <= 30;
-  }).length;
-  const activeBillings = billings.filter(b => b.status !== 'cancelled');
-  const billingPending = activeBillings.filter(b => b.status === 'sent' || b.status === 'overdue').length;
-  // Missing docs — tasks with no attachments and status not completed
-  const missingDocs = tasks.filter(t => t.status !== 'completed' && t.status !== 'cancelled' && (!t.attachments || t.attachments.length === 0) && t.service_type === 'audit').length;
-  const todayScheduleCount = schedules.filter(s => s.date === format(today, 'yyyy-MM-dd')).length;
+  const pendingReview = filteredTasks.filter(t => t.status === 'review').length;
 
   return (
     <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold">Operations Overview</h1>
+          <h1 className="text-xl md:text-2xl font-bold">Task Management Dashboard</h1>
           <p className="text-sm text-muted-foreground">{format(today, 'EEEE, d MMMM yyyy')}</p>
         </div>
-        <Link to="/Tasks" className="text-sm text-primary hover:underline font-medium">Task Control →</Link>
+        <Link to="/Tasks" className="text-sm text-primary hover:underline font-medium">Go to Tasks →</Link>
       </div>
 
-      {/* Row 1 — Primary Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <DashboardStatCard title="OPEN TASKS" value={openTasks} icon={ClipboardList} variant="blue" />
+      {/* Row 1 — Stat Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <DashboardStatCard title="TOTAL TASKS" value={totalTasks} icon={ClipboardList} variant="blue" />
+        <DashboardStatCard title="DUE TODAY" value={dueToday} icon={Clock} variant="yellow" />
         <DashboardStatCard title="OVERDUE" value={overdueTasks} icon={AlertTriangle} variant="red" />
-        <DashboardStatCard title="DUE IN 3 DAYS" value={dueIn3Days} icon={Clock} variant="yellow" />
-        <DashboardStatCard title="COMPLETED TODAY" value={completedToday} icon={CheckCircle2} variant="green" />
-        <DashboardStatCard title="PEAK URGENT" value={peakUrgent} icon={Key} variant="purple" />
+        <DashboardStatCard title="PENDING REVIEW" value={pendingReview} icon={FileCheck} variant="green" />
       </div>
 
-      {/* Row 2 — Secondary Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <DashboardStatCard title="BILLING PENDING" value={billingPending} icon={CreditCard} variant="yellow" />
-        <DashboardStatCard title="MISSING DOCS" value={missingDocs} icon={FileWarning} variant="yellow" />
-        <DashboardStatCard title="TODAY'S SCHEDULE" value={todayScheduleCount} icon={CalendarDays} variant="default" />
+      {/* Filters Bar */}
+      <div className="flex flex-wrap items-center gap-3 p-3 bg-card rounded-xl border">
+        <Filter className="w-4 h-4 text-muted-foreground" />
+        <Select value={deptFilter} onValueChange={setDeptFilter}>
+          <SelectTrigger className="w-[140px] h-8 text-xs">
+            <SelectValue placeholder="Department" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Departments</SelectItem>
+            {Object.entries(DEPT_LABELS).map(([k, v]) => (
+              <SelectItem key={k} value={k}>{v}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={dateRange} onValueChange={setDateRange}>
+          <SelectTrigger className="w-[130px] h-8 text-xs">
+            <SelectValue placeholder="Date Range" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="this_month">This Month</SelectItem>
+            <SelectItem value="all_time">All Time</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[130px] h-8 text-xs">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="review">Review</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => { setDeptFilter('all'); setStatusFilter('all'); setDateRange('this_month'); }}>
+          Reset
+        </Button>
       </div>
 
-      {/* Row 3 — Overdue + Today Schedule */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <div className="lg:col-span-3">
-          <OverdueTasks tasks={tasks} />
-        </div>
-        <div className="lg:col-span-2">
-          <TodaySchedule schedules={schedules} />
-        </div>
+      {/* Row 2 — Completion + Trend + Productivity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <CompletionRateDonut tasks={filteredTasks} />
+        <OverdueTrendChart tasks={tasks} />
+        <EmployeeProductivity tasks={filteredTasks} users={users} />
       </div>
 
-      {/* Row 4 — Chart + Due in 7 Days */}
+      {/* Row 3 — Top Performers + At Risk + Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <TopPerformers tasks={filteredTasks} />
+        <AtRiskEmployees tasks={filteredTasks} />
+        <RecentActivity tasks={filteredTasks} />
+      </div>
+
+      {/* Row 4 — Distribution + Workload */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TaskStatusBarChart tasks={tasks} />
-        <DueIn7Days tasks={tasks} />
+        <TaskDistributionPie tasks={filteredTasks} />
+        <WorkloadByTeam tasks={filteredTasks} />
       </div>
-
-      {/* Row 5 — Recent Tasks */}
-      <RecentTasks tasks={tasks} />
     </div>
   );
 }
