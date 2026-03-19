@@ -177,8 +177,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 2. Send department-specific messages to department groups
+    // 2. Send department-specific messages to department groups (skip if same Group ID as company)
+    const sentGroupIds = new Set();
+    if (companyTarget) sentGroupIds.add(companyTarget);
+
     for (const [dept, groupId] of Object.entries(deptGroupMap)) {
+      if (sentGroupIds.has(groupId)) {
+        console.log(`Skipping dept:${dept} — same Group ID as already sent target`);
+        continue;
+      }
       const deptOverdue = overdueTasks.filter(t => t.department === dept);
       const deptDue3 = due3Days.filter(t => t.department === dept);
       const deptDue7 = due7Days.filter(t => t.department === dept);
@@ -186,6 +193,7 @@ Deno.serve(async (req) => {
       const msg = buildFullMessage(todayStr, deptOverdue, deptDue3, deptDue7, DEPT_LABEL[dept] || dept);
       if (msg) {
         await sendMessage(accessToken, groupId, msg);
+        sentGroupIds.add(groupId);
         sentTargets.push(`dept:${dept}`);
       }
     }
