@@ -189,6 +189,34 @@ Deno.serve(async (req) => {
         });
 
         console.log(`Saved incoming ${messageType} from ${senderName} in ${chatType} (${chatKey}): ${content}`);
+
+        // Auto-save files to Google Drive
+        if (fileUrl && (messageType === 'image' || messageType === 'video' || messageType === 'audio' || messageType === 'file')) {
+          try {
+            let ext = 'bin';
+            if (messageType === 'image') ext = 'jpg';
+            else if (messageType === 'video') ext = 'mp4';
+            else if (messageType === 'audio') ext = 'm4a';
+            else if (msg.fileName) ext = msg.fileName.split('.').pop() || 'bin';
+
+            const driveFileName = msg.fileName || `line_${messageType}_${msg.id}.${ext}`;
+            const driveContentType = messageType === 'image' ? 'image/jpeg'
+              : messageType === 'video' ? 'video/mp4'
+              : messageType === 'audio' ? 'audio/m4a'
+              : 'application/octet-stream';
+
+            const driveRes = await base44.asServiceRole.functions.invoke('saveLineFileToDrive', {
+              file_url: fileUrl,
+              file_name: driveFileName,
+              content_type: driveContentType,
+              chat_display_name: chatDisplayName,
+              message_type: messageType,
+            });
+            console.log(`Auto-saved to Google Drive: ${driveRes?.folder_path || 'done'}`);
+          } catch (driveErr) {
+            console.warn('Auto-save to Drive failed (non-blocking):', driveErr.message);
+          }
+        }
       }
     }
 
