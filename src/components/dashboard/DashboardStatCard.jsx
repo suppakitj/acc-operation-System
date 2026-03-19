@@ -2,31 +2,28 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 const VARIANTS = {
-  blue: 'bg-blue-50 border-blue-200 text-blue-700',
-  red: 'bg-red-50 border-red-200 text-red-700',
-  yellow: 'bg-yellow-50 border-yellow-200 text-yellow-700',
-  green: 'bg-green-50 border-green-200 text-green-700',
-  purple: 'bg-purple-50 border-purple-200 text-purple-700',
-  default: 'bg-card border-border text-foreground',
+  blue: { bg: 'bg-white border-l-4 border-l-blue-500', icon: 'bg-blue-50 text-blue-600', text: 'text-blue-700' },
+  red: { bg: 'bg-white border-l-4 border-l-red-500', icon: 'bg-red-50 text-red-600', text: 'text-red-700' },
+  yellow: { bg: 'bg-white border-l-4 border-l-amber-500', icon: 'bg-amber-50 text-amber-600', text: 'text-amber-700' },
+  green: { bg: 'bg-white border-l-4 border-l-emerald-500', icon: 'bg-emerald-50 text-emerald-600', text: 'text-emerald-700' },
+  purple: { bg: 'bg-white border-l-4 border-l-purple-500', icon: 'bg-purple-50 text-purple-600', text: 'text-purple-700' },
+  default: { bg: 'bg-white border-l-4 border-l-slate-300', icon: 'bg-slate-50 text-slate-500', text: 'text-foreground' },
 };
 
-const ICON_COLORS = {
-  blue: 'text-blue-500',
-  red: 'text-red-500',
-  yellow: 'text-yellow-500',
-  green: 'text-green-500',
-  purple: 'text-purple-500',
-  default: 'text-muted-foreground',
-};
-
-export default function DashboardStatCard({ title, value, icon: Icon, variant = 'default' }) {
+export default function DashboardStatCard({ title, value, icon: Icon, variant = 'default', subtitle }) {
+  const v = VARIANTS[variant] || VARIANTS.default;
   return (
-    <div className={cn('rounded-xl border p-3 md:p-4 flex flex-col justify-between min-h-[80px]', VARIANTS[variant])}>
-      <div className="flex items-center justify-between">
-        <p className="text-[11px] md:text-xs font-medium uppercase tracking-wide opacity-80">{title}</p>
-        {Icon && <Icon className={cn('w-4 h-4 md:w-5 md:h-5', ICON_COLORS[variant])} />}
+    <div className={cn('rounded-xl border shadow-sm p-4 flex items-center gap-4 transition-shadow hover:shadow-md', v.bg)}>
+      {Icon && (
+        <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center shrink-0', v.icon)}>
+          <Icon className="w-5 h-5" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{title}</p>
+        <p className={cn('text-2xl font-bold leading-tight', v.text)}>{value}</p>
+        {subtitle && <p className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</p>}
       </div>
-      <p className="text-2xl md:text-3xl font-bold mt-1">{value}</p>
     </div>
   );
 }
