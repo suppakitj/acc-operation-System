@@ -28,14 +28,17 @@ export default function ManusSettings() {
   }, [configs]);
 
   const webhookId = getVal('manus_webhook_id');
+  const customWebhookUrl = getVal('manus_webhook_url');
+  const [webhookUrlInput, setWebhookUrlInput] = useState('');
 
-  // Build webhook URL
-  const appId = window.__BASE44_APP_ID__ || '';
-  const baseUrl = window.location.origin;
-  const webhookBaseUrl = `https://app.base44.com/api/functions/${appId}/manusWebhook`;
-  const webhookUrl = webhookSecret
-    ? `${webhookBaseUrl}?secret=${encodeURIComponent(webhookSecret)}`
-    : webhookBaseUrl;
+  useEffect(() => {
+    setWebhookUrlInput(customWebhookUrl);
+  }, [customWebhookUrl]);
+
+  // Final webhook URL with optional secret
+  const webhookUrl = webhookUrlInput
+    ? (webhookSecret ? `${webhookUrlInput}?secret=${encodeURIComponent(webhookSecret)}` : webhookUrlInput)
+    : '';
 
   // Save API Key + Secret
   const saveMutation = useMutation({
