@@ -18,7 +18,7 @@ import PeakAccount from './pages/PeakAccount';
 import Billing from './pages/Billing';
 import Notifications from './pages/Notifications';
 import LineChat from './pages/LineChat';
-import Reports from './pages/Reports';
+
 import UserManagement from './pages/UserManagement';
 import RoleManagement from './pages/RoleManagement';
 import AuditLog from './pages/AuditLog';
@@ -66,7 +66,7 @@ const AuthenticatedApp = () => {
         <Route path="/Billing" element={<Billing />} />
         <Route path="/Notifications" element={<Notifications />} />
         <Route path="/LineChat" element={<LineChat />} />
-        <Route path="/Reports" element={<Reports />} />
+
         <Route path="/UserManagement" element={<UserManagement />} />
         <Route path="/RoleManagement" element={<RoleManagement />} />
         <Route path="/AuditLog" element={<AuditLog />} />
