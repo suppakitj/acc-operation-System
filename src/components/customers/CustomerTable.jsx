@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle, ClipboardList } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 const DEPT_LABELS = { management: 'Management', accounting: 'บัญชี', consulting: 'ที่ปรึกษา', audit: 'Audit', billing: 'Billing', it: 'IT' };
 
 const DEFAULT_WIDTHS = {
-  code: 80, company_name: 200, tax_id: 140, department: 130, owner: 130,
-  tasks: 110, monthly_fee: 110, yearly_fee: 110, status: 90,
+  code: 80, company_name: 220, tax_id: 150, department: 140,
+  monthly_fee: 120, yearly_fee: 120, status: 90,
 };
 
 function ResizeHandle({ onMouseDown }) {
@@ -81,8 +81,6 @@ export default function CustomerTable({ customers, tasks = [], onRowClick }) {
       else if (field === 'code') { va = a.customer_code || ''; vb = b.customer_code || ''; }
       else if (field === 'tax_id') { va = a.tax_id || ''; vb = b.tax_id || ''; }
       else if (field === 'department') { va = (a.departments || []).join(','); vb = (b.departments || []).join(','); }
-      else if (field === 'owner') { va = a.primary_officer_name || ''; vb = b.primary_officer_name || ''; }
-      else if (field === 'tasks') { va = taskMap[a.id]?.total || 0; vb = taskMap[b.id]?.total || 0; }
       else if (field === 'monthly_fee') { va = a.monthly_fee || 0; vb = b.monthly_fee || 0; }
       else if (field === 'yearly_fee') { va = a.yearly_fee || 0; vb = b.yearly_fee || 0; }
       else if (field === 'status') { va = a.status || ''; vb = b.status || ''; }
@@ -98,8 +96,6 @@ export default function CustomerTable({ customers, tasks = [], onRowClick }) {
     { field: 'company_name', label: 'Company' },
     { field: 'tax_id', label: 'Tax ID', static: true },
     { field: 'department', label: 'แผนก' },
-    { field: 'owner', label: 'Owner' },
-    { field: 'tasks', label: 'Tasks' },
     { field: 'monthly_fee', label: 'Monthly Fee' },
     { field: 'yearly_fee', label: 'Yearly Fee' },
     { field: 'status', label: 'Status' },
@@ -122,8 +118,6 @@ export default function CustomerTable({ customers, tasks = [], onRowClick }) {
         </thead>
         <tbody>
           {sorted.map(c => {
-            const tk = taskMap[c.id];
-            const hasOwner = !!c.primary_officer_name;
             const depts = (c.departments || []).map(d => DEPT_LABELS[d] || d);
             return (
               <tr key={c.id} className="border-b last:border-b-0 hover:bg-muted/30 cursor-pointer transition-colors" onClick={() => onRowClick(c)}>
@@ -141,22 +135,6 @@ export default function CustomerTable({ customers, tasks = [], onRowClick }) {
                       ))}
                       {depts.length > 2 && <span className="text-[9px] text-muted-foreground">+{depts.length - 2}</span>}
                     </div>
-                  ) : <span className="text-xs text-muted-foreground">—</span>}
-                </td>
-                <td className="px-3 py-3 whitespace-nowrap overflow-hidden text-ellipsis">
-                  {hasOwner ? (
-                    <span className="text-xs">{c.primary_officer_name}</span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-xs text-yellow-600"><AlertTriangle className="w-3.5 h-3.5" /></span>
-                  )}
-                </td>
-                <td className="px-3 py-3 whitespace-nowrap">
-                  {tk ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs">
-                      <ClipboardList className="w-3.5 h-3.5 text-muted-foreground" />
-                      {tk.total}
-                      {tk.overdue > 0 && <Badge className="bg-red-100 text-red-700 text-[9px] px-1.5 py-0 border-0">{tk.overdue} overdue</Badge>}
-                    </span>
                   ) : <span className="text-xs text-muted-foreground">—</span>}
                 </td>
                 <td className="px-3 py-3 text-xs font-medium whitespace-nowrap">
