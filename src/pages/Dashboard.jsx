@@ -9,6 +9,7 @@ import OverdueTasks from '../components/dashboard/OverdueTasks';
 import TodaySchedule from '../components/dashboard/TodaySchedule';
 import TaskStatusBarChart from '../components/dashboard/TaskStatusBarChart';
 import DueIn7Days from '../components/dashboard/DueIn7Days';
+import RecentTasks from '../components/dashboard/RecentTasks';
 import { useLanguage } from '../components/LanguageContext';
 
 export default function Dashboard() {
@@ -102,6 +103,9 @@ export default function Dashboard() {
         <TaskStatusBarChart tasks={tasks} />
         <DueIn7Days tasks={tasks} />
       </div>
+
+      {/* Row 5 — Recent Tasks */}
+      <RecentTasks tasks={tasks} />
     </div>
   );
 }

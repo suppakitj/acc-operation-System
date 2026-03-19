@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, AlertCircle } from 'lucide-react';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, format } from 'date-fns';
 import { useLanguage } from '../LanguageContext';
 
 const STATUS_BADGE = {
@@ -36,16 +36,18 @@ export default function DueIn7Days({ tasks }) {
         ) : (
           upcoming.slice(0, 8).map(task => {
             const badge = STATUS_BADGE[task.status] || STATUS_BADGE.pending;
+            const daysLeft = differenceInDays(new Date(task.due_date), today);
             return (
               <div key={task.id} className="flex items-center gap-3 py-2.5 border-b last:border-b-0">
                 <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{task.title}</p>
-                  <p className="text-xs text-muted-foreground truncate">{task.customer_name || '-'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{task.customer_name || '-'} · {task.assigned_name || '-'}</p>
                 </div>
-                <Badge variant="outline" className={`text-[10px] shrink-0 ${badge.className}`}>
-                  {badge.label}
-                </Badge>
+                <div className="text-right shrink-0">
+                  <p className="text-xs font-medium text-yellow-600">{daysLeft === 0 ? 'วันนี้' : `อีก ${daysLeft} วัน`}</p>
+                  <p className="text-[10px] text-muted-foreground">{format(new Date(task.due_date), 'd MMM')}</p>
+                </div>
               </div>
             );
           })

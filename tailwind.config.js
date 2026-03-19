@@ -10,6 +10,10 @@ module.exports = {
     'bg-blue-50', 'bg-green-50', 'bg-red-50', 'bg-purple-50', 'bg-orange-50', 'bg-teal-50', 'bg-gray-50',
     'bg-blue-500', 'bg-green-500', 'bg-red-500', 'bg-purple-500', 'bg-orange-500', 'bg-teal-500', 'bg-gray-400',
     'border-blue-400', 'border-green-400', 'border-red-400', 'border-purple-400', 'border-orange-400', 'border-teal-400', 'border-gray-300',
+    'bg-blue-50', 'bg-yellow-50', 'bg-green-50', 'bg-red-50', 'bg-purple-50',
+    'border-blue-200', 'border-yellow-200', 'border-green-200', 'border-red-200', 'border-purple-200',
+    'text-blue-700', 'text-yellow-700', 'text-green-700', 'text-red-700', 'text-purple-700',
+    'text-blue-500', 'text-yellow-500', 'text-green-500', 'text-red-500', 'text-purple-500',
   ],
   theme: {
     extend: {
