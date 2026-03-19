@@ -8,6 +8,47 @@ import { Label } from '@/components/ui/label';
 import { HardDrive, Save, FolderOpen, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+function GoogleDriveOAuthStatus() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['gdrive-connection'],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('checkGdriveConnection', {});
+      return res.data;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
+        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">กำลังตรวจสอบการเชื่อมต่อ...</span>
+      </div>
+    );
+  }
+
+  if (data?.connected) {
+    return (
+      <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 border border-green-200">
+        <CheckCircle2 className="w-4 h-4 text-green-600" />
+        <div className="flex-1">
+          <span className="text-sm font-medium text-green-700">เชื่อมต่อ Google Drive แล้ว</span>
+          <p className="text-xs text-green-600">{data.displayName} ({data.email})</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+      <XCircle className="w-4 h-4 text-red-500" />
+      <div className="flex-1">
+        <span className="text-sm font-medium text-red-700">ยังไม่ได้เชื่อมต่อ Google Drive</span>
+        <p className="text-xs text-red-500">กรุณาติดต่อ Admin เพื่อเชื่อมต่อ OAuth</p>
+      </div>
+    </div>
+  );
+}
+
 export default function GoogleDriveSettings() {
   const queryClient = useQueryClient();
   const { data: configs = [] } = useQuery({
