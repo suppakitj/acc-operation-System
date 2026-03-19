@@ -10,23 +10,34 @@ const LEGEND = [
 
 export default function AtRiskEmployees({ tasks }) {
   const today = new Date();
+  const currentYear = today.getFullYear();
 
   const atRisk = useMemo(() => {
     const map = {};
     tasks.forEach(t => {
-      if (!t.assigned_to || t.status === 'completed' || t.status === 'cancelled') return;
+      if (!t.assigned_to || t.status === 'cancelled') return;
       if (!t.due_date) return;
       const dueDate = new Date(t.due_date);
-      if (dueDate >= today) return;
+      // เฉพาะ tasks ที่ due_date อยู่ในปีปัจจุบัน
+      if (dueDate.getFullYear() !== currentYear) return;
+      // นับ overdue สะสม: ยังไม่เสร็จแต่เลย due_date, หรือเสร็จหลัง due_date
+      const isOverdue = (() => {
+        if (t.status !== 'completed' && dueDate < today) return true;
+        if (t.status === 'completed' && t.completed_date && new Date(t.completed_date) > dueDate) return true;
+        return false;
+      })();
+      if (!isOverdue) return;
+      const completedOrToday = t.completed_date ? new Date(t.completed_date) : today;
+      const delay = differenceInDays(completedOrToday, dueDate);
       if (!map[t.assigned_to]) map[t.assigned_to] = { name: t.assigned_name || t.assigned_to, overdue: 0, totalDelay: 0 };
       map[t.assigned_to].overdue++;
-      map[t.assigned_to].totalDelay += differenceInDays(today, dueDate);
+      map[t.assigned_to].totalDelay += delay;
     });
     return Object.values(map)
       .map(e => ({ ...e, avgDelay: e.overdue > 0 ? (e.totalDelay / e.overdue).toFixed(1) : 0 }))
       .sort((a, b) => b.overdue - a.overdue)
       .slice(0, 5);
-  }, [tasks]);
+  }, [tasks, currentYear]);
 
   return (
     <Card className="shadow-sm border">
