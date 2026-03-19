@@ -165,6 +165,12 @@ export default function PeakAccount() {
     return u?.full_name?.split(' ')[0] || email?.split('@')[0] || '—';
   };
 
+  const paged = paginateData(filtered, page, pageSize);
+
+  if (!ac.canViewPeakAccount) {
+    return <div className="text-center py-12 text-muted-foreground">ไม่มีสิทธิ์เข้าถึงหน้านี้</div>;
+  }
+
   const getLastReminder = (l) => {
     if (!l.notification_history?.length) return '—';
     const last = l.notification_history[l.notification_history.length - 1];
