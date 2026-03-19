@@ -171,20 +171,38 @@ export default function ManusSettings() {
             ลงทะเบียน Webhook เพื่อให้ Manus แจ้งกลับมาอัตโนมัติเมื่อ OCR เสร็จ — ไม่ต้องกดตรวจสอบเอง
           </p>
 
-          {/* Webhook URL */}
+          {/* Webhook Base URL */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Webhook URL</Label>
+            <Label className="text-xs">Webhook Function URL</Label>
             <div className="flex items-center gap-2">
               <Input
-                value={webhookUrl}
-                readOnly
-                className="font-mono text-xs bg-muted/50"
+                value={webhookUrlInput}
+                onChange={e => setWebhookUrlInput(e.target.value)}
+                placeholder="https://app--xxx.base44.app/api/apps/.../functions/manusWebhook"
+                className="font-mono text-xs"
               />
-              <Button variant="outline" size="icon" onClick={() => copyToClipboard(webhookUrl)} title="คัดลอก URL">
-                <Copy className="w-3.5 h-3.5" />
-              </Button>
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              คัดลอก URL จาก Dashboard → Code → Functions → manusWebhook (ด้านขวาบน)
+            </p>
           </div>
+
+          {/* Final URL Preview */}
+          {webhookUrl && (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">URL ที่จะลงทะเบียน (รวม secret)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={webhookUrl}
+                  readOnly
+                  className="font-mono text-[11px] bg-muted/50"
+                />
+                <Button variant="outline" size="icon" onClick={() => copyToClipboard(webhookUrl)} title="คัดลอก URL">
+                  <Copy className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Webhook Status */}
           <div className="flex items-center gap-3">
