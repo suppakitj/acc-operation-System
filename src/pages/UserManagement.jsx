@@ -58,10 +58,6 @@ export default function UserManagement() {
   const ac = useAccessControl(currentUser);
   const { data: users = [] } = useUserList();
 
-  if (!ac.canManageUsers) {
-    return <div className="text-center py-12 text-muted-foreground">เฉพาะ Admin เท่านั้นที่จัดการผู้ใช้ได้</div>;
-  }
-
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
     onSuccess: () => {
