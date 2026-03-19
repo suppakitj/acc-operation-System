@@ -82,7 +82,12 @@ export default function Customers() {
 
   useEffect(() => { setPage(1); }, [search, statusFilter, deptFilter2]);
 
-  const paged = paginateData(filtered, page, pageSize);
+  // Sort filtered data by customer_code before pagination
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => (a.customer_code || '').localeCompare(b.customer_code || ''));
+  }, [filtered]);
+
+  const paged = paginateData(sorted, page, pageSize);
 
   const canEdit = ac.canEditCustomer;
   const canAdd = ac.canAddCustomer;
@@ -141,12 +146,12 @@ export default function Customers() {
       {/* Table */}
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">{t('loading')}</div>
-      ) : filtered.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">{t('no_data')}</div>
       ) : (
         <>
           <CustomerTable customers={paged} tasks={tasks} onRowClick={onRowClick} />
-          <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+          <TablePagination totalItems={sorted.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
         </>
       )}
 
