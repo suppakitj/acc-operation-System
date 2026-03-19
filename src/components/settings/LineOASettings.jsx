@@ -69,6 +69,7 @@ export default function LineOASettings() {
           value: deptGroups[d.key] || '',
           description: `LINE Group ID แผนก ${d.label}`,
         })),
+        { key: 'line_webhook_url', value: webhookUrl, description: 'LINE Webhook URL' },
       ];
       for (const p of pairs) {
         const existing = configs.find(c => c.key === p.key);
