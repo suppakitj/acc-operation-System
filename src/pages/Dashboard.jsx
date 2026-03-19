@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { format, differenceInDays, startOfMonth, endOfMonth } from 'date-fns';
-import { ClipboardList, AlertTriangle, Clock, FileCheck, Filter } from 'lucide-react';
+import { ClipboardList, AlertTriangle, Clock, FileCheck, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import DashboardStatCard from '../components/dashboard/DashboardStatCard';
@@ -50,7 +50,6 @@ export default function Dashboard() {
         const start = startOfMonth(today);
         const end = endOfMonth(today);
         const created = new Date(t.created_date);
-        // Include tasks created this month OR still open
         if (t.status === 'completed' || t.status === 'cancelled') {
           if (created < start || created > end) return false;
         }
@@ -69,30 +68,35 @@ export default function Dashboard() {
   }).length;
   const pendingReview = filteredTasks.filter(t => t.status === 'review').length;
 
+  const hasFilters = deptFilter !== 'all' || statusFilter !== 'all' || dateRange !== 'this_month';
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold">Task Management Dashboard</h1>
-          <p className="text-sm text-muted-foreground">{format(today, 'EEEE, d MMMM yyyy')}</p>
+          <h1 className="text-2xl font-bold tracking-tight">Task Management Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{format(today, 'EEEE, d MMMM yyyy')}</p>
         </div>
-        <Link to="/Tasks" className="text-sm text-primary hover:underline font-medium">Go to Tasks →</Link>
+        <Link to="/Tasks" className="text-sm text-primary hover:underline font-medium shrink-0">
+          Go to Tasks →
+        </Link>
       </div>
 
-      {/* Row 1 — Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <DashboardStatCard title="TOTAL TASKS" value={totalTasks} icon={ClipboardList} variant="blue" />
-        <DashboardStatCard title="DUE TODAY" value={dueToday} icon={Clock} variant="yellow" />
-        <DashboardStatCard title="OVERDUE" value={overdueTasks} icon={AlertTriangle} variant="red" />
-        <DashboardStatCard title="PENDING REVIEW" value={pendingReview} icon={FileCheck} variant="green" />
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <DashboardStatCard title="TOTAL TASKS" value={totalTasks} icon={ClipboardList} variant="blue" subtitle="active tasks" />
+        <DashboardStatCard title="DUE TODAY" value={dueToday} icon={Clock} variant="yellow" subtitle="need attention" />
+        <DashboardStatCard title="OVERDUE" value={overdueTasks} icon={AlertTriangle} variant="red" subtitle="past deadline" />
+        <DashboardStatCard title="PENDING REVIEW" value={pendingReview} icon={FileCheck} variant="green" subtitle="awaiting approval" />
       </div>
 
-      {/* Filters Bar */}
-      <div className="flex flex-wrap items-center gap-3 p-3 bg-card rounded-xl border">
-        <Filter className="w-4 h-4 text-muted-foreground" />
+      {/* Filter Bar */}
+      <div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-card rounded-xl border shadow-sm">
+        <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+        <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Filters:</span>
         <Select value={deptFilter} onValueChange={setDeptFilter}>
-          <SelectTrigger className="w-[140px] h-8 text-xs">
+          <SelectTrigger className="w-[150px] h-8 text-xs border-dashed">
             <SelectValue placeholder="Department" />
           </SelectTrigger>
           <SelectContent>
@@ -103,7 +107,7 @@ export default function Dashboard() {
           </SelectContent>
         </Select>
         <Select value={dateRange} onValueChange={setDateRange}>
-          <SelectTrigger className="w-[130px] h-8 text-xs">
+          <SelectTrigger className="w-[130px] h-8 text-xs border-dashed">
             <SelectValue placeholder="Date Range" />
           </SelectTrigger>
           <SelectContent>
@@ -112,7 +116,7 @@ export default function Dashboard() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[130px] h-8 text-xs">
+          <SelectTrigger className="w-[130px] h-8 text-xs border-dashed">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -123,26 +127,33 @@ export default function Dashboard() {
             <SelectItem value="completed">Completed</SelectItem>
           </SelectContent>
         </Select>
-        <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => { setDeptFilter('all'); setStatusFilter('all'); setDateRange('this_month'); }}>
-          Reset
-        </Button>
+        {hasFilters && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+            onClick={() => { setDeptFilter('all'); setStatusFilter('all'); setDateRange('this_month'); }}
+          >
+            <RotateCcw className="w-3 h-3" /> Reset
+          </Button>
+        )}
       </div>
 
-      {/* Row 2 — Completion + Trend + Productivity */}
+      {/* Row 1 — Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <CompletionRateDonut tasks={filteredTasks} />
         <OverdueTrendChart tasks={tasks} />
         <EmployeeProductivity tasks={filteredTasks} users={users} />
       </div>
 
-      {/* Row 3 — Top Performers + At Risk + Recent Activity */}
+      {/* Row 2 — Tables + Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <TopPerformers tasks={filteredTasks} />
         <AtRiskEmployees tasks={filteredTasks} />
         <RecentActivity tasks={filteredTasks} />
       </div>
 
-      {/* Row 4 — Distribution + Workload */}
+      {/* Row 3 — Bottom Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <TaskDistributionPie tasks={filteredTasks} />
         <WorkloadByTeam tasks={filteredTasks} />
