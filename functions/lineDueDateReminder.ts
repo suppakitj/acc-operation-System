@@ -168,18 +168,8 @@ Deno.serve(async (req) => {
 
     let sentTargets = [];
 
-    // 1. Send full summary to company group
-    if (companyTarget) {
-      const msg = buildFullMessage(todayStr, overdueTasks, due3Days, due7Days, null);
-      if (msg) {
-        await sendMessage(accessToken, companyTarget, msg);
-        sentTargets.push('company');
-      }
-    }
-
-    // 2. Send department-specific messages to department groups (skip if same Group ID as company)
+    // Send department-specific messages to department groups only
     const sentGroupIds = new Set();
-    if (companyTarget) sentGroupIds.add(companyTarget);
 
     for (const [dept, groupId] of Object.entries(deptGroupMap)) {
       if (sentGroupIds.has(groupId)) {
