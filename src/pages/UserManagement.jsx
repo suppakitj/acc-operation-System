@@ -128,6 +128,10 @@ export default function UserManagement() {
   const activeCount = users.filter(u => u.user_status !== 'inactive').length;
   const inactiveCount = users.filter(u => u.user_status === 'inactive').length;
 
+  if (!ac.canManageUsers) {
+    return <div className="text-center py-12 text-muted-foreground">เฉพาะ Admin เท่านั้นที่จัดการผู้ใช้ได้</div>;
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}
