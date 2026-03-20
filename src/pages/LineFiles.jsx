@@ -15,6 +15,7 @@ export default function LineFiles() {
   const [zipping, setZipping] = useState(null); // folder id being zipped
   const [selectedIds, setSelectedIds] = useState([]);
   const [zippingMulti, setZippingMulti] = useState(false);
+  const [failedIds, setFailedIds] = useState(new Set());
 
   const currentKey = currentFolderId || 'root';
 
@@ -65,11 +66,15 @@ export default function LineFiles() {
 
   const handleDownload = async (file) => {
     setDownloadingId(file.id);
+    // Clear previous fail status on retry
+    setFailedIds(prev => { const next = new Set(prev); next.delete(file.id); return next; });
+
     const res = await base44.functions.invoke('browseLineDrive', { action: 'download', file_id: file.id });
     const info = res.data;
 
     if (info.error) {
-      toast.error(info.error);
+      toast.error(`${file.name}: ${info.error}`);
+      setFailedIds(prev => new Set(prev).add(file.id));
       setDownloadingId(null);
       return;
     }
@@ -80,7 +85,8 @@ export default function LineFiles() {
     });
 
     if (!downloadRes.ok) {
-      toast.error('ไม่สามารถดาวน์โหลดไฟล์ได้');
+      toast.error(`${file.name}: ไม่สามารถดาวน์โหลดได้ (${downloadRes.status})`);
+      setFailedIds(prev => new Set(prev).add(file.id));
       setDownloadingId(null);
       return;
     }
@@ -205,6 +211,7 @@ export default function LineFiles() {
               zippingFolderId={zipping}
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
+              failedIds={failedIds}
             />
           )}
         </CardContent>
