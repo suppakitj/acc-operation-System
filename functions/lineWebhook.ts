@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
           : (messageType === 'file') ? 'file'
           : 'text';
 
-        await base44.asServiceRole.entities.LineMessage.create({
+        const createdMsg = await base44.asServiceRole.entities.LineMessage.create({
           line_user_id: chatKey,
           display_name: chatDisplayName,
           profile_image: chatImage,
@@ -186,6 +186,7 @@ Deno.serve(async (req) => {
           file_url: fileUrl || undefined,
           is_read: false,
           chat_type: chatType,
+          drive_saved: false,
         });
 
         console.log(`Saved incoming ${messageType} from ${senderName} in ${chatType} (${chatKey}): ${content}`);
@@ -234,8 +235,13 @@ Deno.serve(async (req) => {
               message_type: messageType,
             });
             console.log(`Auto-saved to Google Drive: ${driveRes?.folder_path || 'done'}`);
+            // Mark as saved to Drive
+            if (createdMsg?.id && (driveRes?.success || driveRes?.drive_file_id)) {
+              await base44.asServiceRole.entities.LineMessage.update(createdMsg.id, { drive_saved: true });
+            }
           } catch (driveErr) {
             console.warn('Auto-save to Drive failed (non-blocking):', driveErr.message);
+            // drive_saved stays false — retryDriveSave will pick it up later
           }
         }
       }
