@@ -1,10 +1,9 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Verify user is authenticated
     const user = await base44.auth.me();
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -17,11 +16,11 @@ Deno.serve(async (req) => {
     }
 
     // Get LINE access token from AppConfig
-    const configs = await base44.asServiceRole.entities.AppConfig.filter({});
-    const accessToken = configs.find(c => c.key === 'line_access_token')?.value || '';
+    const configs = await base44.asServiceRole.entities.AppConfig.filter({ key: 'line_access_token' }, '-created_date', 1);
+    const accessToken = configs[0]?.value || '';
 
     if (!accessToken) {
-      return Response.json({ error: 'LINE OA access token not configured. Go to Settings → LINE Official Account.' }, { status: 400 });
+      return Response.json({ error: 'LINE OA access token not configured.' }, { status: 400 });
     }
 
     // Send message via LINE Push API
@@ -45,7 +44,7 @@ Deno.serve(async (req) => {
 
     // Save outgoing message to LineMessage entity
     await base44.asServiceRole.entities.LineMessage.create({
-      line_user_id: line_user_id,
+      line_user_id,
       display_name: display_name || line_user_id,
       content: message,
       direction: 'outgoing',
