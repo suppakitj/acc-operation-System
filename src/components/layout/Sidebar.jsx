@@ -66,7 +66,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const [expandedGroups, setExpandedGroups] = useState(() => {
     const saved = localStorage.getItem('sidebar_groups');
     if (saved) return JSON.parse(saved);
-    return { overview: true, work: true, clients: true, comms: true, system: false };
+    return { overview: true, work: true, clients: true, comms: true, tools: true, system: false };
   });
 
   useEffect(() => {

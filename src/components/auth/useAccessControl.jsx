@@ -118,8 +118,8 @@ export function useAccessControl(user) {
       if (p('audit_log') !== 'no')       menus.push('audit');
       if (p('db_backup') !== 'no')       menus.push('backup');
 
-      // OCR — visible for admin/management or anyone with ocr permission
-      if (role === 'admin' || role === 'management' || p('ocr') !== 'no') menus.push('ocr');
+      // OCR
+      if (p('ocr') !== 'no') menus.push('ocr');
 
       return menus;
     };
