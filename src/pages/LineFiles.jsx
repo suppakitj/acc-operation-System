@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, RefreshCw, HardDrive, Loader2 } from 'lucide-react';
+import { ArrowLeft, RefreshCw, HardDrive, Loader2, FolderArchive } from 'lucide-react';
 import { toast } from 'sonner';
 import FileBreadcrumb from '../components/line-files/FileBreadcrumb';
 import FileListTable from '../components/line-files/FileListTable';
@@ -12,6 +12,7 @@ export default function LineFiles() {
   const [folderStack, setFolderStack] = useState([]); // [{id, name}, ...]
   const [currentFolderId, setCurrentFolderId] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
+  const [zipping, setZipping] = useState(false);
 
   const currentKey = currentFolderId || 'root';
 
@@ -94,6 +95,28 @@ export default function LineFiles() {
     toast.success(`ดาวน์โหลด ${file.name} สำเร็จ`);
   };
 
+  const handleDownloadFolder = async () => {
+    const folderId = currentFolderId || data?.current_folder_id;
+    if (!folderId) { toast.error('ไม่พบ folder ID'); return; }
+    setZipping(true);
+    toast.info('กำลังรวมไฟล์เป็น .zip — อาจใช้เวลาสักครู่...');
+    const res = await base44.functions.invoke('downloadFolderZip', { folder_id: folderId });
+    setZipping(false);
+    if (res.data?.error) {
+      toast.error(res.data.error);
+      return;
+    }
+    if (res.data?.file_url) {
+      const a = document.createElement('a');
+      a.href = res.data.file_url;
+      a.download = res.data.file_name || 'folder.zip';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      toast.success(`ดาวน์โหลด ${res.data.file_name} สำเร็จ (${res.data.file_count} ไฟล์, ${res.data.total_size_mb} MB)`);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -117,6 +140,18 @@ export default function LineFiles() {
               </Button>
             )}
             <FileBreadcrumb path={breadcrumb} onNavigate={handleBreadcrumbNav} />
+            <div className="ml-auto shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadFolder}
+                disabled={zipping || isLoading}
+                className="text-xs gap-1.5"
+              >
+                {zipping ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderArchive className="w-3.5 h-3.5" />}
+                {zipping ? 'กำลังสร้าง zip...' : 'ดาวน์โหลด Folder (.zip)'}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="px-2 pb-3">
