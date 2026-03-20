@@ -30,6 +30,7 @@ import TeamAnalytics from './pages/TeamAnalytics';
 import StaffDashboard from './pages/StaffDashboard';
 import TaskCalendar from './pages/TaskCalendar';
 import OcrProcessing from './pages/OcrProcessing';
+import LineFiles from './pages/LineFiles';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -79,6 +80,7 @@ const AuthenticatedApp = () => {
         <Route path="/TaskCalendar" element={<TaskCalendar />} />
         <Route path="/DatabaseBackup" element={<DatabaseBackup />} />
         <Route path="/OcrProcessing" element={<OcrProcessing />} />
+        <Route path="/LineFiles" element={<LineFiles />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
