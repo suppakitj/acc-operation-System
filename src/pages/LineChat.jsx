@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Send, Search, MessageCircle, User, Users, ArrowLeft, AlertCircle, Settings } from 'lucide-react';
+import { Send, Search, MessageCircle, User, Users, ArrowLeft, AlertCircle, Settings, ChevronUp } from 'lucide-react';
 import ChatBubble from '../components/chat/ChatBubble';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,13 +13,17 @@ import { useLanguage } from '../components/LanguageContext';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
+const MESSAGES_PER_PAGE = 50;
+
 export default function LineChat() {
   const { t } = useLanguage();
   const [search, setSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [newMessage, setNewMessage] = useState('');
+  const [visibleCount, setVisibleCount] = useState(MESSAGES_PER_PAGE);
   const queryClient = useQueryClient();
   const chatEndRef = useRef(null);
+  const chatTopRef = useRef(null);
 
   // Check LINE config
   const { data: configs = [] } = useQuery({
@@ -79,7 +83,23 @@ export default function LineChat() {
     .sort((a, b) => new Date(b.lastDate) - new Date(a.lastDate));
 
   const selectedUser = selectedUserId ? userGroups[selectedUserId] : null;
-  const chatMessages = selectedUser?.messages?.sort((a, b) => new Date(a.created_date) - new Date(b.created_date)) || [];
+  const allChatMessages = selectedUser?.messages?.sort((a, b) => new Date(a.created_date) - new Date(b.created_date)) || [];
+  const totalMessages = allChatMessages.length;
+  const hasOlderMessages = totalMessages > visibleCount;
+  const chatMessages = hasOlderMessages ? allChatMessages.slice(totalMessages - visibleCount) : allChatMessages;
+
+  // Reset visible count when switching chats
+  useEffect(() => {
+    setVisibleCount(MESSAGES_PER_PAGE);
+  }, [selectedUserId]);
+
+  const handleLoadOlder = useCallback(() => {
+    setVisibleCount(prev => prev + MESSAGES_PER_PAGE);
+    // Keep scroll position near top after loading
+    setTimeout(() => {
+      chatTopRef.current?.scrollIntoView({ behavior: 'instant' });
+    }, 50);
+  }, []);
 
   // Auto-scroll and mark read
   useEffect(() => {
@@ -207,6 +227,20 @@ export default function LineChat() {
               <CardContent className="flex-1 overflow-hidden p-0">
                 <ScrollArea className="h-full p-3 md:p-4">
                   <div className="space-y-3">
+                    {hasOlderMessages && (
+                      <div className="flex justify-center py-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleLoadOlder}
+                          className="text-xs text-muted-foreground gap-1.5 hover:text-foreground"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                          โหลดข้อความเก่า ({totalMessages - visibleCount} ข้อความ)
+                        </Button>
+                      </div>
+                    )}
+                    <div ref={chatTopRef} />
                     {chatMessages.map(m => (
                       <ChatBubble key={m.id} message={m} />
                     ))}
