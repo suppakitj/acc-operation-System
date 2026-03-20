@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Download, ExternalLink, Loader2, Trash2 } from 'lucide-react';
+import { RefreshCw, Download, ExternalLink, Loader2, Trash2, FileSpreadsheet, FileType } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -52,6 +52,11 @@ export default function OcrJobList({ jobs, onRefresh }) {
                 <Badge className={sc.className + ' text-[10px]'}>{sc.label}</Badge>
               </div>
               <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                {job.output_format === 'word' ? (
+                  <span className="flex items-center gap-0.5 text-blue-600"><FileType className="w-3 h-3" /> Word</span>
+                ) : (
+                  <span className="flex items-center gap-0.5 text-green-600"><FileSpreadsheet className="w-3 h-3" /> Excel</span>
+                )}
                 {job.customer_name && <span>{job.customer_name}</span>}
                 <span>{format(new Date(job.created_date), 'dd/MM/yyyy HH:mm')}</span>
                 {job.notes && <span>• {job.notes}</span>}
@@ -82,7 +87,7 @@ export default function OcrJobList({ jobs, onRefresh }) {
               {job.status === 'completed' && job.output_file_url && (
                 <Button variant="outline" size="sm" asChild className="text-xs">
                   <a href={job.output_file_url} target="_blank" rel="noopener noreferrer">
-                    <Download className="w-3.5 h-3.5 mr-1" /> Excel
+                    <Download className="w-3.5 h-3.5 mr-1" /> {job.output_format === 'word' ? 'Word' : 'Excel'}
                   </a>
                 </Button>
               )}

@@ -58,7 +58,7 @@ export default function OcrProcessing() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl md:text-2xl font-bold">OCR</h1>
-          <p className="text-sm text-muted-foreground">อัปโหลด PDF → แปลงเป็น Excel อัตโนมัติ → บันทึกใน Google Drive</p>
+          <p className="text-sm text-muted-foreground">อัปโหลดเอกสาร → แปลงเป็น Excel / Word อัตโนมัติ → บันทึกใน Google Drive</p>
         </div>
         <Button variant="outline" size="sm" onClick={refresh}>
           <RefreshCw className="w-4 h-4 mr-1" /> รีเฟรช
@@ -77,7 +77,7 @@ export default function OcrProcessing() {
         {/* Upload Form */}
         <Card className="lg:col-span-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">อัปโหลด PDF</CardTitle>
+            <CardTitle className="text-base">อัปโหลดเอกสาร</CardTitle>
           </CardHeader>
           <CardContent>
             <OcrUploadForm onSubmitted={refresh} />
