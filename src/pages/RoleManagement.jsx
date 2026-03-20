@@ -38,6 +38,7 @@ const DEFAULT_MATRIX = [
   { key: 'reports', label: 'รายงาน (Reports)', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
   { key: 'audit_log', label: 'Audit Log', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
   { key: 'db_backup', label: 'Backup Database', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
+  { key: 'ocr', label: 'OCR (แปลงเอกสาร)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
 ];
 
 const PERM_CYCLE = ['yes', 'dept', 'own', 'edit_only', 'view_only', 'no'];
