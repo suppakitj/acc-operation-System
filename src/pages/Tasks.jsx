@@ -35,11 +35,11 @@ export default function Tasks() {
 
   const { data: allTasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date', 500),
+    queryFn: () => base44.entities.Task.list('-created_date', 1000),
   });
   // Apply department-based visibility
   const tasks = ac.filterByDepartment(allTasks);
-  const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
+  const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500), staleTime: 60_000 });
   const customers = allCustomers.filter(c => c.status === 'active');
   const { data: users = [] } = useUserList();
 

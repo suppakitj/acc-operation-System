@@ -14,6 +14,7 @@ export default function AppLayout() {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
+    staleTime: 2 * 60_000, // 2min — user data rarely changes
   });
 
   const { data: notifications } = useQuery({

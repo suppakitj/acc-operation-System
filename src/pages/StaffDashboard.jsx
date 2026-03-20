@@ -35,6 +35,7 @@ export default function StaffDashboard() {
     queryKey: ['tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 1000),
   });
+  // staleTime inherited from global default (30s)
   const { data: users = [], isLoading: loadingUsers } = useUserList();
 
   const today = new Date();

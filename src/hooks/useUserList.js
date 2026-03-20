@@ -8,6 +8,7 @@ export function useUserList() {
       const res = await base44.functions.invoke('listUsers', {});
       return res.data?.users || [];
     },
-    staleTime: 60000, // cache 1 min
+    staleTime: 2 * 60_000, // 2min — user list rarely changes
+    gcTime: 10 * 60_000,   // keep in cache 10min
   });
 }

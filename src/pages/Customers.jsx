@@ -38,7 +38,7 @@ export default function Customers() {
   const [pageSize, setPageSize] = useState(25);
   const queryClient = useQueryClient();
 
-  const { data: customers = [], isLoading } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500) });
+  const { data: customers = [], isLoading } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500), staleTime: 60_000 });
   const { data: tasks = [] } = useQuery({ queryKey: ['tasks'], queryFn: () => base44.entities.Task.list('-created_date', 1000) });
 
   const createMutation = useMutation({

@@ -6,6 +6,7 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ClipboardList, AlertTriangle, Clock, FileCheck, CheckCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { useUserList } from '@/hooks/useUserList';
 import DashboardStatCard from '../components/dashboard/DashboardStatCard';
 import CompletionRateDonut from '../components/dashboard/CompletionRateDonut';
 import OverdueTrendChart from '../components/dashboard/OverdueTrendChart';
@@ -30,12 +31,9 @@ export default function Dashboard() {
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date', 500),
+    queryFn: () => base44.entities.Task.list('-created_date', 1000),
   });
-  const { data: users = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
-  });
+  const { data: users = [] } = useUserList();
 
   // Filters
   const [deptFilter, setDeptFilter] = useState('all');

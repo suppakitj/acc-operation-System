@@ -65,6 +65,7 @@ export default function PeakAccount() {
   const { data: licenses = [], isLoading } = useQuery({
     queryKey: ['peakLicenses'],
     queryFn: () => base44.entities.PeakLicense.list('-created_date', 500),
+    staleTime: 60_000,
   });
 
   const createMutation = useMutation({

@@ -46,12 +46,13 @@ export default function TaskCalendar() {
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-due_date', 500),
+    queryFn: () => base44.entities.Task.list('-created_date', 1000),
   });
 
   const { data: holidays = [] } = useQuery({
     queryKey: ['holidays'],
     queryFn: () => base44.entities.HolidayMaster.filter({ status: 'active' }),
+    staleTime: 5 * 60_000, // holidays rarely change
   });
 
   // Build holiday lookup by date

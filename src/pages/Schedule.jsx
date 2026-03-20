@@ -63,8 +63,8 @@ export default function Schedule() {
   const [editingSchedule, setEditingSchedule] = useState(null);
 
   const { data: allSchedules = [] } = useQuery({ queryKey: ['schedules'], queryFn: () => base44.entities.Schedule.list('-date', 500) });
-  const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 200) });
-  const { data: holidays = [] } = useQuery({ queryKey: ['holidays'], queryFn: () => base44.entities.HolidayMaster.filter({ status: 'active' }) });
+  const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500), staleTime: 60_000 });
+  const { data: holidays = [] } = useQuery({ queryKey: ['holidays'], queryFn: () => base44.entities.HolidayMaster.filter({ status: 'active' }), staleTime: 5 * 60_000 });
   const customers = allCustomers.filter(c => c.status === 'active');
   const { data: users = [] } = useUserList();
 
