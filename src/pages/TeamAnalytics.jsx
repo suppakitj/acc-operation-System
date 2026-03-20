@@ -33,7 +33,7 @@ export default function TeamAnalytics() {
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 1000),
-    staleTime: 60_000, // analytics data — 1 min cache
+    staleTime: 2 * 60_000, // analytics page — 2 min cache, data doesn't need to be real-time
   });
 
   const filteredTasks = useMemo(() => {

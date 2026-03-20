@@ -38,7 +38,7 @@ export default function Billing() {
   const queryClient = useQueryClient();
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
   const ac = useAccessControl(currentUser);
-  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list(), staleTime: 60_000 });
+  const { data: users = [] } = useQuery({ queryKey: ['userList'], queryFn: () => base44.entities.User.list(), staleTime: 2 * 60_000 });
   const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500), staleTime: 60_000 });
   const customers = allCustomers.filter(c => c.status === 'active');
   const { data: allBillings = [] } = useQuery({ queryKey: ['billings'], queryFn: () => base44.entities.Billing.list('-created_date', 500) });

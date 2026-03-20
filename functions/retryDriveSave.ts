@@ -41,11 +41,13 @@ Deno.serve(async (req) => {
   let successCount = 0;
   let failCount = 0;
 
-  for (const msg of toRetry) {
-    const retryNum = (msg.drive_retry_count || 0) + 1;
+  // Process in batches of 5 to avoid overloading Drive API
+  const BATCH_SIZE = 5;
+  for (let i = 0; i < toRetry.length; i += BATCH_SIZE) {
+    const batch = toRetry.slice(i, i + BATCH_SIZE);
 
-    try {
-      // Determine file info
+    const results = await Promise.allSettled(batch.map(async (msg) => {
+      const retryNum = (msg.drive_retry_count || 0) + 1;
       const isImage = msg.message_type === 'image';
       const fileName = isImage
         ? `line_image_${msg.id}.jpg`
@@ -66,21 +68,25 @@ Deno.serve(async (req) => {
           drive_saved: true,
           drive_retry_count: retryNum,
         });
-        successCount++;
         console.log(`✓ Retry #${retryNum} success for message ${msg.id}`);
+        return 'success';
       } else {
         await base44.asServiceRole.entities.LineMessage.update(msg.id, {
           drive_retry_count: retryNum,
         });
-        failCount++;
-        console.log(`✗ Retry #${retryNum} failed for message ${msg.id}: ${JSON.stringify(result)}`);
+        console.log(`✗ Retry #${retryNum} failed for message ${msg.id}`);
+        return 'fail';
       }
-    } catch (e) {
-      await base44.asServiceRole.entities.LineMessage.update(msg.id, {
-        drive_retry_count: retryNum,
-      });
-      failCount++;
-      console.error(`✗ Retry #${retryNum} error for message ${msg.id}: ${e.message}`);
+    }));
+
+    results.forEach(r => {
+      if (r.status === 'fulfilled' && r.value === 'success') successCount++;
+      else failCount++;
+    });
+
+    // Small delay between batches to ease API pressure
+    if (i + BATCH_SIZE < toRetry.length) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
 

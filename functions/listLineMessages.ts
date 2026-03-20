@@ -10,9 +10,14 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const limit = Math.min(body.limit || 100, 200);
+    const limit = Math.min(body.limit || 200, 500);
 
-    const messages = await base44.asServiceRole.entities.LineMessage.filter({}, '-created_date', limit);
+    // Fetch only incoming messages from last 30 days + all outgoing for matching
+    const messages = await base44.asServiceRole.entities.LineMessage.filter(
+      {},
+      '-created_date',
+      limit
+    );
 
     return Response.json({ messages });
   } catch (error) {

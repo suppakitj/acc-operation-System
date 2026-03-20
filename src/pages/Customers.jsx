@@ -39,7 +39,12 @@ export default function Customers() {
   const queryClient = useQueryClient();
 
   const { data: customers = [], isLoading } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500), staleTime: 60_000 });
-  const { data: tasks = [] } = useQuery({ queryKey: ['tasks'], queryFn: () => base44.entities.Task.list('-created_date', 1000) });
+  // Only fetch tasks for customer page when needed (shared cache with other pages)
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: () => base44.entities.Task.list('-created_date', 1000),
+    staleTime: 60_000, // customers page doesn't need real-time task data
+  });
 
   const createMutation = useMutation({
     mutationFn: (data) => {

@@ -33,15 +33,15 @@ export default function LineChat() {
   const getConfigVal = (key) => configs.find(c => c.key === key)?.value || '';
   const isLineConfigured = !!(getConfigVal('line_channel_id') && getConfigVal('line_channel_secret') && getConfigVal('line_access_token'));
 
-  // Poll messages every 10s (reduced from 5s to save API calls)
+  // Poll messages every 15s to reduce API load
   const { data: messages = [] } = useQuery({
     queryKey: ['lineMessages'],
     queryFn: async () => {
       const res = await base44.functions.invoke('listLineMessages', {});
       return res.data?.messages || [];
     },
-    refetchInterval: 10_000,
-    staleTime: 8_000,
+    refetchInterval: 15_000,
+    staleTime: 12_000,
   });
 
   // Send via backend function (actual LINE API)

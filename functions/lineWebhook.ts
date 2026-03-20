@@ -191,22 +191,23 @@ Deno.serve(async (req) => {
 
         console.log(`Saved incoming ${messageType} from ${senderName} in ${chatType} (${chatKey}): ${content}`);
 
-        // Update display_name and profile_image on older messages in the same chat
+        // Update display_name and profile_image on older messages (batch — max 10 at a time)
         if (chatDisplayName || chatImage) {
           try {
             const oldMsgs = await base44.asServiceRole.entities.LineMessage.filter(
               { line_user_id: chatKey },
               '-created_date',
-              50
+              20
             );
-            for (const old of oldMsgs) {
-              if (old.display_name !== chatDisplayName || old.profile_image !== chatImage) {
-                await base44.asServiceRole.entities.LineMessage.update(old.id, {
-                  display_name: chatDisplayName,
-                  profile_image: chatImage,
-                });
-              }
-            }
+            const toUpdate = oldMsgs.filter(old =>
+              old.display_name !== chatDisplayName || old.profile_image !== chatImage
+            ).slice(0, 10); // Cap at 10 per webhook to avoid CPU spike
+            await Promise.all(toUpdate.map(old =>
+              base44.asServiceRole.entities.LineMessage.update(old.id, {
+                display_name: chatDisplayName,
+                profile_image: chatImage,
+              })
+            ));
           } catch (e) {
             console.warn('Failed to update old messages display info:', e.message);
           }

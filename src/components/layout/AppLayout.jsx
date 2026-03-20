@@ -18,13 +18,14 @@ export default function AppLayout() {
   });
 
   const { data: notifications } = useQuery({
-    queryKey: ['unreadNotifications'],
+    queryKey: ['unreadNotifications', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
       return base44.entities.Notification.filter({ target_user: user.email, is_read: false });
     },
     enabled: !!user?.email,
-    refetchInterval: 60000,
+    refetchInterval: 2 * 60_000, // every 2min instead of 1min
+    staleTime: 60_000,
   });
 
   // Log login event once
