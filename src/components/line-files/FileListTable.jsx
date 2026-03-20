@@ -1,5 +1,5 @@
 import React from 'react';
-import { Folder, FileText, Image, Film, Music, File, Download, Eye, Loader2 } from 'lucide-react';
+import { Folder, FileText, Image, Film, Music, File, Download, Loader2, FolderArchive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 
@@ -22,7 +22,7 @@ function formatSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function FileListTable({ files, onFolderClick, onDownload, downloadingId }) {
+export default function FileListTable({ files, onFolderClick, onDownload, downloadingId, onDownloadFolder, zippingFolderId }) {
   if (!files || files.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -72,7 +72,23 @@ export default function FileListTable({ files, onFolderClick, onDownload, downlo
                 {file.isFolder ? '—' : formatSize(file.size)}
               </td>
               <td className="py-2.5 px-3 text-right">
-                {!file.isFolder && (
+                {file.isFolder ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); onDownloadFolder?.(file.id); }}
+                    disabled={zippingFolderId === file.id}
+                    className="text-xs gap-1 h-7"
+                    title="ดาวน์โหลด folder เป็น .zip"
+                  >
+                    {zippingFolderId === file.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <FolderArchive className="w-3.5 h-3.5" />
+                    )}
+                    <span className="hidden sm:inline">.zip</span>
+                  </Button>
+                ) : (
                   <Button
                     variant="ghost"
                     size="sm"
