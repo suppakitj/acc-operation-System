@@ -1,6 +1,7 @@
 import React from 'react';
 import { Folder, FileText, Image, Film, Music, File, Download, Loader2, FolderArchive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 
 function getFileIcon(file) {
@@ -22,7 +23,7 @@ function formatSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function FileListTable({ files, onFolderClick, onDownload, downloadingId, onDownloadFolder, zippingFolderId }) {
+export default function FileListTable({ files, onFolderClick, onDownload, downloadingId, onDownloadFolder, zippingFolderId, selectedIds = [], onSelectionChange }) {
   if (!files || files.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -39,11 +40,36 @@ export default function FileListTable({ files, onFolderClick, onDownload, downlo
     return a.name.localeCompare(b.name);
   });
 
+  const fileOnly = sorted.filter(f => !f.isFolder);
+  const allFilesSelected = fileOnly.length > 0 && fileOnly.every(f => selectedIds.includes(f.id));
+
+  const toggleSelect = (id) => {
+    onSelectionChange?.(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAll = () => {
+    if (allFilesSelected) {
+      onSelectionChange?.([]);
+    } else {
+      onSelectionChange?.(fileOnly.map(f => f.id));
+    }
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-muted-foreground text-xs">
+            <th className="py-2.5 px-2 w-8">
+              {fileOnly.length > 0 && (
+                <Checkbox
+                  checked={allFilesSelected}
+                  onCheckedChange={toggleAll}
+                />
+              )}
+            </th>
             <th className="text-left py-2.5 px-3 font-medium">ชื่อ</th>
             <th className="text-left py-2.5 px-3 font-medium hidden md:table-cell">แก้ไขล่าสุด</th>
             <th className="text-right py-2.5 px-3 font-medium hidden md:table-cell">ขนาด</th>
@@ -57,6 +83,14 @@ export default function FileListTable({ files, onFolderClick, onDownload, downlo
               className={`border-b last:border-b-0 hover:bg-muted/50 transition-colors ${file.isFolder ? 'cursor-pointer' : ''}`}
               onClick={() => file.isFolder && onFolderClick(file.id, file.name)}
             >
+              <td className="py-2.5 px-2 w-8" onClick={e => e.stopPropagation()}>
+                {!file.isFolder && (
+                  <Checkbox
+                    checked={selectedIds.includes(file.id)}
+                    onCheckedChange={() => toggleSelect(file.id)}
+                  />
+                )}
+              </td>
               <td className="py-2.5 px-3">
                 <div className="flex items-center gap-2.5">
                   {getFileIcon(file)}
