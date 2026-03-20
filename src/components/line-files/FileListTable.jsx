@@ -1,5 +1,5 @@
 import React from 'react';
-import { Folder, FileText, Image, Film, Music, File, Download, Loader2, FolderArchive } from 'lucide-react';
+import { Folder, FileText, Image, Film, Music, File, Download, Loader2, FolderArchive, AlertCircle, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
@@ -23,7 +23,7 @@ function formatSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export default function FileListTable({ files, onFolderClick, onDownload, downloadingId, onDownloadFolder, zippingFolderId, selectedIds = [], onSelectionChange }) {
+export default function FileListTable({ files, onFolderClick, onDownload, downloadingId, onDownloadFolder, zippingFolderId, selectedIds = [], onSelectionChange, failedIds = new Set() }) {
   if (!files || files.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -97,6 +97,11 @@ export default function FileListTable({ files, onFolderClick, onDownload, downlo
                   <span className={`truncate max-w-[300px] ${file.isFolder ? 'font-medium' : ''}`}>
                     {file.name}
                   </span>
+                  {!file.isFolder && failedIds.has(file.id) && (
+                    <span className="flex items-center gap-1 text-[10px] text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full shrink-0" title="ดาวน์โหลดล้มเหลว">
+                      <AlertCircle className="w-3 h-3" /> โหลดไม่ได้
+                    </span>
+                  )}
                 </div>
               </td>
               <td className="py-2.5 px-3 text-muted-foreground text-xs hidden md:table-cell">
@@ -124,18 +129,20 @@ export default function FileListTable({ files, onFolderClick, onDownload, downlo
                   </Button>
                 ) : (
                   <Button
-                    variant="ghost"
+                    variant={failedIds.has(file.id) ? 'outline' : 'ghost'}
                     size="sm"
                     onClick={(e) => { e.stopPropagation(); onDownload(file); }}
                     disabled={downloadingId === file.id}
-                    className="text-xs gap-1 h-7"
+                    className={`text-xs gap-1 h-7 ${failedIds.has(file.id) ? 'border-red-200 text-red-600 hover:bg-red-50' : ''}`}
                   >
                     {downloadingId === file.id ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : failedIds.has(file.id) ? (
+                      <RotateCw className="w-3.5 h-3.5" />
                     ) : (
                       <Download className="w-3.5 h-3.5" />
                     )}
-                    <span className="hidden sm:inline">Download</span>
+                    <span className="hidden sm:inline">{failedIds.has(file.id) ? 'ลองใหม่' : 'Download'}</span>
                   </Button>
                 )}
               </td>
