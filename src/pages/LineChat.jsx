@@ -65,10 +65,12 @@ export default function LineChat() {
   const userGroups = {};
   messages.forEach(m => {
     const key = m.line_user_id || m.customer_name || 'unknown';
-    if (!userGroups[key]) userGroups[key] = { id: key, name: m.display_name || m.customer_name || '?', image: m.profile_image, messages: [], unread: 0, lastDate: m.created_date, chatType: m.chat_type || 'user' };
+    if (!userGroups[key]) userGroups[key] = { id: key, name: m.display_name || m.customer_name || '?', image: '', messages: [], unread: 0, lastDate: m.created_date, chatType: m.chat_type || 'user' };
     userGroups[key].messages.push(m);
     if (!m.is_read && m.direction === 'incoming') userGroups[key].unread++;
     if (m.created_date > userGroups[key].lastDate) userGroups[key].lastDate = m.created_date;
+    // Keep the latest non-empty profile image
+    if (m.profile_image && !userGroups[key].image) userGroups[key].image = m.profile_image;
   });
 
   const userList = Object.values(userGroups)
