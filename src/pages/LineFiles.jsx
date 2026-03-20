@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, RefreshCw, HardDrive, Loader2, FolderArchive } from 'lucide-react';
+import { ArrowLeft, RefreshCw, HardDrive, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import FileBreadcrumb from '../components/line-files/FileBreadcrumb';
 import FileListTable from '../components/line-files/FileListTable';
@@ -12,7 +12,7 @@ export default function LineFiles() {
   const [folderStack, setFolderStack] = useState([]); // [{id, name}, ...]
   const [currentFolderId, setCurrentFolderId] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
-  const [zipping, setZipping] = useState(false);
+  const [zipping, setZipping] = useState(null); // folder id being zipped
 
   const currentKey = currentFolderId || 'root';
 
@@ -95,13 +95,12 @@ export default function LineFiles() {
     toast.success(`ดาวน์โหลด ${file.name} สำเร็จ`);
   };
 
-  const handleDownloadFolder = async () => {
-    const folderId = currentFolderId || data?.current_folder_id;
+  const handleDownloadFolder = async (folderId) => {
     if (!folderId) { toast.error('ไม่พบ folder ID'); return; }
-    setZipping(true);
+    setZipping(folderId);
     toast.info('กำลังรวมไฟล์เป็น .zip — อาจใช้เวลาสักครู่...');
     const res = await base44.functions.invoke('downloadFolderZip', { folder_id: folderId });
-    setZipping(false);
+    setZipping(null);
     if (res.data?.error) {
       toast.error(res.data.error);
       return;
@@ -140,18 +139,6 @@ export default function LineFiles() {
               </Button>
             )}
             <FileBreadcrumb path={breadcrumb} onNavigate={handleBreadcrumbNav} />
-            <div className="ml-auto shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadFolder}
-                disabled={zipping || isLoading}
-                className="text-xs gap-1.5"
-              >
-                {zipping ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderArchive className="w-3.5 h-3.5" />}
-                {zipping ? 'กำลังสร้าง zip...' : 'ดาวน์โหลด Folder (.zip)'}
-              </Button>
-            </div>
           </div>
         </CardHeader>
         <CardContent className="px-2 pb-3">
@@ -171,6 +158,8 @@ export default function LineFiles() {
               onFolderClick={handleFolderClick}
               onDownload={handleDownload}
               downloadingId={downloadingId}
+              onDownloadFolder={handleDownloadFolder}
+              zippingFolderId={zipping}
             />
           )}
         </CardContent>
