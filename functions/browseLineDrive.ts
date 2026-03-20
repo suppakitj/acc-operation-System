@@ -56,20 +56,40 @@ Deno.serve(async (req) => {
     // List contents of specific folder
     query = `'${folder_id}' in parents and trashed=false`;
   } else {
-    // Find root "LINE Files" folder first
-    const rootQuery = `name='LINE Files' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-    const rootRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(rootQuery)}&fields=files(id,name)`,
-      { headers: authHeader }
-    );
-    if (!rootRes.ok) {
-      return Response.json({ error: 'Failed to search Drive' }, { status: 500 });
+    // Check if a custom root folder is configured in AppConfig
+    const configs = await base44.asServiceRole.entities.AppConfig.filter({});
+    const configuredRootId = configs.find(c => c.key === 'gdrive_line_files_root_id')?.value || '';
+
+    let rootId = configuredRootId;
+    let rootName = 'LINE Files';
+
+    if (!rootId) {
+      // Fallback: find folder named "LINE Files"
+      const rootQuery = `name='LINE Files' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+      const rootRes = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(rootQuery)}&fields=files(id,name)`,
+        { headers: authHeader }
+      );
+      if (!rootRes.ok) {
+        return Response.json({ error: 'Failed to search Drive' }, { status: 500 });
+      }
+      const rootData = await rootRes.json();
+      if (!rootData.files || rootData.files.length === 0) {
+        return Response.json({ files: [], breadcrumb: [{ id: null, name: rootName }] });
+      }
+      rootId = rootData.files[0].id;
+    } else {
+      // Get the configured folder's name
+      const folderMetaRes = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${rootId}?fields=id,name`,
+        { headers: authHeader }
+      );
+      if (folderMetaRes.ok) {
+        const folderMeta = await folderMetaRes.json();
+        rootName = folderMeta.name || 'LINE Files';
+      }
     }
-    const rootData = await rootRes.json();
-    if (!rootData.files || rootData.files.length === 0) {
-      return Response.json({ files: [], breadcrumb: [{ id: null, name: 'LINE Files' }] });
-    }
-    const rootId = rootData.files[0].id;
+
     query = `'${rootId}' in parents and trashed=false`;
 
     // List root folder contents
@@ -94,7 +114,8 @@ Deno.serve(async (req) => {
         thumbnailLink: f.thumbnailLink,
       })),
       current_folder_id: rootId,
-      breadcrumb: [{ id: rootId, name: 'LINE Files' }],
+      root_name: rootName,
+      breadcrumb: [{ id: rootId, name: rootName }],
     });
   }
 

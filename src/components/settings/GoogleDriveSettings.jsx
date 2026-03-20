@@ -61,10 +61,12 @@ export default function GoogleDriveSettings() {
 
   const [uploadFolderId, setUploadFolderId] = useState('');
   const [outputFolderId, setOutputFolderId] = useState('');
+  const [lineFilesRootId, setLineFilesRootId] = useState('');
 
   useEffect(() => {
     setUploadFolderId(getVal('gdrive_upload_folder_id'));
     setOutputFolderId(getVal('gdrive_output_folder_id'));
+    setLineFilesRootId(getVal('gdrive_line_files_root_id'));
   }, [configs]);
 
   const saveMutation = useMutation({
@@ -72,6 +74,7 @@ export default function GoogleDriveSettings() {
       const items = [
         { key: 'gdrive_upload_folder_id', value: uploadFolderId, description: 'Google Drive Folder ID สำหรับรับไฟล์ที่ upload' },
         { key: 'gdrive_output_folder_id', value: outputFolderId, description: 'Google Drive Folder ID สำหรับเก็บผลลัพธ์จาก Manus' },
+        { key: 'gdrive_line_files_root_id', value: lineFilesRootId, description: 'Google Drive Folder ID สำหรับ LINE Files Browser (root folder)' },
       ];
       for (const item of items) {
         const existingId = getId(item.key);
@@ -127,6 +130,21 @@ export default function GoogleDriveSettings() {
             placeholder="เช่น 1zYxWvUtSrQpOnMlKjIhGfEdCbA"
             className="font-mono text-sm"
           />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1.5">
+            <FolderOpen className="w-3.5 h-3.5" /> LINE Files Root Folder ID
+          </Label>
+          <Input
+            value={lineFilesRootId}
+            onChange={e => setLineFilesRootId(e.target.value)}
+            placeholder="เช่น 1aBcDeFgHiJkLmNoPqRsTuVwXyZ"
+            className="font-mono text-sm"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Folder ที่จะใช้เป็น root ของหน้า LINE Files — ถ้าไม่กรอกจะใช้ folder ชื่อ "LINE Files" อัตโนมัติ
+          </p>
         </div>
 
         <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
