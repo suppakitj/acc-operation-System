@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { FileText, CheckCircle2, Clock, AlertTriangle, RefreshCw } from 'lucide-react';
 import OcrUploadForm from '../components/ocr/OcrUploadForm';
 import OcrJobList from '../components/ocr/OcrJobList';
+import OcrJobFilters from '../components/ocr/OcrJobFilters';
 
 export default function OcrProcessing() {
   const queryClient = useQueryClient();
@@ -25,6 +26,25 @@ export default function OcrProcessing() {
   }, [queryClient]);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['ocr-jobs'] });
+
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const filteredJobs = useMemo(() => {
+    let result = jobs;
+    if (statusFilter !== 'all') {
+      result = result.filter(j => j.status === statusFilter);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(j =>
+        (j.filename || '').toLowerCase().includes(q) ||
+        (j.customer_name || '').toLowerCase().includes(q) ||
+        (j.notes || '').toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [jobs, search, statusFilter]);
 
   const stats = {
     total: jobs.length,
@@ -66,14 +86,20 @@ export default function OcrProcessing() {
 
         {/* Job List */}
         <Card className="lg:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">รายการ OCR ({jobs.length})</CardTitle>
+          <CardHeader className="pb-3 space-y-3">
+            <CardTitle className="text-base">รายการ OCR ({filteredJobs.length}/{jobs.length})</CardTitle>
+            <OcrJobFilters
+              search={search}
+              onSearchChange={setSearch}
+              statusFilter={statusFilter}
+              onStatusChange={setStatusFilter}
+            />
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <p className="text-sm text-muted-foreground text-center py-8">กำลังโหลด...</p>
             ) : (
-              <OcrJobList jobs={jobs} onRefresh={refresh} />
+              <OcrJobList jobs={filteredJobs} onRefresh={refresh} />
             )}
           </CardContent>
         </Card>
