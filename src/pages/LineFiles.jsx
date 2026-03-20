@@ -26,8 +26,9 @@ export default function LineFiles() {
 
   const files = data?.files || [];
 
+  const rootName = data?.root_name || 'LINE Files';
   const breadcrumb = [
-    { id: null, name: 'LINE Files' },
+    { id: null, name: rootName },
     ...folderStack,
   ];
 
