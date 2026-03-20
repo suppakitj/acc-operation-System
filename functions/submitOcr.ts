@@ -43,21 +43,32 @@ Deno.serve(async (req) => {
   const fileData = await fileRes.json();
   console.log('Manus file created:', fileData.id);
 
-  // Step 2: Download PDF from our storage
-  console.log('Downloading PDF from:', job.file_url);
-  const pdfRes = await fetch(job.file_url);
-  if (!pdfRes.ok) {
-    await base44.entities.OcrJob.update(ocr_job_id, { status: 'failed', error_message: 'Failed to download PDF' });
-    return Response.json({ error: 'Failed to download PDF' }, { status: 500 });
+  // Step 2: Download file from our storage
+  console.log('Downloading file from:', job.file_url);
+  const fileDownloadRes = await fetch(job.file_url);
+  if (!fileDownloadRes.ok) {
+    await base44.entities.OcrJob.update(ocr_job_id, { status: 'failed', error_message: 'Failed to download file' });
+    return Response.json({ error: 'Failed to download file' }, { status: 500 });
   }
-  const pdfBuffer = await pdfRes.arrayBuffer();
+  const fileBuffer = await fileDownloadRes.arrayBuffer();
 
-  // Step 3: Upload PDF to Manus presigned URL
-  console.log('Uploading PDF to Manus S3...');
+  // Detect content type from filename
+  const fileName = job.filename.toLowerCase();
+  let contentType = 'application/octet-stream';
+  if (fileName.endsWith('.pdf')) contentType = 'application/pdf';
+  else if (fileName.endsWith('.png')) contentType = 'image/png';
+  else if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) contentType = 'image/jpeg';
+  else if (fileName.endsWith('.tiff')) contentType = 'image/tiff';
+  else if (fileName.endsWith('.bmp')) contentType = 'image/bmp';
+  else if (fileName.endsWith('.gif')) contentType = 'image/gif';
+  else if (fileName.endsWith('.webp')) contentType = 'image/webp';
+
+  // Step 3: Upload file to Manus presigned URL
+  console.log('Uploading file to Manus S3...');
   const uploadRes = await fetch(fileData.upload_url, {
     method: 'PUT',
-    body: pdfBuffer,
-    headers: { 'Content-Type': 'application/pdf' },
+    body: fileBuffer,
+    headers: { 'Content-Type': contentType },
   });
 
   if (!uploadRes.ok) {
@@ -65,31 +76,56 @@ Deno.serve(async (req) => {
     await base44.entities.OcrJob.update(ocr_job_id, { status: 'failed', error_message: `Manus upload failed: ${errText}` });
     return Response.json({ error: 'Manus upload failed' }, { status: 500 });
   }
-  console.log('PDF uploaded to Manus successfully');
+  console.log('File uploaded to Manus successfully');
 
-  // Step 4: Create OCR task on Manus
-  const prompt = `You are a professional bank statement data extraction expert. 
-Please analyze the attached PDF bank statement and extract ALL transactions into an Excel (.xlsx) file.
+  // Step 4: Build prompt based on output_format and custom_prompt
+  const outputFormat = job.output_format || 'excel';
+  const customPrompt = job.custom_prompt || '';
+  const baseName = job.filename.replace(/\.[^.]+$/, '');
 
-The Excel file should have the following columns:
-- Date (วันที่)
-- Time (เวลา) 
-- Description (รายการ)
-- Withdrawal (ถอน/จ่าย)
-- Deposit (ฝาก/รับ)
-- Balance (ยอมคงเหลือ)
-- Channel (ช่องทาง)
+  let prompt;
+  if (customPrompt) {
+    // User provided custom instructions
+    const formatInstruction = outputFormat === 'word'
+      ? `Please output the result as a Word (.docx) file named "${baseName}_output.docx".`
+      : `Please output the result as an Excel (.xlsx) file named "${baseName}_output.xlsx".`;
+    prompt = `${customPrompt}
+
+${formatInstruction}
 
 Important instructions:
-- Extract EVERY transaction, do not skip any rows
 - Keep the original Thai text as-is
-- Format dates as DD/MM/YYYY
-- Format numbers with 2 decimal places
+- Be thorough and extract all relevant data from the document
+- If the document contains tables, preserve the structure`;
+  } else {
+    // Default: auto-detect and extract data
+    if (outputFormat === 'word') {
+      prompt = `You are a professional document OCR specialist.
+Please analyze the attached document and convert its content into a well-formatted Word (.docx) file.
+
+Important instructions:
+- Extract ALL text, tables, and data from the document
+- Preserve the original structure and formatting as much as possible
+- Keep the original Thai text as-is
+- If there are tables, recreate them in Word format
+- Name the file: "${baseName}_extracted.docx"
+
+Please output the result as a Word (.docx) file.`;
+    } else {
+      prompt = `You are a professional document data extraction expert.
+Please analyze the attached document and extract ALL data into an Excel (.xlsx) file.
+
+Important instructions:
+- Extract EVERY piece of data, do not skip any rows
+- Keep the original Thai text as-is
+- If the document contains tables, preserve the column structure
+- Format numbers with 2 decimal places where applicable
 - If a field is empty, leave it blank
-- Add a summary row at the bottom with totals for Withdrawal and Deposit columns
-- Name the Excel file: "${job.filename.replace('.pdf', '')}_extracted.xlsx"
+- Name the file: "${baseName}_extracted.xlsx"
 
 Please output the result as an Excel (.xlsx) file.`;
+    }
+  }
 
   console.log('Creating Manus OCR task...');
   const taskRes = await fetch(`${MANUS_BASE}/tasks`, {
