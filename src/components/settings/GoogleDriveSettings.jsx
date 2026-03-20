@@ -69,13 +69,23 @@ export default function GoogleDriveSettings() {
     setLineFilesRootId(getVal('gdrive_line_files_root_id'));
   }, [configs]);
 
+  // Auto-extract folder ID from full Google Drive URL
+  const extractFolderId = (val) => {
+    if (!val) return '';
+    if (val.includes('drive.google.com')) {
+      const match = val.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+      return match ? match[1] : val;
+    }
+    return val.trim();
+  };
+
   const saveMutation = useMutation({
-    mutationFn: async () => {
-      const items = [
-        { key: 'gdrive_upload_folder_id', value: uploadFolderId, description: 'Google Drive Folder ID สำหรับรับไฟล์ที่ upload' },
-        { key: 'gdrive_output_folder_id', value: outputFolderId, description: 'Google Drive Folder ID สำหรับเก็บผลลัพธ์จาก Manus' },
-        { key: 'gdrive_line_files_root_id', value: lineFilesRootId, description: 'Google Drive Folder ID สำหรับ LINE Files Browser (root folder)' },
-      ];
+  mutationFn: async () => {
+    const items = [
+      { key: 'gdrive_upload_folder_id', value: extractFolderId(uploadFolderId), description: 'Google Drive Folder ID สำหรับรับไฟล์ที่ upload' },
+      { key: 'gdrive_output_folder_id', value: extractFolderId(outputFolderId), description: 'Google Drive Folder ID สำหรับเก็บผลลัพธ์จาก Manus' },
+      { key: 'gdrive_line_files_root_id', value: extractFolderId(lineFilesRootId), description: 'Google Drive Folder ID สำหรับ LINE Files Browser (root folder)' },
+    ];
       for (const item of items) {
         const existingId = getId(item.key);
         if (existingId) {
