@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, RefreshCw, HardDrive, Loader2 } from 'lucide-react';
+import { ArrowLeft, RefreshCw, HardDrive, Loader2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import FileBreadcrumb from '../components/line-files/FileBreadcrumb';
 import FileListTable from '../components/line-files/FileListTable';
@@ -13,6 +13,8 @@ export default function LineFiles() {
   const [currentFolderId, setCurrentFolderId] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
   const [zipping, setZipping] = useState(null); // folder id being zipped
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [zippingMulti, setZippingMulti] = useState(false);
 
   const currentKey = currentFolderId || 'root';
 
@@ -36,6 +38,7 @@ export default function LineFiles() {
   const handleFolderClick = (folderId, folderName) => {
     setFolderStack(prev => [...prev, { id: folderId, name: folderName }]);
     setCurrentFolderId(folderId);
+    setSelectedIds([]);
   };
 
   const handleBreadcrumbNav = (folderId) => {
@@ -95,6 +98,32 @@ export default function LineFiles() {
     toast.success(`ดาวน์โหลด ${file.name} สำเร็จ`);
   };
 
+  const handleDownloadSelected = async () => {
+    if (selectedIds.length === 0) return;
+    // Single file → direct download
+    if (selectedIds.length === 1) {
+      const file = files.find(f => f.id === selectedIds[0]);
+      if (file) { handleDownload(file); setSelectedIds([]); }
+      return;
+    }
+    // Multiple files → zip
+    setZippingMulti(true);
+    toast.info(`กำลังรวม ${selectedIds.length} ไฟล์เป็น .zip...`);
+    const res = await base44.functions.invoke('downloadMultipleFiles', { file_ids: selectedIds });
+    setZippingMulti(false);
+    if (res.data?.error) { toast.error(res.data.error); return; }
+    if (res.data?.file_url) {
+      const a = document.createElement('a');
+      a.href = res.data.file_url;
+      a.download = res.data.file_name || 'selected_files.zip';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      toast.success(`ดาวน์โหลด ${res.data.file_count} ไฟล์สำเร็จ (${res.data.total_size_mb} MB)`);
+      setSelectedIds([]);
+    }
+  };
+
   const handleDownloadFolder = async (folderId) => {
     if (!folderId) { toast.error('ไม่พบ folder ID'); return; }
     setZipping(folderId);
@@ -139,6 +168,20 @@ export default function LineFiles() {
               </Button>
             )}
             <FileBreadcrumb path={breadcrumb} onNavigate={handleBreadcrumbNav} />
+            {selectedIds.length > 0 && (
+              <div className="ml-auto shrink-0">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleDownloadSelected}
+                  disabled={zippingMulti}
+                  className="text-xs gap-1.5"
+                >
+                  {zippingMulti ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                  {zippingMulti ? 'กำลังสร้าง zip...' : `ดาวน์โหลด ${selectedIds.length} ไฟล์`}
+                </Button>
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent className="px-2 pb-3">
@@ -160,6 +203,8 @@ export default function LineFiles() {
               downloadingId={downloadingId}
               onDownloadFolder={handleDownloadFolder}
               zippingFolderId={zipping}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
             />
           )}
         </CardContent>
