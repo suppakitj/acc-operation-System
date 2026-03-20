@@ -40,20 +40,23 @@ export default function LineOASettings() {
   const [showGroupId, setShowGroupId] = useState(false);
   const [deptGroups, setDeptGroups] = useState({});
   const [showDeptGroupIds, setShowDeptGroupIds] = useState({});
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
+    if (!configs.length || initialized) return;
     setChannelId(getVal('line_channel_id'));
     setChannelSecret(getVal('line_channel_secret'));
     setAccessToken(getVal('line_access_token'));
     setLineUserId(getVal('line_user_id'));
     setLineGroupId(getVal('line_group_id'));
     setWebhookUrl(getVal('line_webhook_url') || 'https://acc-precision-hub.base44.app/functions/lineWebhook');
-    // Load department group IDs
     const dg = {};
     DEPT_LIST.forEach(d => {
       dg[d.key] = getVal(`line_group_dept_${d.key}`);
     });
     setDeptGroups(dg);
+    setInitialized(true);
   }, [configs]);
 
   const saveMutation = useMutation({
@@ -97,9 +100,7 @@ export default function LineOASettings() {
     onError: (err) => toast.error(err.message),
   });
 
-  const isConnected = !!(getVal('line_channel_id') && getVal('line_channel_secret') && getVal('line_access_token') && getVal('line_user_id'));
-  const hasGroupId = !!getVal('line_group_id');
-  const [webhookUrl, setWebhookUrl] = useState('');
+  const isConnected = !!(channelId && channelSecret && accessToken && lineUserId);
   const maskedSecret = channelSecret ? '•'.repeat(Math.max(0, channelSecret.length - 4)) + channelSecret.slice(-4) : '';
 
   return (
