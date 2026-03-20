@@ -16,7 +16,7 @@ import Customers from './pages/Customers';
 import TaskTemplates from './pages/TaskTemplates';
 import PeakAccount from './pages/PeakAccount';
 import Billing from './pages/Billing';
-import Notifications from './pages/Notifications';
+
 import LineChat from './pages/LineChat';
 
 import UserManagement from './pages/UserManagement';
@@ -66,7 +66,7 @@ const AuthenticatedApp = () => {
         <Route path="/TaskTemplates" element={<TaskTemplates />} />
         <Route path="/PeakAccount" element={<PeakAccount />} />
         <Route path="/Billing" element={<Billing />} />
-        <Route path="/Notifications" element={<Notifications />} />
+
         <Route path="/LineChat" element={<LineChat />} />
 
         <Route path="/UserManagement" element={<UserManagement />} />

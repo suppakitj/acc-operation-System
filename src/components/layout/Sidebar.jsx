@@ -29,7 +29,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'holiday_master', label: 'Holiday Master', icon: CalendarHeart, path: '/HolidayMaster' },
     { id: 'peak', label: t('menu_peak'), icon: Key, path: '/PeakAccount' },
     { id: 'billing', label: t('menu_billing'), icon: CreditCard, path: '/Billing' },
-    { id: 'notifications', label: t('menu_notifications'), icon: Bell, path: '/Notifications' },
+
     { id: 'line_chat', label: t('menu_line_chat'), icon: MessageCircle, path: '/LineChat' },
     { id: 'line_files', label: 'LINE Files', icon: HardDrive, path: '/LineFiles' },
     { id: 'team_analytics', label: 'Team Analytics', icon: TrendingUp, path: '/TeamAnalytics' },

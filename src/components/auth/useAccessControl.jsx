@@ -93,7 +93,7 @@ export function useAccessControl(user) {
 
     // ─── sidebar menu visibility ─────────────────────────────
     const getVisibleMenuIds = () => {
-      const menus = ['dashboard', 'notifications', 'settings'];
+      const menus = ['dashboard', 'settings'];
 
       if (p('view_task') !== 'no')       menus.push('tasks');
       if (p('task_calendar') !== 'no')   menus.push('task_calendar');
