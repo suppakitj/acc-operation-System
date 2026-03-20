@@ -4,12 +4,16 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, FileText, Loader2, X, Search } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Upload, FileText, Loader2, X, Search, FileSpreadsheet, FileType } from 'lucide-react';
 import { toast } from 'sonner';
 import CustomerSearchSelect from './CustomerSearchSelect';
 
 export default function OcrUploadForm({ onSubmitted }) {
   const [file, setFile] = useState(null);
+  const [outputFormat, setOutputFormat] = useState('excel');
+  const [customPrompt, setCustomPrompt] = useState('');
   const [customerId, setCustomerId] = useState('');
   const [notes, setNotes] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -21,8 +25,10 @@ export default function OcrUploadForm({ onSubmitted }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file) { toast.error('กรุณาเลือกไฟล์ PDF'); return; }
-    if (!file.name.toLowerCase().endsWith('.pdf')) { toast.error('รองรับเฉพาะไฟล์ PDF เท่านั้น'); return; }
+    if (!file) { toast.error('กรุณาเลือกไฟล์'); return; }
+    const allowedExts = ['.pdf', '.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.webp'];
+    const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    if (!allowedExts.includes(ext)) { toast.error('รองรับไฟล์ PDF และรูปภาพ (PNG, JPG, TIFF, BMP, GIF, WebP)'); return; }
 
     setUploading(true);
 
@@ -35,6 +41,8 @@ export default function OcrUploadForm({ onSubmitted }) {
       filename: file.name,
       file_url,
       status: 'uploading',
+      output_format: outputFormat,
+      custom_prompt: customPrompt || '',
       customer_id: customerId || '',
       customer_name: customer?.company_name || '',
       notes,
@@ -50,6 +58,8 @@ export default function OcrUploadForm({ onSubmitted }) {
     }
 
     setFile(null);
+    setOutputFormat('excel');
+    setCustomPrompt('');
     setCustomerId('');
     setNotes('');
     setUploading(false);
@@ -59,28 +69,57 @@ export default function OcrUploadForm({ onSubmitted }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
-        <Label>ไฟล์ PDF Bank Statement</Label>
+        <Label>ไฟล์เอกสาร (PDF, รูปภาพ)</Label>
         <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
           {file ? (
             <div className="flex items-center justify-center gap-2">
               <FileText className="w-5 h-5 text-primary" />
-              <span className="text-sm font-medium">{file.name}</span>
+              <span className="text-sm font-medium truncate max-w-[180px]">{file.name}</span>
               <span className="text-xs text-muted-foreground">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
               <Button type="button" variant="ghost" size="sm" onClick={() => setFile(null)}>ลบ</Button>
             </div>
           ) : (
             <label className="cursor-pointer block">
               <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">คลิกเพื่อเลือกไฟล์ PDF</p>
+              <p className="text-sm text-muted-foreground">คลิกเพื่อเลือกไฟล์</p>
+              <p className="text-[11px] text-muted-foreground/70 mt-1">PDF, PNG, JPG, TIFF, BMP, GIF, WebP</p>
               <input
                 type="file"
-                accept=".pdf"
+                accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp,.gif,.webp"
                 className="hidden"
                 onChange={e => setFile(e.target.files?.[0] || null)}
               />
             </label>
           )}
         </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>รูปแบบผลลัพธ์</Label>
+        <Select value={outputFormat} onValueChange={setOutputFormat}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="excel">
+              <span className="flex items-center gap-2"><FileSpreadsheet className="w-4 h-4 text-green-600" /> Excel (.xlsx)</span>
+            </SelectItem>
+            <SelectItem value="word">
+              <span className="flex items-center gap-2"><FileType className="w-4 h-4 text-blue-600" /> Word (.docx)</span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>คำสั่ง OCR <span className="text-muted-foreground font-normal">(ไม่บังคับ)</span></Label>
+        <Textarea
+          value={customPrompt}
+          onChange={e => setCustomPrompt(e.target.value)}
+          placeholder="เช่น แปลงข้อมูลในตารางเป็น Excel, สรุปเอกสารเป็น Word, ดึงข้อมูลใบเสร็จ ฯลฯ"
+          className="h-20 text-sm"
+        />
+        <p className="text-[11px] text-muted-foreground">ถ้าไม่ระบุ ระบบจะดึงข้อมูลจากเอกสารอัตโนมัติ</p>
       </div>
 
       <CustomerSearchSelect
