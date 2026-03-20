@@ -190,6 +190,27 @@ Deno.serve(async (req) => {
 
         console.log(`Saved incoming ${messageType} from ${senderName} in ${chatType} (${chatKey}): ${content}`);
 
+        // Update display_name and profile_image on older messages in the same chat
+        if (chatDisplayName || chatImage) {
+          try {
+            const oldMsgs = await base44.asServiceRole.entities.LineMessage.filter(
+              { line_user_id: chatKey },
+              '-created_date',
+              50
+            );
+            for (const old of oldMsgs) {
+              if (old.display_name !== chatDisplayName || old.profile_image !== chatImage) {
+                await base44.asServiceRole.entities.LineMessage.update(old.id, {
+                  display_name: chatDisplayName,
+                  profile_image: chatImage,
+                });
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to update old messages display info:', e.message);
+          }
+        }
+
         // Auto-save files to Google Drive (images and documents only, skip video/audio)
         if (fileUrl && (messageType === 'image' || messageType === 'file')) {
           try {
