@@ -190,8 +190,8 @@ Deno.serve(async (req) => {
 
         console.log(`Saved incoming ${messageType} from ${senderName} in ${chatType} (${chatKey}): ${content}`);
 
-        // Auto-save files to Google Drive
-        if (fileUrl && (messageType === 'image' || messageType === 'video' || messageType === 'audio' || messageType === 'file')) {
+        // Auto-save files to Google Drive (images and documents only, skip video/audio)
+        if (fileUrl && (messageType === 'image' || messageType === 'file')) {
           try {
             let ext = 'bin';
             if (messageType === 'image') ext = 'jpg';
