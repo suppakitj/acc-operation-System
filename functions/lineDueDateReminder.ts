@@ -137,6 +137,20 @@ Deno.serve(async (req) => {
     const bangkokNow = new Date(now.getTime() + bangkokOffset);
     const todayStr = bangkokNow.toISOString().split('T')[0];
 
+    // Check if today is a weekend (Saturday=6, Sunday=0)
+    const dayOfWeek = bangkokNow.getUTCDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+    // Check if today is a holiday from HolidayMaster
+    const holidays = await base44.asServiceRole.entities.HolidayMaster.filter({ status: 'active' });
+    const isHoliday = holidays.some(h => h.date === todayStr);
+
+    if (isWeekend || isHoliday) {
+      const reason = isWeekend ? `weekend (${['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์'][dayOfWeek]})` : `holiday (${holidays.find(h => h.date === todayStr)?.name_th || ''})`;
+      console.log(`Skipping due date reminder — today is ${reason}`);
+      return Response.json({ status: 'skipped', reason });
+    }
+
     // Fetch all active tasks
     const allTasks = await base44.asServiceRole.entities.Task.filter({});
     const activeTasks = allTasks.filter(t =>
