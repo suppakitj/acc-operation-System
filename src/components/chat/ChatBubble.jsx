@@ -98,6 +98,18 @@ export default function ChatBubble({ message, onCreateTask }) {
           )}
         </div>
       </div>
+      {/* Create task button for incoming text messages */}
+      {!isOutgoing && message.message_type === 'text' && onCreateTask && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 shrink-0 self-center opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={() => onCreateTask(message)}
+          title="สร้างงานจากข้อความนี้"
+        >
+          <ClipboardPlus className="w-3.5 h-3.5 text-muted-foreground" />
+        </Button>
+      )}
     </div>
   );
 }
