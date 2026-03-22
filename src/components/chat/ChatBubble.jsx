@@ -83,7 +83,7 @@ export default function ChatBubble({ message, onCreateTask }) {
   const showSenderName = !isOutgoing && message.chat_type === 'group' && message.sender_name;
 
   return (
-    <div className={`flex ${isOutgoing ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex gap-1 group ${isOutgoing ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[80%] md:max-w-[70%] rounded-2xl px-3.5 py-2 ${isSticker ? '' : bubbleClass}`}>
         {showSenderName && (
           <p className="text-[11px] font-medium text-primary mb-1">{message.sender_name}</p>
