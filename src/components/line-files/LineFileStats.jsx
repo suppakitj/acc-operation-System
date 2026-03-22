@@ -21,7 +21,7 @@ export default function LineFileStats() {
     staleTime: 30_000,
   });
 
-  const fileMessages = messages.filter(m => m.file_url && (m.message_type === 'image' || m.message_type === 'file'));
+  const fileMessages = messages.filter(m => m.file_url && (m.message_type === 'image' || m.message_type === 'file') && m.message_type !== 'sticker');
 
   const counts = {
     total: fileMessages.length,
