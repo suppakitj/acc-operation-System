@@ -144,6 +144,9 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
           <FieldWrapper label="TAX ID (13 หลัก)" required error={errors.tax_id}>
             <Input value={form.tax_id} onChange={e => update('tax_id', e.target.value.replace(/\D/g, ''))} maxLength={13} placeholder="0000000000000" disabled={readOnly} className={errors.tax_id ? 'border-destructive' : ''} />
           </FieldWrapper>
+          <FieldWrapper label="เลขสาขา">
+            <Input value={form.branch_code || ''} onChange={e => update('branch_code', e.target.value.replace(/\D/g, ''))} maxLength={5} placeholder="00000 = สำนักงานใหญ่" disabled={readOnly} />
+          </FieldWrapper>
           <FieldWrapper label="สถานะ">
             <Select value={form.status} onValueChange={v => update('status', v)} disabled={readOnly}>
               <SelectTrigger><SelectValue /></SelectTrigger>
