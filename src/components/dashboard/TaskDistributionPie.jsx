@@ -40,15 +40,15 @@ export default function TaskDistributionPie({ tasks }) {
       </CardHeader>
       <CardContent className="pt-2 pb-4 px-5">
         <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="w-[180px] h-[180px] shrink-0">
+          <div className="w-[190px] h-[190px] shrink-0">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={85}
+                  innerRadius={45}
+                  outerRadius={80}
                   dataKey="value"
                   strokeWidth={2}
                   stroke="#fff"
