@@ -14,7 +14,7 @@ import { useLanguage } from '../components/LanguageContext';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
-const MESSAGES_PER_PAGE = 50;
+const MESSAGES_PER_PAGE = 10;
 
 export default function LineChat() {
   const { t } = useLanguage();
