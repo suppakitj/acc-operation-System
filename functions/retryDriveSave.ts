@@ -63,7 +63,8 @@ Deno.serve(async (req) => {
         message_type: msg.message_type,
       });
 
-      if (result?.success || result?.drive_file_id) {
+      const resData = result?.data || result;
+      if (resData?.success || resData?.drive_file_id) {
         await base44.asServiceRole.entities.LineMessage.update(msg.id, {
           drive_saved: true,
           drive_retry_count: retryNum,
