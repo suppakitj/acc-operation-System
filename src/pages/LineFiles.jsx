@@ -7,6 +7,7 @@ import { ArrowLeft, RefreshCw, HardDrive, Loader2, Download } from 'lucide-react
 import { toast } from 'sonner';
 import FileBreadcrumb from '../components/line-files/FileBreadcrumb';
 import FileListTable from '../components/line-files/FileListTable';
+import LineFileStats from '../components/line-files/LineFileStats';
 
 export default function LineFiles() {
   const [folderStack, setFolderStack] = useState([]); // [{id, name}, ...]
@@ -164,6 +165,8 @@ export default function LineFiles() {
           <RefreshCw className="w-4 h-4 mr-1" /> รีเฟรช
         </Button>
       </div>
+
+      <LineFileStats />
 
       <Card>
         <CardHeader className="pb-2 pt-4 px-4">
