@@ -11,17 +11,27 @@ const STATS_CONFIG = [
 ];
 
 export default function LineFileStats() {
-  const { data: messages = [] } = useQuery({
-    queryKey: ['lineFileStats'],
+  const { data: imgMessages = [] } = useQuery({
+    queryKey: ['lineFileStats', 'image'],
     queryFn: () => base44.entities.LineMessage.filter(
-      { direction: 'incoming' },
+      { direction: 'incoming', message_type: 'image' },
       '-created_date',
       1000
     ),
     staleTime: 30_000,
   });
 
-  const fileMessages = messages.filter(m => m.file_url && (m.message_type === 'image' || m.message_type === 'file') && m.message_type !== 'sticker');
+  const { data: fileOnlyMessages = [] } = useQuery({
+    queryKey: ['lineFileStats', 'file'],
+    queryFn: () => base44.entities.LineMessage.filter(
+      { direction: 'incoming', message_type: 'file' },
+      '-created_date',
+      1000
+    ),
+    staleTime: 30_000,
+  });
+
+  const fileMessages = [...imgMessages, ...fileOnlyMessages].filter(m => m.file_url);
 
   const counts = {
     total: fileMessages.length,
