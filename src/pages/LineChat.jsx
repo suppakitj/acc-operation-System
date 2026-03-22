@@ -271,6 +271,14 @@ export default function LineChat() {
           )}
         </Card>
       </div>
+
+      {/* Create Task from LINE message dialog */}
+      <CreateTaskFromChat
+        open={taskDialogOpen}
+        onOpenChange={setTaskDialogOpen}
+        message={taskMessage}
+        chatDisplayName={selectedUser?.name}
+      />
     </div>
   );
 }
