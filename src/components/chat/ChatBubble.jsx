@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { FileText, Download, Image as ImageIcon } from 'lucide-react';
+import { FileText, Download, Image as ImageIcon, ClipboardPlus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export default function ChatBubble({ message }) {
+export default function ChatBubble({ message, onCreateTask }) {
   const isOutgoing = message.direction === 'outgoing';
   const [imgError, setImgError] = useState(false);
 
