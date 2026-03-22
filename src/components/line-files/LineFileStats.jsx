@@ -25,7 +25,7 @@ export default function LineFileStats() {
     } else if (d.retried === 0) {
       toast.info(d.message || 'ไม่มีไฟล์ให้ retry');
     } else {
-      toast.success(`Retry ${d.retried} ไฟล์: สำเร็จ ${d.success}, ล้มเหลว ${d.failed}`);
+      toast.success(d.message || `รีเซ็ต ${d.retried} ไฟล์แล้ว — ระบบจะ retry อัตโนมัติ`);
       queryClient.invalidateQueries({ queryKey: ['lineFileStats'] });
     }
     setRetrying(false);
