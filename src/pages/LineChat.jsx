@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Send, Search, MessageCircle, User, Users, ArrowLeft, AlertCircle, Settings, ChevronUp } from 'lucide-react';
 import ChatBubble from '../components/chat/ChatBubble';
+import CreateTaskFromChat from '../components/chat/CreateTaskFromChat';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '../components/LanguageContext';
