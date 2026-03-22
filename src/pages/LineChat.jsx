@@ -245,7 +245,11 @@ export default function LineChat() {
                     )}
                     <div ref={chatTopRef} />
                     {chatMessages.map(m => (
-                      <ChatBubble key={m.id} message={m} />
+                      <ChatBubble
+                        key={m.id}
+                        message={m}
+                        onCreateTask={(msg) => { setTaskMessage(msg); setTaskDialogOpen(true); }}
+                      />
                     ))}
                     <div ref={chatEndRef} />
                   </div>
