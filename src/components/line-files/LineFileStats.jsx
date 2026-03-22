@@ -13,6 +13,24 @@ const STATS_CONFIG = [
 ];
 
 export default function LineFileStats() {
+  const [retrying, setRetrying] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    const res = await base44.functions.invoke('manualRetryDriveSave', {});
+    const d = res.data;
+    if (d.error) {
+      toast.error(d.error);
+    } else if (d.retried === 0) {
+      toast.info(d.message || 'ไม่มีไฟล์ให้ retry');
+    } else {
+      toast.success(`Retry ${d.retried} ไฟล์: สำเร็จ ${d.success}, ล้มเหลว ${d.failed}`);
+      queryClient.invalidateQueries({ queryKey: ['lineFileStats'] });
+    }
+    setRetrying(false);
+  };
+
   const { data: imgMessages = [] } = useQuery({
     queryKey: ['lineFileStats', 'image'],
     queryFn: () => base44.entities.LineMessage.filter(
