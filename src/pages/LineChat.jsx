@@ -22,6 +22,8 @@ export default function LineChat() {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [newMessage, setNewMessage] = useState('');
   const [visibleCount, setVisibleCount] = useState(MESSAGES_PER_PAGE);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [taskMessage, setTaskMessage] = useState(null);
   const queryClient = useQueryClient();
   const chatEndRef = useRef(null);
   const chatTopRef = useRef(null);
