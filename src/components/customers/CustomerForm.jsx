@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '../LanguageContext';
-import { Building2, Users, Phone, Briefcase, CreditCard, FileText } from 'lucide-react';
+import { Building2, Users, Phone, Briefcase, CreditCard, FileText, UserCheck } from 'lucide-react';
 
 const SERVICES = [
   { value: 'accounting', label: 'รับทำบัญชี' },
@@ -79,6 +79,7 @@ function FieldWrapper({ label, required, error, children }) {
 export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }) {
   const { t } = useLanguage();
   const { data: users = [] } = useUserList();
+  const { data: referrers = [] } = useQuery({ queryKey: ['referrers'], queryFn: () => base44.entities.Referrer.filter({ status: 'active' }), staleTime: 60_000 });
   const [errors, setErrors] = useState({});
 
   const [form, setForm] = useState({
@@ -317,6 +318,44 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
             </FieldWrapper>
           </div>
         </div>
+      </div>
+
+      {/* Section: ผู้แนะนำ */}
+      <div className="bg-card rounded-xl border p-4 md:p-5">
+        <SectionHeader icon={UserCheck} title="ผู้แนะนำ (Referral)" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FieldWrapper label="ผู้แนะนำ">
+            <SearchableSelect
+              value={form.referrer_id || '_none'}
+              onValueChange={v => {
+                if (v === '_none') {
+                  setForm(p => ({ ...p, referrer_id: '', referrer_name: '', referral_commission_pct: null }));
+                } else {
+                  const ref = referrers.find(r => r.id === v);
+                  setForm(p => ({ ...p, referrer_id: v, referrer_name: ref?.name || '' }));
+                }
+              }}
+              options={[{ value: '_none', label: '— ไม่มีผู้แนะนำ —' }, ...referrers.map(r => ({ value: r.id, label: `${r.name}${r.phone ? ` (${r.phone})` : ''}` }))]}
+              placeholder="เลือกผู้แนะนำ"
+              disabled={readOnly}
+            />
+          </FieldWrapper>
+          <FieldWrapper label="% ค่าแนะนำ">
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              step="0.5"
+              value={form.referral_commission_pct ?? ''}
+              onChange={e => update('referral_commission_pct', e.target.value ? parseFloat(e.target.value) : null)}
+              placeholder="เช่น 5 = 5%"
+              disabled={readOnly || !form.referrer_id}
+            />
+          </FieldWrapper>
+        </div>
+        {form.referrer_name && (
+          <p className="text-xs text-muted-foreground mt-2">ผู้แนะนำ: <span className="font-medium text-foreground">{form.referrer_name}</span> {form.referral_commission_pct ? `— ค่าแนะนำ ${form.referral_commission_pct}%` : ''}</p>
+        )}
       </div>
 
       {/* Notes */}
