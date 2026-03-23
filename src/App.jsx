@@ -31,6 +31,7 @@ import StaffDashboard from './pages/StaffDashboard';
 import TaskCalendar from './pages/TaskCalendar';
 import OcrProcessing from './pages/OcrProcessing';
 import LineFiles from './pages/LineFiles';
+import ReferralCommission from './pages/ReferralCommission';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -81,6 +82,7 @@ const AuthenticatedApp = () => {
         <Route path="/DatabaseBackup" element={<DatabaseBackup />} />
         <Route path="/OcrProcessing" element={<OcrProcessing />} />
         <Route path="/LineFiles" element={<LineFiles />} />
+        <Route path="/ReferralCommission" element={<ReferralCommission />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
