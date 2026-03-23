@@ -107,9 +107,10 @@ export function useAccessControl(user) {
       if (p('user_master') !== 'no')     menus.push('users');
       if (p('role_mgmt') !== 'no')       menus.push('roles');
 
-      // line_chat & line_files → always visible
+      // line_chat & line_files & referral → always visible for relevant roles
       menus.push('line_chat');
       menus.push('line_files');
+      menus.push('referral');
 
       // All menu visibility now from matrix
       if (p('staff_dashboard') !== 'no') menus.push('staff_dashboard');
