@@ -17,13 +17,14 @@ const ICON_COLORS = {
 };
 
 export default function TaskStatsRow({ tasks }) {
-  const today = new Date();
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const active = tasks.filter(t => t.status !== 'completed' && t.status !== 'cancelled');
-  const overdue = active.filter(t => t.due_date && new Date(t.due_date) < today).length;
-  const due3 = active.filter(t => { if (!t.due_date) return false; const d = differenceInDays(new Date(t.due_date), today); return d >= 0 && d <= 3; }).length;
-  const due7 = active.filter(t => { if (!t.due_date) return false; const d = differenceInDays(new Date(t.due_date), today); return d >= 0 && d <= 7; }).length;
+  const overdue = active.filter(t => t.due_date && new Date(t.due_date) < todayStart).length;
+  const due3 = active.filter(t => { if (!t.due_date) return false; const d = differenceInDays(new Date(t.due_date), todayStart); return d >= 0 && d <= 3; }).length;
+  const due7 = active.filter(t => { if (!t.due_date) return false; const d = differenceInDays(new Date(t.due_date), todayStart); return d >= 0 && d <= 7; }).length;
   const waiting = tasks.filter(t => t.status === 'review').length;
-  const completedToday = tasks.filter(t => t.completed_date === format(today, 'yyyy-MM-dd')).length;
+  const completedToday = tasks.filter(t => t.completed_date === format(now, 'yyyy-MM-dd')).length;
 
   const stats = [
     { label: 'OPEN TASKS', value: active.length, icon: ClipboardList, variant: 'blue' },

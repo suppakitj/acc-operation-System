@@ -7,16 +7,17 @@ import { useLanguage } from '../LanguageContext';
 
 export default function OverdueTasks({ tasks }) {
   const { t } = useLanguage();
-  const today = new Date();
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   const overdue = tasks
     .filter(task => {
       if (!task.due_date || task.status === 'completed' || task.status === 'cancelled') return false;
-      return new Date(task.due_date) < today;
+      return new Date(task.due_date) < todayStart;
     })
     .map(task => ({
       ...task,
-      daysLate: differenceInDays(today, new Date(task.due_date)),
+      daysLate: differenceInDays(todayStart, new Date(task.due_date)),
     }))
     .sort((a, b) => b.daysLate - a.daysLate);
 

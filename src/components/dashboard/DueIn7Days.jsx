@@ -13,12 +13,13 @@ const STATUS_BADGE = {
 
 export default function DueIn7Days({ tasks }) {
   const { t } = useLanguage();
-  const today = new Date();
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   const upcoming = tasks
     .filter(task => {
       if (!task.due_date || task.status === 'completed' || task.status === 'cancelled') return false;
-      const days = differenceInDays(new Date(task.due_date), today);
+      const days = differenceInDays(new Date(task.due_date), todayStart);
       return days >= 0 && days <= 7;
     })
     .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
@@ -36,7 +37,7 @@ export default function DueIn7Days({ tasks }) {
         ) : (
           upcoming.slice(0, 8).map(task => {
             const badge = STATUS_BADGE[task.status] || STATUS_BADGE.pending;
-            const daysLeft = differenceInDays(new Date(task.due_date), today);
+            const daysLeft = differenceInDays(new Date(task.due_date), todayStart);
             return (
               <div key={task.id} className="flex items-center gap-3 py-2.5 border-b last:border-b-0">
                 <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0" />
