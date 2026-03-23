@@ -66,9 +66,10 @@ export default function Dashboard() {
   const totalTasks = filteredTasks.filter(t => t.status !== 'cancelled').length;
   const dueTodayStr = format(today, 'yyyy-MM-dd');
   const dueToday = filteredTasks.filter(t => t.due_date === dueTodayStr && t.status !== 'completed' && t.status !== 'cancelled').length;
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const overdueTasks = filteredTasks.filter(t => {
     if (!t.due_date || t.status === 'completed' || t.status === 'cancelled') return false;
-    return new Date(t.due_date) < today;
+    return new Date(t.due_date) < todayStart;
   }).length;
   const pendingReview = filteredTasks.filter(t => t.status === 'review').length;
   const completedTasks = filteredTasks.filter(t => t.status === 'completed').length;

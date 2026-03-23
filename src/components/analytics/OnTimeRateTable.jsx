@@ -13,7 +13,10 @@ export default function OnTimeRateTable({ tasks, year }) {
 
       const key = t.assigned_to || t.assigned_name;
       if (!map[key]) map[key] = { name: t.assigned_name, email: key, onTime: 0, late: 0 };
-      if (completedDate <= new Date(t.due_date)) {
+      // Compare date-only strings: completed on due_date = on time
+      const compStr = t.completed_date.slice(0, 10);
+      const dueStr = t.due_date.slice(0, 10);
+      if (compStr <= dueStr) {
         map[key].onTime++;
       } else {
         map[key].late++;
