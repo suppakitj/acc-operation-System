@@ -59,7 +59,11 @@ export default function UserManagement() {
   const { data: users = [] } = useUserList();
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      const res = await base44.functions.invoke('updateUser', { userId: id, data });
+      if (res.data?.error) throw new Error(res.data.error);
+      return res.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setShowForm(false);
