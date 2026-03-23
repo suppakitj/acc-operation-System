@@ -23,7 +23,8 @@ const SVC_LABELS = { accounting: 'Accounting', payroll: 'Payroll', tax_consultin
 
 export default function TaskTable({ tasks, selected, setSelected, onRowClick, sortField, sortDir, onSort, users = [] }) {
   const { t } = useLanguage();
-  const today = new Date();
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const allSelected = tasks.length > 0 && selected.length === tasks.length;
 
   const [colWidths, setColWidths] = useState({});
@@ -109,8 +110,8 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
           {tasks.length === 0 ? (
             <tr><td colSpan={10} className="text-center py-12 text-sm text-muted-foreground">{t('no_data')}</td></tr>
           ) : tasks.map(task => {
-            const isOverdue = task.due_date && task.status !== 'completed' && task.status !== 'cancelled' && new Date(task.due_date) < today;
-            const daysLate = isOverdue ? differenceInDays(today, new Date(task.due_date)) : 0;
+            const isOverdue = task.due_date && task.status !== 'completed' && task.status !== 'cancelled' && new Date(task.due_date) < todayStart;
+            const daysLate = isOverdue ? differenceInDays(todayStart, new Date(task.due_date)) : 0;
             return (
               <tr key={task.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors cursor-pointer group"
                 onClick={() => onRowClick(task)}>
