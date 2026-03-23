@@ -62,20 +62,24 @@ export default function ReferralCommission() {
     return refCustomers.flatMap(cust => {
       const custBillings = paidBillings.filter(b => b.customer_id === cust.id);
       const ref = referrers.find(r => r.id === cust.referrer_id);
-      return custBillings.map(b => ({
-        billing_id: b.id,
-        invoice_number: b.invoice_number,
-        period_month: b.period_month,
-        billing_date: b.billing_date,
-        payment_date: b.payment_date,
-        customer_id: cust.id,
-        customer_name: cust.company_name,
-        referrer_id: cust.referrer_id,
-        referrer_name: ref?.name || cust.referrer_name || '—',
-        billing_amount: b.amount || 0,
-        commission_pct: cust.referral_commission_pct,
-        commission_amount: Math.round((b.amount || 0) * (cust.referral_commission_pct / 100) * 100) / 100,
-      }));
+      return custBillings.map(b => {
+        const serviceAmt = b.service_amount ?? b.amount ?? 0;
+        return {
+          billing_id: b.id,
+          invoice_number: b.invoice_number,
+          period_month: b.period_month,
+          billing_date: b.billing_date,
+          payment_date: b.payment_date,
+          customer_id: cust.id,
+          customer_name: cust.company_name,
+          referrer_id: cust.referrer_id,
+          referrer_name: ref?.name || cust.referrer_name || '—',
+          billing_amount: b.amount || 0,
+          service_amount: serviceAmt,
+          commission_pct: cust.referral_commission_pct,
+          commission_amount: Math.round(serviceAmt * (cust.referral_commission_pct / 100) * 100) / 100,
+        };
+      });
     });
   }, [customers, billings, referrers]);
 

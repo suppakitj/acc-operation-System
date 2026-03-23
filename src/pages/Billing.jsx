@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Search } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import ExtraCostEditor from '../components/billing/ExtraCostEditor';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
@@ -189,7 +190,7 @@ export default function Billing() {
 
   const openNew = () => {
     setEditingBill(null);
-    setForm({ status: 'draft', billing_date: format(today, 'yyyy-MM-dd') });
+    setForm({ status: 'draft', billing_date: format(today, 'yyyy-MM-dd'), service_amount: 0, extra_costs: [], amount: 0 });
     setShowForm(true);
   };
 
@@ -332,9 +333,34 @@ export default function Billing() {
               <div className="space-y-1.5"><Label>{t('invoice_number')}</Label><Input value={form.invoice_number || ''} onChange={e => setForm(p => ({ ...p, invoice_number: e.target.value }))} /></div>
               <div className="space-y-1.5"><Label>Period (เดือน)</Label><Input value={form.period_month || ''} onChange={e => setForm(p => ({ ...p, period_month: e.target.value }))} placeholder="2026-02" /></div>
             </div>
+            {/* ค่าบริการ */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">ค่าบริการ (คิดค่าแนะนำจากยอดนี้)</Label>
+              <Input type="number" min={0} step="0.01" value={form.service_amount ?? ''} onChange={e => {
+                const svc = parseFloat(e.target.value) || 0;
+                const extra = (form.extra_costs || []).reduce((s, c) => s + (c.amount || 0), 0);
+                setForm(p => ({ ...p, service_amount: svc, amount: svc + extra }));
+              }} placeholder="0.00" />
+            </div>
+
+            {/* ค่าใช้จ่ายอื่นๆ */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">ค่าใช้จ่ายอื่นๆ</Label>
+              <ExtraCostEditor items={form.extra_costs || []} onChange={extras => {
+                const extraTotal = extras.reduce((s, c) => s + (c.amount || 0), 0);
+                setForm(p => ({ ...p, extra_costs: extras, amount: (p.service_amount || 0) + extraTotal }));
+              }} />
+            </div>
+
+            {/* สรุปยอดรวม + WHT */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5"><Label>{t('amount')}</Label><Input type="number" value={form.amount || ''} onChange={e => setForm(p => ({ ...p, amount: parseFloat(e.target.value) || 0 }))} /></div>
-              <div className="space-y-1.5"><Label>WHT Amount</Label><Input type="number" value={form.wht_amount || ''} onChange={e => setForm(p => ({ ...p, wht_amount: parseFloat(e.target.value) || 0 }))} /></div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">ยอดรวม (อัตโนมัติ)</Label>
+                <div className="h-9 flex items-center px-3 border rounded-md bg-muted/50 text-sm font-bold">
+                  ฿{(form.amount || 0).toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                </div>
+              </div>
+              <div className="space-y-1.5"><Label className="text-xs">WHT Amount</Label><Input type="number" value={form.wht_amount || ''} onChange={e => setForm(p => ({ ...p, wht_amount: parseFloat(e.target.value) || 0 }))} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5"><Label>Inv Date</Label><Input type="date" value={form.billing_date || ''} onChange={e => setForm(p => ({ ...p, billing_date: e.target.value }))} /></div>

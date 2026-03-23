@@ -26,7 +26,8 @@ export default function CommissionTable({ data }) {
             <TableHead className="text-xs">ลูกค้า</TableHead>
             <TableHead className="text-xs">Invoice</TableHead>
             <TableHead className="text-xs">เดือน</TableHead>
-            <TableHead className="text-xs text-right">ยอด Billing</TableHead>
+            <TableHead className="text-xs text-right">ยอดรวม</TableHead>
+            <TableHead className="text-xs text-right">ค่าบริการ</TableHead>
             <TableHead className="text-xs text-right">% แนะนำ</TableHead>
             <TableHead className="text-xs text-right">ค่าแนะนำ</TableHead>
           </TableRow>
@@ -44,19 +45,20 @@ export default function CommissionTable({ data }) {
                   <TableCell className="text-xs">{row.customer_name}</TableCell>
                   <TableCell className="text-xs font-mono">{row.invoice_number || '—'}</TableCell>
                   <TableCell className="text-xs">{row.period_month || '—'}</TableCell>
-                  <TableCell className="text-xs text-right tabular-nums">฿{row.billing_amount.toLocaleString()}</TableCell>
+                  <TableCell className="text-xs text-right tabular-nums text-muted-foreground">฿{row.billing_amount.toLocaleString()}</TableCell>
+                  <TableCell className="text-xs text-right tabular-nums font-medium">฿{row.service_amount.toLocaleString()}</TableCell>
                   <TableCell className="text-xs text-right tabular-nums">{row.commission_pct}%</TableCell>
                   <TableCell className="text-xs text-right tabular-nums font-semibold text-amber-600">฿{row.commission_amount.toLocaleString()}</TableCell>
                 </TableRow>
               ))}
               <TableRow className="bg-muted/50 border-b-2">
-                <TableCell colSpan={6} className="text-xs font-semibold text-right">รวม {group.name}</TableCell>
+                <TableCell colSpan={7} className="text-xs font-semibold text-right">รวม {group.name}</TableCell>
                 <TableCell className="text-xs text-right font-bold text-amber-700 tabular-nums">฿{group.total.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</TableCell>
               </TableRow>
             </React.Fragment>
           ))}
           <TableRow className="bg-primary/5 border-t-2">
-            <TableCell colSpan={6} className="text-sm font-bold text-right">รวมทั้งหมด</TableCell>
+            <TableCell colSpan={7} className="text-sm font-bold text-right">รวมทั้งหมด</TableCell>
             <TableCell className="text-sm text-right font-bold text-amber-700 tabular-nums">
               ฿{data.reduce((s, d) => s + d.commission_amount, 0).toLocaleString('th-TH', { minimumFractionDigits: 2 })}
             </TableCell>
