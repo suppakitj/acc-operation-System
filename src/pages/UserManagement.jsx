@@ -66,6 +66,10 @@ export default function UserManagement() {
       setEditingUser(null);
       toast.success(t('saved'));
     },
+    onError: (err) => {
+      console.error('User update failed:', err);
+      toast.error('บันทึกไม่สำเร็จ: ' + (err?.message || 'ไม่ทราบสาเหตุ'));
+    },
   });
 
   const handleSave = async (formData) => {
