@@ -19,8 +19,24 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing userId or data' }, { status: 400 });
     }
 
-    // Use service role to bypass User entity security rules
-    await base44.asServiceRole.entities.User.update(userId, data);
+    // Separate role from other fields — role requires special handling
+    const { role, ...otherData } = data;
+
+    // Update non-role fields first
+    if (Object.keys(otherData).length > 0) {
+      await base44.asServiceRole.entities.User.update(userId, otherData);
+    }
+
+    // Update role separately if provided
+    if (role !== undefined) {
+      try {
+        await base44.asServiceRole.entities.User.update(userId, { role });
+      } catch (roleErr) {
+        console.warn('Role update skipped (platform restriction):', roleErr.message);
+        // Still return success for other fields, but note role wasn't updated
+        return Response.json({ success: true, roleUpdateSkipped: true, message: 'ข้อมูลอื่นบันทึกแล้ว แต่ไม่สามารถเปลี่ยน Role ได้ (ต้องเปลี่ยนจาก Dashboard ของ Base44)' });
+      }
+    }
 
     return Response.json({ success: true });
   } catch (error) {
