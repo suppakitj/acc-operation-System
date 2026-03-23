@@ -123,6 +123,7 @@ export default function ReferralCommission() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="commission" className="text-xs gap-1.5">สรุปค่าแนะนำ</TabsTrigger>
+          <TabsTrigger value="monthly" className="text-xs gap-1.5">สรุปรายเดือน</TabsTrigger>
           <TabsTrigger value="referrers" className="text-xs gap-1.5">รายชื่อผู้แนะนำ</TabsTrigger>
         </TabsList>
       </Tabs>
