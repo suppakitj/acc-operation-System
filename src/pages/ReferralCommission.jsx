@@ -57,7 +57,7 @@ export default function ReferralCommission() {
     const refCustomers = customers.filter(c => c.referrer_id && c.referral_commission_pct > 0);
     if (refCustomers.length === 0) return [];
 
-    const paidBillings = billings.filter(b => b.status === 'paid');
+    const paidBillings = billings.filter(b => b.status === 'paid' && b.referral_commission === true);
 
     return refCustomers.flatMap(cust => {
       const custBillings = paidBillings.filter(b => b.customer_id === cust.id);

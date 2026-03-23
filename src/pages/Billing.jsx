@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Search } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
@@ -166,6 +167,9 @@ export default function Billing() {
     const newVal = !b.wht_received;
     updateMutation.mutate({ id: b.id, data: { wht_received: newVal, wht_date: newVal ? format(today, 'yyyy-MM-dd') : '' } });
   };
+  const handleToggleReferral = (b) => {
+    updateMutation.mutate({ id: b.id, data: { referral_commission: !b.referral_commission } });
+  };
 
   const handleEdit = (b) => {
     setEditingBill(b);
@@ -305,6 +309,7 @@ export default function Billing() {
             billings={paged}
             onToggleReceipt={handleToggleReceipt}
             onToggleWht={handleToggleWht}
+            onToggleReferral={handleToggleReferral}
             onEdit={handleEdit}
           />
           <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
@@ -380,6 +385,13 @@ export default function Billing() {
                   <SelectTrigger><SelectValue placeholder="เลือก Owner" /></SelectTrigger>
                   <SelectContent>{users.map(u => <SelectItem key={u.id} value={u.email}>{u.full_name}</SelectItem>)}</SelectContent>
                 </Select>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <Checkbox checked={!!form.referral_commission} onCheckedChange={v => setForm(p => ({ ...p, referral_commission: v }))} className="data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600" />
+              <div>
+                <Label className="text-xs font-semibold">จ่ายค่าแนะนำ (Referral Commission)</Label>
+                <p className="text-[11px] text-muted-foreground">ติ๊กเพื่อนับบิลนี้ในค่าแนะนำผู้แนะนำ</p>
               </div>
             </div>
             <div className="space-y-1.5"><Label>{t('notes')}</Label><Textarea value={form.notes || ''} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={2} /></div>

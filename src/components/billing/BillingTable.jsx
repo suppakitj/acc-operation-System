@@ -25,7 +25,7 @@ const STATUS_LABEL = {
   draft: 'Draft', cancelled: 'Cancelled', not_invoiced: 'Not Invoiced',
 };
 
-export default function BillingTable({ billings, onToggleReceipt, onToggleWht, onEdit, onRowClick }) {
+export default function BillingTable({ billings, onToggleReceipt, onToggleWht, onToggleReferral, onEdit, onRowClick }) {
   const today = new Date();
 
   return (
@@ -43,6 +43,7 @@ export default function BillingTable({ billings, onToggleReceipt, onToggleWht, o
             <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
             <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell text-center">Receipt</th>
             <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell text-center">WHT</th>
+            <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell text-center">Ref</th>
             <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden xl:table-cell">Owner</th>
             <th className="px-2 py-3 w-8"></th>
           </tr>
@@ -121,6 +122,15 @@ export default function BillingTable({ billings, onToggleReceipt, onToggleWht, o
                     {b.wht_date && <span className="text-[9px] text-muted-foreground">{b.wht_date}</span>}
                   </div>
                 </td>
+                <td className="px-2 py-3 hidden lg:table-cell text-center" onClick={e => e.stopPropagation()}>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <Checkbox
+                      checked={!!b.referral_commission}
+                      onCheckedChange={() => onToggleReferral(b)}
+                      className="data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+                    />
+                  </div>
+                </td>
                 <td className="px-2 py-3 hidden xl:table-cell">
                   <span className="text-xs text-muted-foreground">{b.owner || '—'}</span>
                 </td>
@@ -144,7 +154,7 @@ export default function BillingTable({ billings, onToggleReceipt, onToggleWht, o
       </table>
       <div className="px-4 py-2 border-t flex items-center justify-between">
         <span className="text-[11px] text-muted-foreground">{billings.length} records</span>
-        <span className="text-[11px] text-muted-foreground italic">Click ✓ boxes to toggle Receipt / WHT · Row menu for more actions</span>
+        <span className="text-[11px] text-muted-foreground italic">Click ✓ to toggle Receipt / WHT / Ref (ค่าแนะนำ)</span>
       </div>
     </div>
   );
