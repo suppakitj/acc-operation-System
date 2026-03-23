@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Plus, UserPlus, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAccessControl } from '../components/auth/useAccessControl';
 import ReferrerForm from '../components/referral/ReferrerForm';
 import ReferrerList from '../components/referral/ReferrerList';
 import CommissionSummary from '../components/referral/CommissionSummary';
@@ -16,6 +17,8 @@ import CommissionTable from '../components/referral/CommissionTable';
 
 export default function ReferralCommission() {
   const queryClient = useQueryClient();
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const ac = useAccessControl(currentUser);
   const [activeTab, setActiveTab] = useState('commission');
   const [showForm, setShowForm] = useState(false);
   const [editingRef, setEditingRef] = useState(null);
@@ -98,6 +101,10 @@ export default function ReferralCommission() {
   // Unique periods
   const periods = useMemo(() => [...new Set(commissionData.map(c => c.period_month).filter(Boolean))].sort().reverse(), [commissionData]);
 
+  if (!ac.canViewReferral) {
+    return <div className="text-center py-12 text-muted-foreground">ไม่มีสิทธิ์เข้าถึงหน้านี้</div>;
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -105,9 +112,11 @@ export default function ReferralCommission() {
           <h1 className="text-xl md:text-2xl font-bold">ค่าแนะนำ (Referral)</h1>
           <p className="text-xs text-muted-foreground">จัดการผู้แนะนำ และสรุปค่าแนะนำจาก Billing</p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs shrink-0" onClick={() => { setEditingRef(null); setShowForm(true); }}>
-          <UserPlus className="w-3.5 h-3.5" /> เพิ่มผู้แนะนำ
-        </Button>
+        {ac.canEditReferral && (
+          <Button size="sm" className="gap-1.5 text-xs shrink-0" onClick={() => { setEditingRef(null); setShowForm(true); }}>
+            <UserPlus className="w-3.5 h-3.5" /> เพิ่มผู้แนะนำ
+          </Button>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

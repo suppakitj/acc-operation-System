@@ -107,10 +107,10 @@ export function useAccessControl(user) {
       if (p('user_master') !== 'no')     menus.push('users');
       if (p('role_mgmt') !== 'no')       menus.push('roles');
 
-      // line_chat & line_files & referral → always visible for relevant roles
+      // line_chat & line_files → always visible for relevant roles
       menus.push('line_chat');
       menus.push('line_files');
-      menus.push('referral');
+      if (p('referral') !== 'no')    menus.push('referral');
 
       // All menu visibility now from matrix
       if (p('staff_dashboard') !== 'no') menus.push('staff_dashboard');
@@ -139,6 +139,8 @@ export function useAccessControl(user) {
       filterByDepartment, canAccessDepartment,
       getVisibleMenuIds,
       canSeeAll: role === 'admin' || crossGroup,
+      canViewReferral: p('referral') !== 'no',
+      canEditReferral: p('referral') !== 'no' && p('referral') !== 'view_only',
       canViewStaffDashboard, canViewTeamAnalytics, canViewReports, canViewAuditLog, canViewDbBackup,
     };
   }, [user, matrix]);
@@ -160,6 +162,7 @@ function empty() {
     filterByDepartment: () => [], canAccessDepartment: () => false,
     getVisibleMenuIds: () => ['dashboard', 'notifications', 'settings'],
     canSeeAll: false,
+    canViewReferral: false, canEditReferral: false,
     canViewStaffDashboard: false, canViewTeamAnalytics: false, canViewReports: false, canViewAuditLog: false, canViewDbBackup: false,
   };
 }

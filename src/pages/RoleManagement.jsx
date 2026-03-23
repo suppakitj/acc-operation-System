@@ -39,6 +39,7 @@ const DEFAULT_MATRIX = [
   { key: 'audit_log', label: 'Audit Log', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
   { key: 'db_backup', label: 'Backup Database', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
   { key: 'ocr', label: 'OCR (แปลงเอกสาร)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  { key: 'referral', label: 'ค่าแนะนำ (Referral)', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
 ];
 
 const PERM_CYCLE = ['yes', 'dept', 'own', 'edit_only', 'view_only', 'no'];

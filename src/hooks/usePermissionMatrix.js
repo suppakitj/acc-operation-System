@@ -28,6 +28,7 @@ const DEFAULT_MATRIX = {
   audit_log:      { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
   db_backup:      { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
   ocr:            { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  referral:       { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
 };
 
 const PermissionMatrixContext = createContext(DEFAULT_MATRIX);
