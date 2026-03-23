@@ -11,12 +11,14 @@ export default function TopOverdueEmployees({ tasks, year }) {
       const dueDate = new Date(t.due_date);
       if (dueDate.getFullYear() !== year) return;
 
-      // Count overdue: completed after due OR still open past due
+      // Count overdue: completed after due OR still open past due (date-only comparison)
       let isOverdue = false;
       if (t.status === 'completed' && t.completed_date) {
-        isOverdue = new Date(t.completed_date) > dueDate;
+        isOverdue = t.completed_date.slice(0, 10) > t.due_date.slice(0, 10);
       } else if (t.status !== 'completed') {
-        isOverdue = new Date() > dueDate;
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        isOverdue = dueDate < todayStart;
       }
 
       const key = t.assigned_to || t.assigned_name;

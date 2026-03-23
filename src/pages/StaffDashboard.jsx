@@ -94,7 +94,8 @@ export default function StaffDashboard() {
         }
       } else if (t.status !== 'cancelled') {
         entry.pending.push(t);
-        if (t.due_date && new Date(t.due_date) < today) {
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        if (t.due_date && new Date(t.due_date) < todayStart) {
           entry.overdue.push(t);
         }
       }

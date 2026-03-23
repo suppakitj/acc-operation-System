@@ -18,17 +18,19 @@ export default function RecentActivity({ tasks }) {
     .slice(0, 5);
 
   const getActivityLabel = (task) => {
-    const today = new Date();
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     if (task.status === 'completed') return `${task.assigned_name || '-'} completed "${task.title}"`;
-    if (task.due_date && new Date(task.due_date) < today && task.status !== 'completed') return `Overdue: ${task.assigned_name || '-'} — ${task.title}`;
+    if (task.due_date && new Date(task.due_date) < todayStart && task.status !== 'completed') return `Overdue: ${task.assigned_name || '-'} — ${task.title}`;
     if (task.status === 'review') return `${task.title} — Pending Review`;
     return `${task.assigned_name || '-'} assigned to "${task.title}"`;
   };
 
   const getType = (task) => {
-    const today = new Date();
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     if (task.status === 'completed') return 'completed';
-    if (task.due_date && new Date(task.due_date) < today) return 'overdue';
+    if (task.due_date && new Date(task.due_date) < todayStart) return 'overdue';
     return task.status;
   };
 
