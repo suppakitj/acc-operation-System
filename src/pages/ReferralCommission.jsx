@@ -149,6 +149,10 @@ export default function ReferralCommission() {
         </>
       )}
 
+      {activeTab === 'monthly' && (
+        <MonthlyCommissionSummary data={filteredCommission} />
+      )}
+
       {activeTab === 'referrers' && (
         <ReferrerList
           referrers={referrers}
