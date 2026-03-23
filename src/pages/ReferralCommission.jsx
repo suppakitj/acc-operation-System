@@ -14,6 +14,7 @@ import ReferrerForm from '../components/referral/ReferrerForm';
 import ReferrerList from '../components/referral/ReferrerList';
 import CommissionSummary from '../components/referral/CommissionSummary';
 import CommissionTable from '../components/referral/CommissionTable';
+import MonthlyCommissionSummary from '../components/referral/MonthlyCommissionSummary';
 
 export default function ReferralCommission() {
   const queryClient = useQueryClient();
