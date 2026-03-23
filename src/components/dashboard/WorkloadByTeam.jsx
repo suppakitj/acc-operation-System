@@ -18,7 +18,11 @@ export default function WorkloadByTeam({ tasks }) {
       const dept = t.department || 'other';
       if (!map[dept]) map[dept] = { in_progress: 0, overdue: 0 };
       if (t.status === 'in_progress' || t.status === 'pending' || t.status === 'review') map[dept].in_progress++;
-      if (t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed') map[dept].overdue++;
+      if (t.due_date && t.status !== 'completed') {
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (new Date(t.due_date) < todayStart) map[dept].overdue++;
+      }
     });
     return Object.entries(map)
       .map(([key, val]) => ({ name: DEPT_LABELS[key] || key, in_progress: val.in_progress, overdue: val.overdue }))

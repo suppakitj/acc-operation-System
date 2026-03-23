@@ -20,10 +20,15 @@ export default function AtRiskEmployees({ tasks }) {
       const dueDate = new Date(t.due_date);
       // เฉพาะ tasks ที่ due_date อยู่ในปีปัจจุบัน
       if (dueDate.getFullYear() !== currentYear) return;
-      // นับ overdue สะสม: ยังไม่เสร็จแต่เลย due_date, หรือเสร็จหลัง due_date
+      // นับ overdue สะสม: ยังไม่เสร็จแต่เลย due_date, หรือเสร็จหลัง due_date (เทียบเฉพาะวันที่)
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const isOverdue = (() => {
-        if (t.status !== 'completed' && dueDate < today) return true;
-        if (t.status === 'completed' && t.completed_date && new Date(t.completed_date) > dueDate) return true;
+        if (t.status !== 'completed' && dueDate < todayStart) return true;
+        if (t.status === 'completed' && t.completed_date) {
+          const compStr = t.completed_date.slice(0, 10);
+          const dueStr = t.due_date.slice(0, 10);
+          return compStr > dueStr;
+        }
         return false;
       })();
       if (!isOverdue) return;
