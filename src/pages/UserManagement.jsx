@@ -64,11 +64,15 @@ export default function UserManagement() {
       if (res.data?.error) throw new Error(res.data.error);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (resData) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setShowForm(false);
       setEditingUser(null);
-      toast.success(t('saved'));
+      if (resData?.roleUpdateSkipped) {
+        toast.warning('บันทึกข้อมูลอื่นแล้ว แต่ไม่สามารถเปลี่ยน Role ได้ (ต้องเปลี่ยนจาก Dashboard ของ Base44)');
+      } else {
+        toast.success(t('saved'));
+      }
     },
     onError: (err) => {
       console.error('User update failed:', err);
