@@ -46,6 +46,7 @@ export default function PeakLicenseForm({ open, onOpenChange, license, onSubmit,
         customer_id: '', customer_name: '', package_type: 'basic',
         payer_type: 'customer_direct_peak', payment_date: '', expiry_date: '',
         renewal_year: new Date().getFullYear(), license_status: 'active',
+        is_affiliate: false,
         acc_prepaid: false, customer_paid_back: false,
         invoice_issued: false, invoice_paid: false, wht_received: false,
         notes: '',
@@ -152,6 +153,7 @@ export default function PeakLicenseForm({ open, onOpenChange, license, onSubmit,
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
               {[
+                { key: 'is_affiliate', label: '🏷️ ลูกค้าเป็น Affiliate ของ Peak' },
                 { key: 'acc_prepaid', label: 'ACC ชำระเงินล่วงหน้าแล้ว' },
                 { key: 'customer_paid_back', label: 'ลูกค้าชำระเงินคืน ACC แล้ว' },
                 { key: 'invoice_issued', label: 'ออกใบแจ้งหนี้แล้ว' },
