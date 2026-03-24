@@ -151,15 +151,15 @@ export default function Dashboard() {
         <WorkloadByTeam tasks={filteredTasks} />
       </div>
 
-      {/* Row 3 — Top Performers Monthly + Yearly */}
+      {/* Row 3 — Monthly: Top Performers + Top Overdue */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <TopPerformersMonthly tasks={tasks} />
-        <TopPerformersYearly tasks={tasks} />
+        <AtRiskEmployeesMonthly tasks={tasks} />
       </div>
 
-      {/* Row 4 — Top Overdue Monthly + Yearly */}
+      {/* Row 4 — Yearly: Top Performers + Top Overdue */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <AtRiskEmployeesMonthly tasks={tasks} />
+        <TopPerformersYearly tasks={tasks} />
         <AtRiskEmployees tasks={tasks} />
       </div>
 
