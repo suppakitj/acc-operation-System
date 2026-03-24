@@ -14,12 +14,14 @@ export default function TopPerformersMonthly({ tasks }) {
     const map = {};
     tasks.forEach(t => {
       if (!t.assigned_to || t.status === 'cancelled') return;
-      // Filter: completed_date ในเดือนปัจจุบัน
-      if (t.status === 'completed' && t.completed_date) {
+      // Filter: completed_date ในเดือนปัจจุบัน + ตรงเวลา (completed_date <= due_date)
+      if (t.status === 'completed' && t.completed_date && t.due_date) {
         const cd = new Date(t.completed_date);
         if (cd.getMonth() === currentMonth && cd.getFullYear() === currentYear) {
-          if (!map[t.assigned_to]) map[t.assigned_to] = { name: t.assigned_name || t.assigned_to, completed: 0 };
-          map[t.assigned_to].completed++;
+          if (t.completed_date.slice(0, 10) <= t.due_date.slice(0, 10)) {
+            if (!map[t.assigned_to]) map[t.assigned_to] = { name: t.assigned_name || t.assigned_to, completed: 0 };
+            map[t.assigned_to].completed++;
+          }
         }
       }
     });
@@ -31,7 +33,7 @@ export default function TopPerformersMonthly({ tasks }) {
   return (
     <Card className="shadow-sm border">
       <CardHeader className="pb-2 pt-4 px-5">
-        <CardTitle className="text-sm font-semibold">Top Performers — ประจำเดือน ({monthLabel})</CardTitle>
+        <CardTitle className="text-sm font-semibold">Top Performers (ตรงเวลา) — ประจำเดือน ({monthLabel})</CardTitle>
       </CardHeader>
       <CardContent className="px-5 pb-4">
         {performers.length === 0 ? (
@@ -42,7 +44,7 @@ export default function TopPerformersMonthly({ tasks }) {
               <tr className="border-b text-muted-foreground">
                 <th className="text-left py-2 font-medium w-10">Rank</th>
                 <th className="text-left py-2 font-medium">Employee</th>
-                <th className="text-right py-2 font-medium">Completed</th>
+                <th className="text-right py-2 font-medium">On-time</th>
               </tr>
             </thead>
             <tbody>
