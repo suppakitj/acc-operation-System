@@ -145,27 +145,27 @@ export default function Dashboard() {
         <EmployeeProductivity tasks={filteredTasks} users={users} />
       </div>
 
-      {/* Row 2 — Top Performers Monthly + Yearly */}
+      {/* Row 2 — Tasks by Service + Workload by Team */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TaskDistributionPie tasks={filteredTasks} />
+        <WorkloadByTeam tasks={filteredTasks} />
+      </div>
+
+      {/* Row 3 — Top Performers Monthly + Yearly */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <TopPerformersMonthly tasks={tasks} />
         <TopPerformersYearly tasks={tasks} />
       </div>
 
-      {/* Row 3 — Top Overdue Monthly + Yearly */}
+      {/* Row 4 — Top Overdue Monthly + Yearly */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <AtRiskEmployeesMonthly tasks={tasks} />
         <AtRiskEmployees tasks={tasks} />
       </div>
 
-      {/* Row 4 — Recent Activity */}
+      {/* Row 5 — Recent Activity */}
       <div className="grid grid-cols-1 gap-4">
         <RecentActivity tasks={filteredTasks} />
-      </div>
-
-      {/* Row 3 — Bottom 2 charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TaskDistributionPie tasks={filteredTasks} />
-        <WorkloadByTeam tasks={filteredTasks} />
       </div>
     </div>
   );
