@@ -11,8 +11,10 @@ import DashboardStatCard from '../components/dashboard/DashboardStatCard';
 import CompletionRateDonut from '../components/dashboard/CompletionRateDonut';
 import OverdueTrendChart from '../components/dashboard/OverdueTrendChart';
 import EmployeeProductivity from '../components/dashboard/EmployeeProductivity';
-import TopPerformers from '../components/dashboard/TopPerformers';
+import TopPerformersMonthly from '../components/dashboard/TopPerformersMonthly';
+import TopPerformersYearly from '../components/dashboard/TopPerformersYearly';
 import AtRiskEmployees from '../components/dashboard/AtRiskEmployees';
+import AtRiskEmployeesMonthly from '../components/dashboard/AtRiskEmployeesMonthly';
 import RecentActivity from '../components/dashboard/RecentActivity';
 import TaskDistributionPie from '../components/dashboard/TaskDistributionPie';
 import WorkloadByTeam from '../components/dashboard/WorkloadByTeam';
@@ -143,10 +145,20 @@ export default function Dashboard() {
         <EmployeeProductivity tasks={filteredTasks} users={users} />
       </div>
 
-      {/* Row 2 — Top Performers (wider) + At Risk + Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <TopPerformers tasks={filteredTasks} />
-        <AtRiskEmployees tasks={filteredTasks} />
+      {/* Row 2 — Top Performers Monthly + Yearly */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TopPerformersMonthly tasks={tasks} />
+        <TopPerformersYearly tasks={tasks} />
+      </div>
+
+      {/* Row 3 — Top Overdue Monthly + Yearly */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <AtRiskEmployeesMonthly tasks={tasks} />
+        <AtRiskEmployees tasks={tasks} />
+      </div>
+
+      {/* Row 4 — Recent Activity */}
+      <div className="grid grid-cols-1 gap-4">
         <RecentActivity tasks={filteredTasks} />
       </div>
 
