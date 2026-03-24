@@ -33,11 +33,40 @@ export default function FileListTable({ files, onFolderClick, onDownload, downlo
     );
   }
 
-  // Sort: folders first, then files
+  const [sortKey, setSortKey] = useState('modifiedTime');
+  const [sortDir, setSortDir] = useState('desc');
+
+  const handleSort = (key) => {
+    if (sortKey === key) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'name' ? 'asc' : 'desc');
+    }
+  };
+
+  const SortIcon = ({ col }) => {
+    if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 opacity-30" />;
+    return sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />;
+  };
+
+  // Sort: folders first, then by selected column
   const sorted = [...files].sort((a, b) => {
     if (a.isFolder && !b.isFolder) return -1;
     if (!a.isFolder && b.isFolder) return 1;
-    return a.name.localeCompare(b.name);
+    const dir = sortDir === 'asc' ? 1 : -1;
+    if (sortKey === 'name') return dir * a.name.localeCompare(b.name);
+    if (sortKey === 'modifiedTime') {
+      const tA = a.modifiedTime || '';
+      const tB = b.modifiedTime || '';
+      return dir * tA.localeCompare(tB);
+    }
+    if (sortKey === 'size') {
+      const sA = Number(a.size) || 0;
+      const sB = Number(b.size) || 0;
+      return dir * (sA - sB);
+    }
+    return 0;
   });
 
   const fileOnly = sorted.filter(f => !f.isFolder);
