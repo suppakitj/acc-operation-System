@@ -19,6 +19,10 @@ const ENTITIES = [
   { key: 'LineMessage', label: 'Line Message', icon: '💬' },
   { key: 'AuditLog', label: 'Audit Log', icon: '📝' },
   { key: 'AppConfig', label: 'App Config', icon: '⚙️' },
+  { key: 'ServiceMaster', label: 'Service Master', icon: '🛠️' },
+  { key: 'HolidayMaster', label: 'Holiday Master', icon: '🎌' },
+  { key: 'OcrJob', label: 'OCR Job', icon: '📄' },
+  { key: 'Referrer', label: 'Referrer', icon: '🤝' },
 ];
 
 function objectToCSV(data) {
