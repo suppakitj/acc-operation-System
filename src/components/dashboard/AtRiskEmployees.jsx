@@ -20,12 +20,20 @@ export default function AtRiskEmployees({ tasks }) {
       const dueDate = new Date(t.due_date);
       // เฉพาะ tasks ที่ due_date อยู่ในปีปัจจุบัน
       if (dueDate.getFullYear() !== currentYear) return;
-      // นับเฉพาะงานที่ยังไม่เสร็จและเลย due_date แล้ว (completed ไม่นับ)
+      // นับ overdue สะสม: ยังไม่เสร็จแต่เลย due_date, หรือเสร็จหลัง due_date (เทียบเฉพาะวันที่)
       const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      if (t.status === 'completed') return;
-      if (dueDate >= todayStart) return;
-
-      const delay = differenceInDays(today, dueDate);
+      const isOverdue = (() => {
+        if (t.status !== 'completed' && dueDate < todayStart) return true;
+        if (t.status === 'completed' && t.completed_date) {
+          const compStr = t.completed_date.slice(0, 10);
+          const dueStr = t.due_date.slice(0, 10);
+          return compStr > dueStr;
+        }
+        return false;
+      })();
+      if (!isOverdue) return;
+      const completedOrToday = t.completed_date ? new Date(t.completed_date) : today;
+      const delay = differenceInDays(completedOrToday, dueDate);
       if (!map[t.assigned_to]) map[t.assigned_to] = { name: t.assigned_name || t.assigned_to, overdue: 0, totalDelay: 0 };
       map[t.assigned_to].overdue++;
       map[t.assigned_to].totalDelay += delay;
