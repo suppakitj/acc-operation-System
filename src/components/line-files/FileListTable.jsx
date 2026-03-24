@@ -99,9 +99,15 @@ export default function FileListTable({ files, onFolderClick, onDownload, downlo
                 />
               )}
             </th>
-            <th className="text-left py-2.5 px-3 font-medium">ชื่อ</th>
-            <th className="text-left py-2.5 px-3 font-medium hidden md:table-cell">แก้ไขล่าสุด</th>
-            <th className="text-right py-2.5 px-3 font-medium hidden md:table-cell">ขนาด</th>
+            <th className="text-left py-2.5 px-3 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('name')}>
+              <span className="inline-flex items-center gap-1">ชื่อ <SortIcon col="name" /></span>
+            </th>
+            <th className="text-left py-2.5 px-3 font-medium hidden md:table-cell cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('modifiedTime')}>
+              <span className="inline-flex items-center gap-1">แก้ไขล่าสุด <SortIcon col="modifiedTime" /></span>
+            </th>
+            <th className="text-right py-2.5 px-3 font-medium hidden md:table-cell cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('size')}>
+              <span className="inline-flex items-center gap-1 justify-end">ขนาด <SortIcon col="size" /></span>
+            </th>
             <th className="text-right py-2.5 px-3 font-medium w-24"></th>
           </tr>
         </thead>
