@@ -56,6 +56,7 @@ export default function PeakAccount() {
   const [payerFilter, setPayerFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [staffFilter, setStaffFilter] = useState('all');
+  const [affiliateFilter, setAffiliateFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
   const [editingLicense, setEditingLicense] = useState(null);
   const [showNotifSettings, setShowNotifSettings] = useState(false);
@@ -139,6 +140,10 @@ export default function PeakAccount() {
         if (payerFilter !== 'all' && l.payer_type !== payerFilter) return false;
         if (statusFilter !== 'all' && l.license_status !== statusFilter) return false;
         if (staffFilter !== 'all' && l.created_by !== staffFilter) return false;
+        if (affiliateFilter !== 'all') {
+          if (affiliateFilter === 'yes' && !l.is_affiliate) return false;
+          if (affiliateFilter === 'no' && l.is_affiliate) return false;
+        }
         return true;
       })
       .sort((a, b) => {
@@ -147,10 +152,10 @@ export default function PeakAccount() {
         const dateB = b.expiry_date || '9999-12-31';
         return dateA.localeCompare(dateB);
       });
-  }, [tabFiltered, search, pkgFilter, payerFilter, statusFilter, staffFilter]);
+  }, [tabFiltered, search, pkgFilter, payerFilter, statusFilter, staffFilter, affiliateFilter]);
 
   // Reset page on filter change
-  React.useEffect(() => { setPage(1); }, [activeTab, search, pkgFilter, payerFilter, statusFilter, staffFilter]);
+  React.useEffect(() => { setPage(1); }, [activeTab, search, pkgFilter, payerFilter, statusFilter, staffFilter, affiliateFilter]);
 
   // Unique staff from licenses
   const staffList = useMemo(() => {
@@ -261,6 +266,14 @@ export default function PeakAccount() {
               {staffList.map(s => <SelectItem key={s.email} value={s.email}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Select value={affiliateFilter} onValueChange={setAffiliateFilter}>
+            <SelectTrigger className="w-full sm:w-[130px] h-9 text-xs"><SelectValue placeholder="All Affiliate" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Affiliate</SelectItem>
+              <SelectItem value="yes">Affiliate</SelectItem>
+              <SelectItem value="no">Not Affiliate</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <p className="text-[11px] text-muted-foreground mt-1.5">{filtered.length} of {licenses.length} records</p>
       </div>
@@ -299,7 +312,14 @@ export default function PeakAccount() {
                     className="border-b last:border-b-0 hover:bg-muted/10 transition-colors cursor-pointer"
                     onClick={() => { setEditingLicense(l); setShowForm(true); }}>
                     <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-foreground">{l.customer_name}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-medium text-foreground">{l.customer_name}</span>
+                        {l.is_affiliate && (
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-50 text-emerald-700 border-emerald-200">
+                            Affiliate
+                          </Badge>
+                        )}
+                      </div>
                     </td>
                     <td className="px-3 py-3">
                       <Badge variant="outline" className={`text-[10px] font-semibold px-2 py-0.5 rounded ${PKG_COLORS[l.package_type]}`}>
