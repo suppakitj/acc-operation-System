@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '../LanguageContext';
-import { Building2, Users, Phone, Briefcase, CreditCard, FileText, UserCheck } from 'lucide-react';
+import { Building2, Users, Phone, Briefcase, CreditCard, FileText, UserCheck, MessageSquare } from 'lucide-react';
+import CustomerLineGroups from './CustomerLineGroups';
 
 const SERVICES = [
   { value: 'accounting', label: 'รับทำบัญชี' },
@@ -239,13 +240,13 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
           <FieldWrapper label="Line ID">
             <Input value={form.line_id} onChange={e => update('line_id', e.target.value)} disabled={readOnly} />
           </FieldWrapper>
-          <div className="md:col-span-2">
-            <FieldWrapper label="LINE Group ID">
-              <Input value={form.line_group_id || ''} onChange={e => update('line_group_id', e.target.value)} placeholder="C..." disabled={readOnly} />
-              <p className="text-[11px] text-muted-foreground mt-1">Group ID ของกลุ่ม LINE สำหรับส่งแจ้งเตือนเข้ากลุ่มลูกค้า</p>
-            </FieldWrapper>
-          </div>
         </div>
+      </div>
+
+      {/* Section: กลุ่ม LINE */}
+      <div className="bg-card rounded-xl border p-4 md:p-5">
+        <SectionHeader icon={MessageSquare} title="กลุ่ม LINE" />
+        <CustomerLineGroups customerId={customer?.id} readOnly={readOnly} />
       </div>
 
       {/* Section: ประเภทบริการ */}
