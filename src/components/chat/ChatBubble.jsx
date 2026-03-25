@@ -98,8 +98,8 @@ export default function ChatBubble({ message, onCreateTask }) {
           )}
         </div>
       </div>
-      {/* Create task button for incoming text messages */}
-      {!isOutgoing && message.message_type === 'text' && onCreateTask && (
+      {/* Create task button for incoming messages (text, image, file) */}
+      {!isOutgoing && message.message_type !== 'sticker' && onCreateTask && (
         <Button
           variant="ghost"
           size="icon"
