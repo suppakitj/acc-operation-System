@@ -69,9 +69,12 @@ export default function CreateTaskFromChat({ open, onOpenChange, message, chatDi
         c.company_name?.toLowerCase().includes((chatDisplayName || '').toLowerCase()) ||
         (chatDisplayName || '').toLowerCase().includes(c.company_name?.toLowerCase())
       );
+      const descParts = [];
+      if (message.content) descParts.push(message.content);
+      if (message.file_url) descParts.push(`\nไฟล์แนบจาก LINE: ${message.file_url}`);
       setForm({
         title: '',
-        description: message.content || '',
+        description: descParts.join(''),
         customer_id: matched?.id || '',
         customer_name: matched?.company_name || '',
         service_type: '',
@@ -81,6 +84,7 @@ export default function CreateTaskFromChat({ open, onOpenChange, message, chatDi
         priority: 'medium',
         status: 'pending',
         due_date: '',
+        attachments: message.file_url ? [message.file_url] : [],
       });
     }
   }, [open, message?.id]);
@@ -119,9 +123,15 @@ export default function CreateTaskFromChat({ open, onOpenChange, message, chatDi
         </DialogHeader>
 
         {/* Original message preview */}
-        <div className="p-3 bg-muted rounded-lg text-sm space-y-1">
+        <div className="p-3 bg-muted rounded-lg text-sm space-y-2">
           <p className="text-[11px] text-muted-foreground font-medium">ข้อความต้นฉบับ:</p>
-          <p className="whitespace-pre-wrap">{message?.content}</p>
+          {message?.message_type === 'image' && message?.file_url && (
+            <img src={message.file_url} alt="รูปภาพ" className="max-w-[200px] max-h-[150px] rounded-lg object-cover" />
+          )}
+          {message?.message_type === 'file' && message?.file_url && (
+            <a href={message.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">📎 {message.content || 'ไฟล์แนบ'}</a>
+          )}
+          {message?.content && <p className="whitespace-pre-wrap">{message.content}</p>}
           <p className="text-[10px] text-muted-foreground">
             จาก: {message?.sender_name || chatDisplayName} · {message?.created_date && new Date(message.created_date).toLocaleString('th-TH')}
           </p>
