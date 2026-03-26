@@ -52,15 +52,21 @@ function ImageCropper({ src, onCrop, onReset }) {
     const scaleY = img.naturalHeight / container.offsetHeight;
 
     const canvas = document.createElement('canvas');
-    canvas.width = rect.w * scaleX;
-    canvas.height = rect.h * scaleY;
+    canvas.width = Math.round(rect.w * scaleX);
+    canvas.height = Math.round(rect.h * scaleY);
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, rect.x * scaleX, rect.y * scaleY, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(
+      img,
+      Math.round(rect.x * scaleX), Math.round(rect.y * scaleY),
+      canvas.width, canvas.height,
+      0, 0, canvas.width, canvas.height
+    );
 
+    const dataUrl = canvas.toDataURL('image/png');
     canvas.toBlob((blob) => {
       if (!blob) return;
       const file = new File([blob], `crop-${Date.now()}.png`, { type: 'image/png' });
-      onCrop({ dataUrl: canvas.toDataURL('image/png'), file });
+      onCrop({ dataUrl, file });
     }, 'image/png');
   };
 
@@ -234,7 +240,13 @@ export default function ScreenCaptureDialog({ open, onOpenChange, onSend, sendin
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>ยกเลิก</Button>
-          {(mode === 'ready' || mode === 'crop') && (
+          {mode === 'crop' && (
+            <Button size="sm" onClick={() => { setMode('ready'); }} disabled={!imageData} className="gap-1.5">
+              <Send className="w-3.5 h-3.5" />
+              ส่งทั้งรูป (ไม่ crop)
+            </Button>
+          )}
+          {mode === 'ready' && (
             <Button size="sm" onClick={handleSend} disabled={!imageData || sending} className="gap-1.5">
               <Send className="w-3.5 h-3.5" />
               {sending ? 'กำลังส่ง...' : 'ส่ง'}
