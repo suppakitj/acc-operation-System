@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Send, MonitorUp, Clipboard, X } from 'lucide-react';
+import { Send, MonitorUp, Clipboard, X, Crop } from 'lucide-react';
+import ScreenCropOverlay from './ScreenCropOverlay';
 
 export default function ScreenCaptureDialog({ open, onOpenChange, onSend, sending }) {
   const [imageData, setImageData] = useState(null);
+  const [fullScreenshot, setFullScreenshot] = useState(null); // full capture for cropping
+  const [showCropper, setShowCropper] = useState(false);
 
   // Listen for paste events
   const handlePaste = useCallback((e) => {
@@ -25,51 +28,83 @@ export default function ScreenCaptureDialog({ open, onOpenChange, onSend, sendin
   useEffect(() => {
     if (open) {
       setImageData(null);
+      setFullScreenshot(null);
+      setShowCropper(false);
       window.addEventListener('paste', handlePaste);
       return () => window.removeEventListener('paste', handlePaste);
     }
   }, [open, handlePaste]);
 
-  // Use getDisplayMedia to capture screen directly
+  // Capture screen -> show crop overlay
   const handleCapture = async () => {
     try {
+      // Temporarily hide the dialog
+      onOpenChange(false);
+      
+      await new Promise(r => setTimeout(r, 300)); // wait for dialog to close
+      
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
       const track = stream.getVideoTracks()[0];
+      
+      // Wait a frame for the stream to stabilize
+      await new Promise(r => setTimeout(r, 100));
+      
       const imageCapture = new ImageCapture(track);
       const bitmap = await imageCapture.grabFrame();
-      track.stop(); // stop sharing immediately after capture
+      track.stop();
 
-      // Draw bitmap to canvas -> blob -> file
       const canvas = document.createElement('canvas');
       canvas.width = bitmap.width;
       canvas.height = bitmap.height;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(bitmap, 0, 0);
+      const dataUrl = canvas.toDataURL('image/png');
 
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const file = new File([blob], `screenshot-${Date.now()}.png`, { type: 'image/png' });
-        const dataUrl = canvas.toDataURL('image/png');
-        setImageData({ dataUrl, file });
-      }, 'image/png');
+      setFullScreenshot(dataUrl);
+      setShowCropper(true);
     } catch (err) {
-      // User cancelled the screen picker — do nothing
       if (err.name !== 'NotAllowedError') {
         console.error('Capture failed:', err);
       }
+      // Re-open dialog if cancelled
+      onOpenChange(true);
     }
+  };
+
+  const handleCropDone = (cropped) => {
+    setShowCropper(false);
+    setFullScreenshot(null);
+    setImageData(cropped);
+    onOpenChange(true); // re-open dialog with cropped image
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setFullScreenshot(null);
+    onOpenChange(true);
   };
 
   const handleSend = () => {
     if (imageData?.file) onSend(imageData.file);
   };
 
+  // Show crop overlay (outside dialog)
+  if (showCropper && fullScreenshot) {
+    return (
+      <ScreenCropOverlay
+        imageSrc={fullScreenshot}
+        onCrop={handleCropDone}
+        onCancel={handleCropCancel}
+      />
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <MonitorUp className="w-4 h-4" />
+            <Crop className="w-4 h-4" />
             Capture & ส่งรูปภาพ
           </DialogTitle>
         </DialogHeader>
@@ -95,10 +130,10 @@ export default function ScreenCaptureDialog({ open, onOpenChange, onSend, sendin
             <>
               <Button onClick={handleCapture} variant="outline" className="gap-2">
                 <MonitorUp className="w-4 h-4" />
-                Capture หน้าจอ
+                Capture หน้าจอ (ลากเลือกได้)
               </Button>
               <p className="text-xs text-muted-foreground">
-                เลือกหน้าจอ/หน้าต่างที่ต้องการ capture
+                จะเปิดให้เลือกหน้าจอ แล้วลากเลือกบริเวณที่ต้องการ
               </p>
               <div className="flex items-center gap-2 text-muted-foreground/50 text-xs">
                 <div className="h-px flex-1 bg-border" />
