@@ -91,7 +91,7 @@ export default function ChatBubble({ message, onCreateTask }) {
         {renderContent()}
         {isOutgoing && message.replied_by && (
           <p className="text-[10px] font-medium opacity-70 text-right mb-0.5">
-            {message.replied_by.split('@')[0].slice(0, 8).toUpperCase()}
+            {message.replied_by.includes('@') ? message.replied_by.split('@')[0] : message.replied_by}
           </p>
         )}
         <div className={`flex items-center gap-1 mt-1 ${isSticker ? 'text-muted-foreground' : timeClass}`}>
