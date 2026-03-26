@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 Deno.serve(async (req) => {
   try {
@@ -9,10 +9,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { line_user_id, message, display_name, chat_type } = await req.json();
+    const { line_user_id, message, display_name, chat_type, file_url, file_type } = await req.json();
 
-    if (!line_user_id || !message) {
-      return Response.json({ error: 'line_user_id and message are required' }, { status: 400 });
+    if (!line_user_id || (!message && !file_url)) {
+      return Response.json({ error: 'line_user_id and (message or file_url) are required' }, { status: 400 });
     }
 
     // Get LINE access token from AppConfig
@@ -21,6 +21,34 @@ Deno.serve(async (req) => {
 
     if (!accessToken) {
       return Response.json({ error: 'LINE OA access token not configured.' }, { status: 400 });
+    }
+
+    // Build LINE message object
+    let lineMessage;
+    let savedMessageType = 'text';
+
+    if (file_url) {
+      // Determine type from file_type hint or URL extension
+      const isImage = file_type === 'image' || /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(file_url);
+
+      if (isImage) {
+        lineMessage = {
+          type: 'image',
+          originalContentUrl: file_url,
+          previewImageUrl: file_url,
+        };
+        savedMessageType = 'image';
+      } else {
+        // For non-image files, send as text with link (LINE file message requires specific hosting)
+        const fileName = message || 'ไฟล์';
+        lineMessage = {
+          type: 'text',
+          text: `📎 ${fileName}\n${file_url}`,
+        };
+        savedMessageType = 'file';
+      }
+    } else {
+      lineMessage = { type: 'text', text: message };
     }
 
     // Send message via LINE Push API
@@ -32,7 +60,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         to: line_user_id,
-        messages: [{ type: 'text', text: message }],
+        messages: [lineMessage],
       }),
     });
 
@@ -46,16 +74,17 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.LineMessage.create({
       line_user_id,
       display_name: display_name || line_user_id,
-      content: message,
+      content: file_url ? (message || (savedMessageType === 'image' ? '[รูปภาพ]' : '[ไฟล์]')) : message,
       direction: 'outgoing',
-      message_type: 'text',
+      message_type: savedMessageType,
+      file_url: file_url || undefined,
       is_read: true,
       replied_by: user.email,
       chat_type: chat_type || 'user',
     });
 
-    console.log(`Sent message to ${line_user_id}: ${message}`);
-    return Response.json({ status: 'sent' });
+    console.log(`Sent ${savedMessageType} to ${line_user_id}`);
+    return Response.json({ status: 'sent', type: savedMessageType });
   } catch (error) {
     console.error('Send message error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });

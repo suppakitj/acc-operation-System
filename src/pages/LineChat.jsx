@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Send, Search, MessageCircle, User, Users, ArrowLeft, AlertCircle, Settings, ChevronUp } from 'lucide-react';
+import { Send, Search, MessageCircle, User, Users, ArrowLeft, AlertCircle, Settings, ChevronUp, Paperclip, Loader2, Image as ImageIcon } from 'lucide-react';
 import ChatBubble from '../components/chat/ChatBubble';
 import CreateTaskFromChat from '../components/chat/CreateTaskFromChat';
 import { format } from 'date-fns';
@@ -47,10 +47,13 @@ export default function LineChat() {
     staleTime: 12_000,
   });
 
+  const fileInputRef = useRef(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+
   // Send via backend function (actual LINE API)
   const sendMutation = useMutation({
-    mutationFn: async ({ line_user_id, message, display_name, chat_type }) => {
-      const res = await base44.functions.invoke('lineSendMessage', { line_user_id, message, display_name, chat_type });
+    mutationFn: async ({ line_user_id, message, display_name, chat_type, file_url, file_type }) => {
+      const res = await base44.functions.invoke('lineSendMessage', { line_user_id, message, display_name, chat_type, file_url, file_type });
       if (res.data?.error) throw new Error(res.data.error);
       return res.data;
     },
@@ -60,6 +63,30 @@ export default function LineChat() {
     },
     onError: (err) => toast.error(err.message),
   });
+
+  const handleFileSend = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedUserId) return;
+    e.target.value = '';
+
+    setUploadingFile(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const isImage = file.type.startsWith('image/');
+      sendMutation.mutate({
+        line_user_id: selectedUserId,
+        message: file.name,
+        display_name: selectedUser?.name,
+        chat_type: selectedUser?.chatType || 'user',
+        file_url,
+        file_type: isImage ? 'image' : 'file',
+      });
+    } catch (err) {
+      toast.error('อัปโหลดไฟล์ล้มเหลว: ' + err.message);
+    } finally {
+      setUploadingFile(false);
+    }
+  };
 
   // Mark messages as read (via backend to access service-role data)
   const markReadMutation = useMutation({
@@ -256,6 +283,23 @@ export default function LineChat() {
                 </ScrollArea>
               </CardContent>
               <div className="p-3 border-t flex gap-2 shrink-0">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.zip,.txt"
+                  onChange={handleFileSend}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingFile || sendMutation.isPending}
+                  title="แนบไฟล์/รูปภาพ"
+                >
+                  {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+                </Button>
                 <Input
                   placeholder={t('type_message')}
                   value={newMessage}
