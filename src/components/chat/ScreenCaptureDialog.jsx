@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Send, MonitorUp, Clipboard, X, Crop, RotateCcw } from 'lucide-react';
+import { Send, MonitorUp, Clipboard, X, Crop, RotateCcw, Pencil } from 'lucide-react';
+import ImageEditor from './ImageEditor';
 
 function ImageCropper({ src, onCrop, onReset }) {
   const containerRef = useRef(null);
@@ -117,7 +118,7 @@ function ImageCropper({ src, onCrop, onReset }) {
 export default function ScreenCaptureDialog({ open, onOpenChange, onSend, sending }) {
   const [imageData, setImageData] = useState(null); // final image to send
   const [rawCapture, setRawCapture] = useState(null); // full screenshot for cropping
-  const [mode, setMode] = useState('idle'); // idle | crop | ready
+  const [mode, setMode] = useState('idle'); // idle | crop | edit | ready
 
   const handlePaste = useCallback((e) => {
     const items = e.clipboardData?.items;
@@ -129,7 +130,7 @@ export default function ScreenCaptureDialog({ open, onOpenChange, onSend, sendin
         const reader = new FileReader();
         reader.onload = (ev) => {
           setImageData({ dataUrl: ev.target.result, file });
-          setMode('ready');
+          setMode('edit');
         };
         reader.readAsDataURL(file);
         return;
@@ -183,6 +184,11 @@ export default function ScreenCaptureDialog({ open, onOpenChange, onSend, sendin
 
   const handleCropDone = (cropped) => {
     setImageData(cropped);
+    setMode('edit');
+  };
+
+  const handleEditDone = (edited) => {
+    setImageData(edited);
     setMode('ready');
   };
 
@@ -192,7 +198,7 @@ export default function ScreenCaptureDialog({ open, onOpenChange, onSend, sendin
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className={mode === 'edit' ? 'max-w-2xl' : 'max-w-lg'}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <MonitorUp className="w-4 h-4" />
@@ -220,6 +226,13 @@ export default function ScreenCaptureDialog({ open, onOpenChange, onSend, sendin
           />
         )}
 
+        {mode === 'edit' && imageData && (
+          <ImageEditor
+            src={imageData.dataUrl}
+            onDone={handleEditDone}
+          />
+        )}
+
         {mode === 'ready' && imageData && (
           <div className="space-y-2">
             <div className="relative">
@@ -230,20 +243,25 @@ export default function ScreenCaptureDialog({ open, onOpenChange, onSend, sendin
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            {rawCapture && (
-              <Button variant="outline" size="sm" onClick={() => setMode('crop')} className="gap-1.5">
-                <Crop className="w-3 h-3" /> Crop ใหม่
+            <div className="flex gap-2">
+              {rawCapture && (
+                <Button variant="outline" size="sm" onClick={() => setMode('crop')} className="gap-1.5">
+                  <Crop className="w-3 h-3" /> Crop ใหม่
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={() => setMode('edit')} className="gap-1.5">
+                <Pencil className="w-3 h-3" /> แก้ไขรูป
               </Button>
-            )}
+            </div>
           </div>
         )}
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>ยกเลิก</Button>
           {mode === 'crop' && (
-            <Button size="sm" onClick={() => { setMode('ready'); }} disabled={!imageData} className="gap-1.5">
-              <Send className="w-3.5 h-3.5" />
-              ส่งทั้งรูป (ไม่ crop)
+            <Button size="sm" onClick={() => { setMode('edit'); }} disabled={!imageData} className="gap-1.5">
+              <Pencil className="w-3.5 h-3.5" />
+              ข้าม crop → แก้ไข
             </Button>
           )}
           {mode === 'ready' && (
