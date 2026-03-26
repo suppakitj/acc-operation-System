@@ -89,13 +89,15 @@ export default function ChatBubble({ message, onCreateTask }) {
           <p className="text-[11px] font-medium text-primary mb-1">{message.sender_name}</p>
         )}
         {renderContent()}
+        {isOutgoing && message.replied_by && (
+          <p className="text-[10px] font-medium opacity-70 text-right mb-0.5">
+            {message.replied_by.split('@')[0].slice(0, 8).toUpperCase()}
+          </p>
+        )}
         <div className={`flex items-center gap-1 mt-1 ${isSticker ? 'text-muted-foreground' : timeClass}`}>
           <span className="text-[10px]">
             {message.created_date && format(new Date(message.created_date), 'HH:mm')}
           </span>
-          {isOutgoing && message.replied_by && (
-            <span className="text-[10px]">· {message.replied_by.split('@')[0]}</span>
-          )}
         </div>
       </div>
       {/* Create task button for incoming messages (text, image, file) */}
