@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Send, Search, MessageCircle, User, Users, ArrowLeft, AlertCircle, Settings, ChevronUp, Paperclip, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Send, Search, MessageCircle, User, Users, ArrowLeft, AlertCircle, Settings, ChevronUp, Paperclip, Loader2, Image as ImageIcon, ScreenShare } from 'lucide-react';
 import ChatBubble from '../components/chat/ChatBubble';
 import CreateTaskFromChat from '../components/chat/CreateTaskFromChat';
+import ScreenCaptureDialog from '../components/chat/ScreenCaptureDialog';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '../components/LanguageContext';
@@ -24,6 +25,8 @@ export default function LineChat() {
   const [visibleCount, setVisibleCount] = useState(MESSAGES_PER_PAGE);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [taskMessage, setTaskMessage] = useState(null);
+  const [captureDialogOpen, setCaptureDialogOpen] = useState(false);
+  const [sendingCapture, setSendingCapture] = useState(false);
   const queryClient = useQueryClient();
   const chatEndRef = useRef(null);
   const chatTopRef = useRef(null);
@@ -141,6 +144,27 @@ export default function LineChat() {
       if (unreadIds.length > 0) markReadMutation.mutate(unreadIds);
     }
   }, [selectedUserId, messages.length]);
+
+  const handleCaptureSend = async (file) => {
+    if (!selectedUserId) return;
+    setSendingCapture(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      sendMutation.mutate({
+        line_user_id: selectedUserId,
+        message: 'Screenshot',
+        display_name: selectedUser?.name,
+        chat_type: selectedUser?.chatType || 'user',
+        file_url,
+        file_type: 'image',
+      });
+      setCaptureDialogOpen(false);
+    } catch (err) {
+      toast.error('ส่ง screenshot ล้มเหลว: ' + err.message);
+    } finally {
+      setSendingCapture(false);
+    }
+  };
 
   const handleSend = () => {
     if (!newMessage.trim() || !selectedUserId) return;
@@ -300,6 +324,16 @@ export default function LineChat() {
                 >
                   {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={() => setCaptureDialogOpen(true)}
+                  disabled={sendMutation.isPending}
+                  title="Capture Screen"
+                >
+                  <ScreenShare className="w-4 h-4" />
+                </Button>
                 <Input
                   placeholder={t('type_message')}
                   value={newMessage}
@@ -315,6 +349,14 @@ export default function LineChat() {
           )}
         </Card>
       </div>
+
+      {/* Screen Capture dialog */}
+      <ScreenCaptureDialog
+        open={captureDialogOpen}
+        onOpenChange={setCaptureDialogOpen}
+        onSend={handleCaptureSend}
+        sending={sendingCapture}
+      />
 
       {/* Create Task from LINE message dialog */}
       <CreateTaskFromChat
