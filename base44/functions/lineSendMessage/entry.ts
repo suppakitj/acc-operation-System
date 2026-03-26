@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
       message_type: savedMessageType,
       file_url: file_url || undefined,
       is_read: true,
-      replied_by: user.full_name || user.email,
+      replied_by: user.initials || user.nickname || user.full_name || user.email,
       chat_type: chat_type || 'user',
     });
 
