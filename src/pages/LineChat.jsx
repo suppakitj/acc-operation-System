@@ -28,6 +28,8 @@ export default function LineChat() {
   const [taskMessage, setTaskMessage] = useState(null);
   const [captureDialogOpen, setCaptureDialogOpen] = useState(false);
   const [sendingCapture, setSendingCapture] = useState(false);
+  const [replyTo, setReplyTo] = useState(null);
+  const [pinnedIds, setPinnedIds] = useState([]);
   const queryClient = useQueryClient();
   const chatEndRef = useRef(null);
   const chatTopRef = useRef(null);
@@ -122,9 +124,10 @@ export default function LineChat() {
   const hasOlderMessages = totalMessages > visibleCount;
   const chatMessages = hasOlderMessages ? allChatMessages.slice(totalMessages - visibleCount) : allChatMessages;
 
-  // Reset visible count when switching chats
+  // Reset visible count and reply when switching chats
   useEffect(() => {
     setVisibleCount(MESSAGES_PER_PAGE);
+    setReplyTo(null);
   }, [selectedUserId]);
 
   const handleLoadOlder = useCallback(() => {
@@ -169,12 +172,26 @@ export default function LineChat() {
 
   const handleSend = () => {
     if (!newMessage.trim() || !selectedUserId) return;
+    const msgText = replyTo
+      ? `↩️ ${replyTo.sender_name || replyTo.display_name || ''}: "${(replyTo.content || '').substring(0, 50)}"\n\n${newMessage.trim()}`
+      : newMessage.trim();
     sendMutation.mutate({
       line_user_id: selectedUserId,
-      message: newMessage.trim(),
+      message: msgText,
       display_name: selectedUser?.name,
       chat_type: selectedUser?.chatType || 'user',
     });
+    setReplyTo(null);
+  };
+
+  const handleReply = (msg) => {
+    setReplyTo(msg);
+  };
+
+  const handlePin = (msg) => {
+    setPinnedIds(prev =>
+      prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]
+    );
   };
 
   // Not configured banner
@@ -301,13 +318,27 @@ export default function LineChat() {
                         key={m.id}
                         message={m}
                         onCreateTask={(msg) => { setTaskMessage(msg); setTaskDialogOpen(true); }}
+                        onReply={handleReply}
+                        onPin={handlePin}
+                        pinnedIds={pinnedIds}
                       />
                     ))}
                     <div ref={chatEndRef} />
                   </div>
                 </ScrollArea>
               </CardContent>
-              <div className="p-3 border-t flex gap-2 shrink-0">
+              {replyTo && (
+                <div className="px-3 pt-2 pb-0 border-t bg-muted/30 flex items-center gap-2">
+                  <div className="flex-1 min-w-0 border-l-2 border-primary pl-2 py-1">
+                    <p className="text-[11px] font-medium text-primary truncate">{replyTo.sender_name || replyTo.display_name || ''}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{replyTo.content || (replyTo.message_type === 'image' ? '🖼️ รูปภาพ' : '📎 ไฟล์')}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setReplyTo(null)}>
+                    <span className="text-xs">✕</span>
+                  </Button>
+                </div>
+              )}
+              <div className={`p-3 ${!replyTo ? 'border-t' : ''} flex gap-2 shrink-0`}>
                 <input
                   type="file"
                   ref={fileInputRef}
