@@ -47,6 +47,7 @@ export default function TaskCalendar() {
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 1000),
+    staleTime: 60_000,
   });
 
   const { data: holidays = [] } = useQuery({

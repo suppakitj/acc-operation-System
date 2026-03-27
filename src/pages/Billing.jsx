@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { Plus, Search } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import ExtraCostEditor from '../components/billing/ExtraCostEditor';
+import { useUserList } from '@/hooks/useUserList';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
@@ -41,17 +42,10 @@ export default function Billing() {
   const queryClient = useQueryClient();
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
   const ac = useAccessControl(currentUser);
-  const { data: users = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: async () => {
-      const res = await base44.functions.invoke('listUsers', {});
-      return res.data?.users || [];
-    },
-    staleTime: 2 * 60_000,
-  });
+  const { data: users = [] } = useUserList();
   const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500), staleTime: 60_000 });
-  const customers = allCustomers.filter(c => c.status === 'active');
-  const { data: allBillings = [] } = useQuery({ queryKey: ['billings'], queryFn: () => base44.entities.Billing.list('-created_date', 500) });
+  const customers = useMemo(() => allCustomers.filter(c => c.status === 'active'), [allCustomers]);
+  const { data: allBillings = [] } = useQuery({ queryKey: ['billings'], queryFn: () => base44.entities.Billing.list('-created_date', 500), staleTime: 60_000 });
 
   const billings = (ac.canViewBilling || ac.canViewBillingDept) ? allBillings.filter(b => b.status !== 'cancelled') : [];
 
@@ -138,7 +132,7 @@ export default function Billing() {
   }, [billings, activeTab, search, clientFilter, deptFilter, statusFilter, receiptFilter, whtFilter, ownerFilter, dateFilter, overdueOnly]);
 
   // Reset page when filters change
-  React.useEffect(() => { setPage(1); }, [activeTab, search, clientFilter, deptFilter, statusFilter, receiptFilter, whtFilter, ownerFilter, dateFilter, overdueOnly]);
+  useEffect(() => { setPage(1); }, [activeTab, search, clientFilter, deptFilter, statusFilter, receiptFilter, whtFilter, ownerFilter, dateFilter, overdueOnly]);
 
   const paged = paginateData(filtered, page, pageSize);
 

@@ -22,7 +22,8 @@ export default function WorkloadBalancer() {
 
   const { data: allTasks = [] } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date', 2000),
+    queryFn: () => base44.entities.Task.list('-created_date', 1000),
+    staleTime: 60_000,
   });
 
   const activeTasks = useMemo(() =>

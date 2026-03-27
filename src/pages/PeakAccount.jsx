@@ -155,7 +155,7 @@ export default function PeakAccount() {
   }, [tabFiltered, search, pkgFilter, payerFilter, statusFilter, staffFilter, affiliateFilter]);
 
   // Reset page on filter change
-  React.useEffect(() => { setPage(1); }, [activeTab, search, pkgFilter, payerFilter, statusFilter, staffFilter, affiliateFilter]);
+  useMemo(() => setPage(1), [activeTab, search, pkgFilter, payerFilter, statusFilter, staffFilter, affiliateFilter]);
 
   // Unique staff from licenses
   const staffList = useMemo(() => {

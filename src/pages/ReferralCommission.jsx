@@ -38,7 +38,7 @@ export default function ReferralCommission() {
   });
   const { data: billings = [] } = useQuery({
     queryKey: ['billings'],
-    queryFn: () => base44.entities.Billing.list('-created_date', 1000),
+    queryFn: () => base44.entities.Billing.list('-created_date', 500),
     staleTime: 60_000,
   });
 

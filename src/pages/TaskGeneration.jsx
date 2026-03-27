@@ -25,6 +25,7 @@ export default function TaskGeneration() {
   const { data: templates = [] } = useQuery({
     queryKey: ['taskTemplates'],
     queryFn: () => base44.entities.TaskTemplate.list('-created_date', 500),
+    staleTime: 2 * 60_000,
   });
   const activeTemplates = templates.filter(t => t.status === 'active' || !t.status);
 

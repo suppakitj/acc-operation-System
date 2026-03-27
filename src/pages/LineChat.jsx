@@ -17,6 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '../components/LanguageContext';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { useUserList } from '@/hooks/useUserList';
 
 const MESSAGES_PER_PAGE = 10;
 
@@ -42,19 +43,13 @@ export default function LineChat() {
   const { data: configs = [] } = useQuery({
     queryKey: ['appConfig', 'line_oa'],
     queryFn: () => base44.entities.AppConfig.list(),
+    staleTime: 5 * 60_000,
   });
   const getConfigVal = (key) => configs.find(c => c.key === key)?.value || '';
   const isLineConfigured = !!(getConfigVal('line_channel_id') && getConfigVal('line_channel_secret') && getConfigVal('line_access_token'));
 
-  // Fetch users for @mention
-  const { data: users = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: async () => {
-      const res = await base44.functions.invoke('listUsers', {});
-      return res.data?.users || [];
-    },
-    staleTime: 2 * 60_000,
-  });
+  // Fetch users for @mention — reuse shared hook for cache sharing
+  const { data: users = [] } = useUserList();
 
   // Poll messages every 15s to reduce API load
   const { data: messages = [] } = useQuery({

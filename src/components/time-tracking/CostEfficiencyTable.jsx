@@ -21,6 +21,7 @@ export default function CostEfficiencyTable({ entries }) {
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
     queryFn: () => base44.entities.Customer.list('-created_date', 500),
+    staleTime: 60_000,
   });
 
   const completed = entries.filter(e => !e.is_running && e.duration_minutes);

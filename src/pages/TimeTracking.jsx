@@ -21,6 +21,7 @@ export default function TimeTracking() {
   const { data: allEntries = [], isLoading } = useQuery({
     queryKey: ['timeEntries'],
     queryFn: () => base44.entities.TimeEntry.list('-created_date', 5000),
+    staleTime: 60_000,
   });
 
   // Filter by selected month/year
