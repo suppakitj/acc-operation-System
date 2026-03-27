@@ -73,6 +73,15 @@ export default function LineChat() {
   const [captureDialogOpen, setCaptureDialogOpen] = useState(false);
   const [sendingCapture, setSendingCapture] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
+  // Persist pinned messages per chat in localStorage
+  const getPinnedKey = (chatId) => `line_pinned_${chatId}`;
+  const loadPinnedIds = (chatId) => {
+    if (!chatId) return [];
+    try {
+      const saved = localStorage.getItem(getPinnedKey(chatId));
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  };
   const [pinnedIds, setPinnedIds] = useState([]);
   const queryClient = useQueryClient();
   const chatEndRef = useRef(null);
@@ -175,7 +184,12 @@ export default function LineChat() {
   const hasOlderMessages = totalMessages > visibleCount;
   const chatMessages = hasOlderMessages ? allChatMessages.slice(totalMessages - visibleCount) : allChatMessages;
 
-  useEffect(() => { setVisibleCount(MESSAGES_PER_PAGE); setReplyTo(null); }, [selectedUserId]);
+  useEffect(() => {
+    setVisibleCount(MESSAGES_PER_PAGE);
+    setReplyTo(null);
+    // Load pinned messages for this chat
+    setPinnedIds(loadPinnedIds(selectedUserId));
+  }, [selectedUserId]);
 
   const handleLoadOlder = useCallback(() => {
     setVisibleCount(prev => prev + MESSAGES_PER_PAGE);
@@ -224,7 +238,16 @@ export default function LineChat() {
   };
 
   const handleReply = (msg) => setReplyTo(msg);
-  const handlePin = (msg) => setPinnedIds(prev => prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]);
+  const handlePin = (msg) => {
+    setPinnedIds(prev => {
+      const newIds = prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id];
+      // Save to localStorage
+      if (selectedUserId) {
+        localStorage.setItem(getPinnedKey(selectedUserId), JSON.stringify(newIds));
+      }
+      return newIds;
+    });
+  };
 
   // Group messages by date
   const messagesWithSeparators = [];
