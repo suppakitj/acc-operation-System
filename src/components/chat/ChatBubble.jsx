@@ -64,18 +64,46 @@ export default function ChatBubble({ message, onCreateTask, onReply, onPin, pinn
       );
     }
 
-    return <p className="text-sm whitespace-pre-wrap">{message.content}</p>;
+    return <p className="text-sm whitespace-pre-wrap">{replyQuote ? messageBody : message.content}</p>;
   };
 
-  // Reply quote display
+  // Check if content starts with reply prefix (↩️ format from handleSend)
+  const parseReplyContent = () => {
+    const text = message.content || '';
+    if (!text.startsWith('↩️')) return { quote: null, body: text };
+    const parts = text.split('\n\n');
+    if (parts.length >= 2) {
+      const quoteLine = parts[0].replace('↩️ ', '');
+      const body = parts.slice(1).join('\n\n');
+      return { quote: quoteLine, body };
+    }
+    return { quote: null, body: text };
+  };
+
+  const { quote: replyQuote, body: messageBody } = parseReplyContent();
+
+  // Reply quote display (from _replyTo prop or parsed from content)
   const renderReplyQuote = () => {
-    if (!message._replyTo) return null;
-    return (
-      <div className={`text-[11px] px-2 py-1 mb-1 rounded border-l-2 ${isOutgoing ? 'border-primary-foreground/40 bg-primary-foreground/10 text-primary-foreground/80' : 'border-primary/40 bg-primary/5 text-foreground/70'}`}>
-        <span className="font-medium">{message._replyTo.sender || ''}</span>
-        <p className="truncate">{message._replyTo.content || ''}</p>
-      </div>
-    );
+    // From _replyTo prop (if set)
+    if (message._replyTo) {
+      return (
+        <div className={`text-[11px] px-2 py-1 mb-1.5 rounded ${isOutgoing ? 'bg-white/15 border-l-2 border-white/40' : 'bg-black/5 border-l-2 border-primary/40'}`}>
+          <span className={`font-medium ${isOutgoing ? 'text-white/80' : 'text-primary'}`}>{message._replyTo.sender || ''}</span>
+          <p className={`truncate ${isOutgoing ? 'text-white/60' : 'text-muted-foreground'}`}>{message._replyTo.content || ''}</p>
+        </div>
+      );
+    }
+    // Parsed from ↩️ format
+    if (replyQuote) {
+      return (
+        <div className={`text-[11px] px-2 py-1 mb-1.5 rounded ${isOutgoing ? 'bg-white/15 border-l-2 border-white/40' : 'bg-black/5 border-l-2 border-primary/40'}`}>
+          <p className={`${isOutgoing ? 'text-white/70' : 'text-muted-foreground'}`}>
+            {replyQuote}
+          </p>
+        </div>
+      );
+    }
+    return null;
   };
 
   const isSticker = message.message_type === 'sticker' && message.file_url && !imgError;
