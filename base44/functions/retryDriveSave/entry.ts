@@ -61,6 +61,7 @@ Deno.serve(async (req) => {
         content_type: contentType,
         chat_display_name: chatName,
         message_type: msg.message_type,
+        sender_name: msg.sender_name || msg.display_name || 'Unknown',
       });
 
       const resData = result?.data || result;
