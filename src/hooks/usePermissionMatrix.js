@@ -30,6 +30,7 @@ const DEFAULT_MATRIX = {
   ocr:            { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   referral:       { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
   task_generation:{ admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  time_tracking:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
 };
 
 const PermissionMatrixContext = createContext(DEFAULT_MATRIX);

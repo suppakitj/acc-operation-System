@@ -41,6 +41,7 @@ const DEFAULT_MATRIX = [
   { key: 'ocr', label: 'OCR (แปลงเอกสาร)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   { key: 'referral', label: 'ค่าแนะนำ (Referral)', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
   { key: 'task_generation', label: 'สร้างงานอัตโนมัติ', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
+  { key: 'time_tracking', label: 'SLA / Time Tracking', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
 ];
 
 const PERM_CYCLE = ['yes', 'dept', 'own', 'edit_only', 'view_only', 'no'];

@@ -125,6 +125,9 @@ export function useAccessControl(user) {
       // Task Generation
       if (p('task_generation') !== 'no') menus.push('task_generation');
 
+      // Time Tracking
+      if (p('time_tracking') !== 'no') menus.push('time_tracking');
+
       return menus;
     };
 

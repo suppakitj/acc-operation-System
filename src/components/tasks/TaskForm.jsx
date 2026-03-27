@@ -12,8 +12,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, ClipboardList } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
+import TaskTimeTracker from '../time-tracking/TaskTimeTracker';
 
-export default function TaskForm({ task, onSubmit, isLoading, permissions }) {
+export default function TaskForm({ task, onSubmit, isLoading, permissions, currentUser }) {
   const canEditAssignee = permissions?.canEditAssignee !== false;
   const canEditDueDate = permissions ? permissions.canChangeDueDate(task) : true;
   const canEditStatus = permissions ? permissions.canChangeStatus(task) : true;
@@ -184,6 +185,11 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions }) {
           </div>
         </div>
       </div>
+
+      {/* Time Tracking — only for existing tasks */}
+      {task?.id && currentUser && (
+        <TaskTimeTracker task={task} currentUser={currentUser} />
+      )}
 
       <Button onClick={() => onSubmit(form)} disabled={isLoading || !form.title} className="w-full">
         {isLoading ? t('saving') : (task ? t('update') : t('create'))}

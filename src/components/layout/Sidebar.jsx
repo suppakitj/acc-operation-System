@@ -5,7 +5,7 @@ import {
   Bell, CreditCard, MessageCircle, Shield,
   Settings, ChevronLeft, ChevronRight, Key, ClipboardList,
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays,
-  ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, ScanLine, HardDrive, Handshake, Zap
+  ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, ScanLine, HardDrive, Handshake, Zap, Timer
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -26,6 +26,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'customers', label: t('menu_customers'), icon: Building2, path: '/Customers' },
     { id: 'templates', label: t('menu_templates'), icon: ClipboardList, path: '/TaskTemplates' },
     { id: 'task_generation', label: 'สร้างงานอัตโนมัติ', icon: Zap, path: '/TaskGeneration' },
+    { id: 'time_tracking', label: 'Time Tracking', icon: Timer, path: '/TimeTracking' },
     { id: 'service_master', label: 'Service Master', icon: Briefcase, path: '/ServiceMaster' },
     { id: 'holiday_master', label: 'Holiday Master', icon: CalendarHeart, path: '/HolidayMaster' },
     { id: 'peak', label: t('menu_peak'), icon: Key, path: '/PeakAccount' },
@@ -49,7 +50,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   // Menu groups
   const menuGroups = [
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'staff_dashboard', 'team_analytics'] },
-    { key: 'work', label: 'งาน', icon: Folder, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'task_generation', 'service_master', 'holiday_master'] },
+    { key: 'work', label: 'งาน', icon: Folder, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'task_generation', 'time_tracking', 'service_master', 'holiday_master'] },
     { key: 'clients', label: 'ลูกค้า', icon: Contact, ids: ['customers', 'peak', 'billing', 'referral'] },
     { key: 'comms', label: 'สื่อสาร', icon: MessageSquare, ids: ['notifications', 'line_chat', 'line_files'] },
     { key: 'tools', label: 'เครื่องมือ', icon: ScanLine, ids: ['ocr'] },

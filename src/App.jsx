@@ -33,6 +33,7 @@ import OcrProcessing from './pages/OcrProcessing';
 import LineFiles from './pages/LineFiles';
 import ReferralCommission from './pages/ReferralCommission';
 import TaskGeneration from './pages/TaskGeneration';
+import TimeTracking from './pages/TimeTracking';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -85,6 +86,7 @@ const AuthenticatedApp = () => {
         <Route path="/LineFiles" element={<LineFiles />} />
         <Route path="/ReferralCommission" element={<ReferralCommission />} />
         <Route path="/TaskGeneration" element={<TaskGeneration />} />
+        <Route path="/TimeTracking" element={<TimeTracking />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

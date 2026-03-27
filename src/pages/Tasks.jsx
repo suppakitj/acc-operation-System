@@ -166,7 +166,7 @@ export default function Tasks() {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingTask ? t('edit_task') : t('create_task')}</DialogTitle></DialogHeader>
-          <TaskForm task={editingTask} onSubmit={handleSubmit} isLoading={createMutation.isPending || updateMutation.isPending} permissions={ac} />
+          <TaskForm task={editingTask} onSubmit={handleSubmit} isLoading={createMutation.isPending || updateMutation.isPending} permissions={ac} currentUser={currentUser} />
         </DialogContent>
       </Dialog>
     </div>
