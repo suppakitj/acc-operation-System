@@ -13,37 +13,70 @@ import { useAccessControl } from '../components/auth/useAccessControl';
 
 const ROLES = ['admin', 'management', 'manager', 'super_supervisor', 'staff'];
 
-const DEFAULT_MATRIX = [
-  { key: 'login', label: 'Login ระบบ', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-  { key: 'user_master', label: 'จัดการ User & User Master', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
-  { key: 'role_mgmt', label: 'User Role Management', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
-  { key: 'customer', label: 'จัดการ Customer Master Data', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'yes', staff: 'edit_only' },
-  { key: 'template', label: 'จัดการ Task Template', admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'no' },
-  { key: 'view_task', label: 'ดู Task ทั้งหมด', admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'dept' },
-  { key: 'edit_assignee', label: 'แก้ไขผู้รับผิดชอบ', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
-  { key: 'change_due', label: 'เปลี่ยน Due Date', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
-  { key: 'change_status', label: 'เปลี่ยน Status งาน', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
-  { key: 'add_task', label: 'เพิ่ม Task Manual', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-  { key: 'view_billing', label: 'ดู Billing', admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'no' },
-  { key: 'view_schedule', label: 'ดูตารางทีม', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'dept', staff: 'dept' },
-  { key: 'add_schedule', label: 'เพิ่มตารางงาน', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-  { key: 'edit_schedule', label: 'แก้ไข/ลบตารางงาน', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
-  { key: 'cross_group', label: 'ดูข้ามกลุ่ม', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
-  { key: 'peak', label: 'Licensing Peak Account', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
-  { key: 'service_master', label: 'จัดการ Service Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
-  { key: 'holiday_master', label: 'จัดการ Holiday Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
-  { key: 'staff_dashboard', label: 'Staff Dashboard', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
-  { key: 'task_calendar', label: 'Task Calendar (Drag & Drop)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-  { key: 'team_analytics', label: 'Team Analytics', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
-  { key: 'reports', label: 'รายงาน (Reports)', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
-  { key: 'audit_log', label: 'Audit Log', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
-  { key: 'db_backup', label: 'Backup Database', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
-  { key: 'ocr', label: 'OCR (แปลงเอกสาร)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-  { key: 'referral', label: 'ค่าแนะนำ (Referral)', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
-  { key: 'task_generation', label: 'สร้างงานอัตโนมัติ', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
-  { key: 'time_tracking', label: 'SLA / Time Tracking', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-  { key: 'workload', label: 'Workload Balancer', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
+const PERMISSION_GROUPS = [
+  {
+    name: '🔐 ระบบ & ผู้ใช้',
+    items: [
+      { key: 'login', label: 'Login ระบบ', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+      { key: 'user_master', label: 'จัดการ User & User Master', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
+      { key: 'role_mgmt', label: 'User Role Management', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
+      { key: 'audit_log', label: 'Audit Log', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
+      { key: 'db_backup', label: 'Backup Database', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
+    ],
+  },
+  {
+    name: '📋 งาน (Task)',
+    items: [
+      { key: 'view_task', label: 'ดู Task ทั้งหมด', admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'dept' },
+      { key: 'add_task', label: 'เพิ่ม Task Manual', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+      { key: 'edit_assignee', label: 'แก้ไขผู้รับผิดชอบ', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
+      { key: 'change_due', label: 'เปลี่ยน Due Date', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
+      { key: 'change_status', label: 'เปลี่ยน Status งาน', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
+      { key: 'template', label: 'จัดการ Task Template', admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'no' },
+      { key: 'task_generation', label: 'สร้างงานอัตโนมัติ', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
+      { key: 'task_calendar', label: 'Task Calendar (Drag & Drop)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+      { key: 'cross_group', label: 'ดูข้ามกลุ่ม', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
+    ],
+  },
+  {
+    name: '📅 ตารางงาน',
+    items: [
+      { key: 'view_schedule', label: 'ดูตารางทีม', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'dept', staff: 'dept' },
+      { key: 'add_schedule', label: 'เพิ่มตารางงาน', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+      { key: 'edit_schedule', label: 'แก้ไข/ลบตารางงาน', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
+    ],
+  },
+  {
+    name: '👥 ลูกค้า & Billing',
+    items: [
+      { key: 'customer', label: 'จัดการ Customer Master Data', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'yes', staff: 'edit_only' },
+      { key: 'view_billing', label: 'ดู Billing', admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'no' },
+      { key: 'peak', label: 'Licensing Peak Account', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
+      { key: 'referral', label: 'ค่าแนะนำ (Referral)', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
+    ],
+  },
+  {
+    name: '📊 รายงาน & วิเคราะห์',
+    items: [
+      { key: 'staff_dashboard', label: 'Staff Dashboard', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
+      { key: 'team_analytics', label: 'Team Analytics', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
+      { key: 'time_tracking', label: 'SLA / Time Tracking', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+      { key: 'workload', label: 'Workload Balancer', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
+      { key: 'reports', label: 'รายงาน (Reports)', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
+    ],
+  },
+  {
+    name: '⚙️ Master Data & เครื่องมือ',
+    items: [
+      { key: 'service_master', label: 'จัดการ Service Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
+      { key: 'holiday_master', label: 'จัดการ Holiday Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
+      { key: 'ocr', label: 'OCR (แปลงเอกสาร)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+    ],
+  },
 ];
+
+// Flatten for compatibility
+const DEFAULT_MATRIX = PERMISSION_GROUPS.flatMap(g => g.items);
 
 const PERM_CYCLE = ['yes', 'dept', 'own', 'edit_only', 'view_only', 'no'];
 
@@ -250,20 +283,36 @@ export default function RoleManagement() {
                 </tr>
               </thead>
               <tbody>
-                {matrix.map((row, i) => (
-                  <tr key={row.key} className={`border-b last:border-b-0 ${i % 2 === 0 ? 'bg-card' : 'bg-muted/10'}`}>
-                    <td className="px-4 py-2.5 text-xs font-medium">{row.label}</td>
-                    {ROLES.map(role => (
-                      <td key={role} className="px-3 py-2.5 text-center">
-                        <PermCell
-                          value={row[role]}
-                          editable={isEditingMatrix}
-                          onClick={() => handleCellClick(row.key, role)}
-                        />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                {PERMISSION_GROUPS.map((group, gi) => {
+                  const groupRows = group.items.map(item => {
+                    const source = isEditingMatrix && matrixEdits ? matrixEdits : savedMatrix;
+                    if (source?.[item.key]) return { ...item, ...source[item.key] };
+                    return item;
+                  });
+                  return (
+                    <React.Fragment key={group.name}>
+                      <tr className="bg-muted/50">
+                        <td colSpan={ROLES.length + 1} className="px-4 py-2 text-xs font-bold text-foreground">
+                          {group.name}
+                        </td>
+                      </tr>
+                      {groupRows.map((row, i) => (
+                        <tr key={row.key} className={`border-b last:border-b-0 ${i % 2 === 0 ? 'bg-card' : 'bg-muted/10'}`}>
+                          <td className="px-4 py-2.5 text-xs font-medium pl-6">{row.label}</td>
+                          {ROLES.map(role => (
+                            <td key={role} className="px-3 py-2.5 text-center">
+                              <PermCell
+                                value={row[role]}
+                                editable={isEditingMatrix}
+                                onClick={() => handleCellClick(row.key, role)}
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
