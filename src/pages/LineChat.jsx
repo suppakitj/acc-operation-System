@@ -209,6 +209,7 @@ export default function LineChat() {
       display_name: selectedUser?.name,
       chat_type: selectedUser?.chatType || 'user',
       mentions: activeMentions.length > 0 ? activeMentions : undefined,
+      reply_to_id: replyTo?.id || undefined,
     });
     setReplyTo(null);
     setActiveMentions([]);
@@ -364,6 +365,21 @@ export default function LineChat() {
                         onReply={handleReply}
                         onPin={handlePin}
                         pinnedIds={pinnedIds}
+                        onQuoteClick={(msgId) => {
+                          // If the message is not visible, load more
+                          const idx = allChatMessages.findIndex(m => m.id === msgId);
+                          if (idx >= 0 && idx < totalMessages - visibleCount) {
+                            setVisibleCount(totalMessages - idx + 5);
+                          }
+                          setTimeout(() => {
+                            const el = document.getElementById(`msg-${msgId}`);
+                            if (el) {
+                              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                              el.classList.add('bg-primary/10');
+                              setTimeout(() => el.classList.remove('bg-primary/10'), 2000);
+                            }
+                          }, 100);
+                        }}
                       />
                       </div>
                     ))}

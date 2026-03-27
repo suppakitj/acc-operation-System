@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { line_user_id, message, display_name, chat_type, file_url, file_type, mentions } = await req.json();
+    const { line_user_id, message, display_name, chat_type, file_url, file_type, mentions, reply_to_id } = await req.json();
 
     if (!line_user_id || (!message && !file_url)) {
       return Response.json({ error: 'line_user_id and (message or file_url) are required' }, { status: 400 });
@@ -163,6 +163,7 @@ Deno.serve(async (req) => {
       is_read: true,
       replied_by: user.initials || user.nickname || user.full_name || user.email,
       chat_type: chat_type || 'user',
+      reply_to_id: reply_to_id || undefined,
     });
 
     console.log(`Sent ${savedMessageType} to ${line_user_id} (mentions: ${mentions?.length || 0})`);

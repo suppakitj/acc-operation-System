@@ -9,7 +9,7 @@ import {
 import { toast } from 'sonner';
 import { replaceLineEmojis } from './lineEmojiMap';
 
-export default function ChatBubble({ message, onCreateTask, onReply, onPin, pinnedIds = [] }) {
+export default function ChatBubble({ message, onCreateTask, onReply, onPin, pinnedIds = [], onQuoteClick }) {
   const isOutgoing = message.direction === 'outgoing';
   const [imgError, setImgError] = useState(false);
   const isPinned = pinnedIds.includes(message.id);
@@ -84,11 +84,20 @@ export default function ChatBubble({ message, onCreateTask, onReply, onPin, pinn
   const { quote: replyQuote, body: messageBody } = parseReplyContent();
 
   // Reply quote display (from _replyTo prop or parsed from content)
+  const handleQuoteClick = () => {
+    if (message.reply_to_id && onQuoteClick) {
+      onQuoteClick(message.reply_to_id);
+    }
+  };
+
   const renderReplyQuote = () => {
+    const clickable = !!(message.reply_to_id && onQuoteClick);
+    const clickClass = clickable ? 'cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity' : '';
+
     // From _replyTo prop (if set)
     if (message._replyTo) {
       return (
-        <div className={`text-[11px] px-2 py-1 mb-1.5 rounded ${isOutgoing ? 'bg-white/15 border-l-2 border-white/40' : 'bg-black/5 border-l-2 border-primary/40'}`}>
+        <div onClick={clickable ? handleQuoteClick : undefined} className={`text-[11px] px-2 py-1 mb-1.5 rounded ${clickClass} ${isOutgoing ? 'bg-white/15 border-l-2 border-white/40' : 'bg-black/5 border-l-2 border-primary/40'}`}>
           <span className={`font-medium ${isOutgoing ? 'text-white/80' : 'text-primary'}`}>{message._replyTo.sender || ''}</span>
           <p className={`truncate ${isOutgoing ? 'text-white/60' : 'text-muted-foreground'}`}>{message._replyTo.content || ''}</p>
         </div>
@@ -97,7 +106,7 @@ export default function ChatBubble({ message, onCreateTask, onReply, onPin, pinn
     // Parsed from ↩️ format
     if (replyQuote) {
       return (
-        <div className={`text-[11px] px-2 py-1 mb-1.5 rounded ${isOutgoing ? 'bg-white/15 border-l-2 border-white/40' : 'bg-black/5 border-l-2 border-primary/40'}`}>
+        <div onClick={clickable ? handleQuoteClick : undefined} className={`text-[11px] px-2 py-1 mb-1.5 rounded ${clickClass} ${isOutgoing ? 'bg-white/15 border-l-2 border-white/40' : 'bg-black/5 border-l-2 border-primary/40'}`}>
           <p className={`${isOutgoing ? 'text-white/70' : 'text-muted-foreground'}`}>
             {replyQuote}
           </p>
