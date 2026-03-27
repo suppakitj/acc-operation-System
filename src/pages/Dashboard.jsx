@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ClipboardList, AlertTriangle, Clock, FileCheck, CheckCircle } from 'lucide-react';
+import { parseUTCDate } from '@/lib/dateUtils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useUserList } from '@/hooks/useUserList';
@@ -55,7 +56,7 @@ export default function Dashboard() {
       if (f.dateRange === 'this_month') {
         const start = startOfMonth(today);
         const end = endOfMonth(today);
-        const created = new Date(t.created_date);
+        const created = parseUTCDate(t.created_date);
         if (t.status === 'completed' || t.status === 'cancelled') {
           if (created < start || created > end) return false;
         }
