@@ -7,6 +7,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { replaceLineEmojis } from './lineEmojiMap';
 
 export default function ChatBubble({ message, onCreateTask, onReply, onPin, pinnedIds = [] }) {
   const isOutgoing = message.direction === 'outgoing';
@@ -64,7 +65,7 @@ export default function ChatBubble({ message, onCreateTask, onReply, onPin, pinn
       );
     }
 
-    return <p className="text-sm whitespace-pre-wrap">{replyQuote ? messageBody : message.content}</p>;
+    return <p className="text-sm whitespace-pre-wrap">{replaceLineEmojis(replyQuote ? messageBody : message.content)}</p>;
   };
 
   // Check if content starts with reply prefix (↩️ format from handleSend)
