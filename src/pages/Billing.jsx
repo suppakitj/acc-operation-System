@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Search } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 import ExtraCostEditor from '../components/billing/ExtraCostEditor';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
@@ -324,10 +325,12 @@ export default function Billing() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>{t('customer')} *</Label>
-              <Select value={form.customer_id || ''} onValueChange={v => { const c = customers.find(c => c.id === v); setForm(p => ({ ...p, customer_id: v, customer_name: c?.company_name || '' })); }}>
-                <SelectTrigger><SelectValue placeholder={t('select_customer')} /></SelectTrigger>
-                <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>)}</SelectContent>
-              </Select>
+              <SearchableSelect
+                value={form.customer_id || ''}
+                onValueChange={v => { const c = customers.find(c => c.id === v); setForm(p => ({ ...p, customer_id: v, customer_name: c?.company_name || '' })); }}
+                options={customers.map(c => ({ value: c.id, label: c.company_name }))}
+                placeholder={t('select_customer')}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5"><Label>{t('invoice_number')}</Label><Input value={form.invoice_number || ''} onChange={e => setForm(p => ({ ...p, invoice_number: e.target.value }))} /></div>
