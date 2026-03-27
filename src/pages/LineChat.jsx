@@ -201,7 +201,7 @@ export default function LineChat() {
   const handleSend = () => {
     if (!newMessage.trim() || !selectedUserId) return;
     const msgText = replyTo
-      ? `↩️ ${replyTo.sender_name || replyTo.display_name || ''}: "${(replyTo.content || '').substring(0, 50)}"\n\n${newMessage.trim()}`
+      ? `↩️ ${replyTo.sender_name || replyTo.display_name || ''}: "${replyTo.content || ''}"\n\n${newMessage.trim()}`
       : newMessage.trim();
     sendMutation.mutate({
       line_user_id: selectedUserId,
