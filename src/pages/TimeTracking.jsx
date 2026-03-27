@@ -4,11 +4,12 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Clock, Building2, Users, ClipboardList } from 'lucide-react';
+import { Clock, Building2, Users, ClipboardList, TrendingUp } from 'lucide-react';
 import TimeTrackingStats from '../components/time-tracking/TimeTrackingStats';
 import TimeByCustomerTable from '../components/time-tracking/TimeByCustomerTable';
 import TimeByEmployeeTable from '../components/time-tracking/TimeByEmployeeTable';
 import TimeByTaskTable from '../components/time-tracking/TimeByTaskTable';
+import CostEfficiencyTable from '../components/time-tracking/CostEfficiencyTable';
 
 const MONTH_LABELS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
@@ -87,6 +88,7 @@ export default function TimeTracking() {
       <Tabs defaultValue="customer" className="space-y-3">
         <TabsList>
           <TabsTrigger value="customer" className="gap-1.5 text-xs"><Building2 className="w-3.5 h-3.5" /> ตามลูกค้า</TabsTrigger>
+          <TabsTrigger value="efficiency" className="gap-1.5 text-xs"><TrendingUp className="w-3.5 h-3.5" /> Cost Efficiency</TabsTrigger>
           <TabsTrigger value="employee" className="gap-1.5 text-xs"><Users className="w-3.5 h-3.5" /> ตามพนักงาน</TabsTrigger>
           <TabsTrigger value="task" className="gap-1.5 text-xs"><ClipboardList className="w-3.5 h-3.5" /> ตาม Task</TabsTrigger>
         </TabsList>
@@ -98,6 +100,17 @@ export default function TimeTracking() {
             </CardHeader>
             <CardContent>
               <TimeByCustomerTable entries={entries} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="efficiency">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Cost Efficiency — เปรียบเทียบเวลาที่ใช้ vs ค่าบริการ</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CostEfficiencyTable entries={entries} />
             </CardContent>
           </Card>
         </TabsContent>
