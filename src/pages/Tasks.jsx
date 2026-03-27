@@ -71,6 +71,15 @@ export default function Tasks() {
     else createMutation.mutate(data);
   };
 
+  // Clamp a Date to working hours (08:30–17:30) on the same day
+  const clampToWorkHours = (date) => {
+    const d = new Date(date);
+    const h = d.getHours(), m = d.getMinutes();
+    if (h < 8 || (h === 8 && m < 30)) { d.setHours(8, 30, 0, 0); }
+    if (h > 17 || (h === 17 && m > 30)) { d.setHours(17, 30, 0, 0); }
+    return d;
+  };
+
   // Auto start/stop timer when status changes
   const autoTimeTrack = async (task, newStatus, user) => {
     try {
@@ -78,22 +87,25 @@ export default function Tasks() {
       const myRunning = entries.find(e => e.user_email === user.email);
 
       if (newStatus === 'in_progress' && !myRunning) {
-        // Auto-start timer
+        // Auto-start timer — clamp to working hours
+        const startTime = clampToWorkHours(new Date());
         await base44.entities.TimeEntry.create({
           task_id: task.id, task_title: task.title,
           customer_id: task.customer_id || '', customer_name: task.customer_name || '',
           service_type: task.service_type || '', department: task.department || '',
           user_email: user.email, user_name: user.full_name || user.email,
-          start_time: new Date().toISOString(), is_running: true,
+          start_time: startTime.toISOString(), is_running: true,
           description: 'เริ่มอัตโนมัติ (status → In Progress)',
         });
       } else if ((newStatus === 'completed' || newStatus === 'review') && myRunning) {
-        // Auto-stop timer
-        const endTime = new Date();
-        const startTime = new Date(myRunning.start_time);
-        const duration = Math.max(0, (endTime - startTime) / 60000);
+        // Auto-stop timer — clamp both start & end to working hours
+        const rawStart = new Date(myRunning.start_time);
+        const rawEnd = new Date();
+        const clampedStart = clampToWorkHours(rawStart);
+        const clampedEnd = clampToWorkHours(rawEnd);
+        const duration = Math.max(0, (clampedEnd - clampedStart) / 60000);
         await base44.entities.TimeEntry.update(myRunning.id, {
-          end_time: endTime.toISOString(),
+          end_time: clampedEnd.toISOString(),
           duration_minutes: Math.round(duration * 100) / 100,
           is_running: false,
           description: (myRunning.description || '') + ` (หยุดอัตโนมัติ: status → ${newStatus})`,
