@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { addDays, format, parseISO } from 'date-fns';
 
@@ -99,12 +100,12 @@ export default function PeakLicenseForm({ open, onOpenChange, license, onSubmit,
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>ลูกค้า *</Label>
-                <Select value={form.customer_id || ''} onValueChange={handleCustomerSelect}>
-                  <SelectTrigger><SelectValue placeholder="เลือกลูกค้า" /></SelectTrigger>
-                  <SelectContent>
-                    {peakCustomers.map(c => <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={form.customer_id || ''}
+                  onValueChange={handleCustomerSelect}
+                  options={peakCustomers.map(c => ({ value: c.id, label: c.company_name }))}
+                  placeholder="เลือกลูกค้า"
+                />
               </div>
               <div className="space-y-1">
                 <Label>ประเภทแพ็กเกจ *</Label>

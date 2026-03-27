@@ -239,13 +239,13 @@ export default function Billing() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input placeholder="Invoice # or client..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 h-9 text-xs" />
           </div>
-          <Select value={clientFilter} onValueChange={setClientFilter}>
-            <SelectTrigger className="w-full sm:w-[140px] h-9 text-xs"><SelectValue placeholder="All Clients" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Clients</SelectItem>
-              {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={clientFilter}
+            onValueChange={setClientFilter}
+            options={[{ value: 'all', label: 'All Clients' }, ...customers.map(c => ({ value: c.id, label: c.company_name }))]}
+            placeholder="All Clients"
+            className="w-full sm:w-[140px] h-9 text-xs"
+          />
           <Select value={deptFilter} onValueChange={setDeptFilter}>
             <SelectTrigger className="w-full sm:w-[120px] h-9 text-xs"><SelectValue placeholder="All Depts" /></SelectTrigger>
             <SelectContent>
