@@ -47,65 +47,6 @@ Deno.serve(async (req) => {
         };
         savedMessageType = 'file';
       }
-    } else if (message && message.startsWith('↩️')) {
-      // Reply message — send as Flex Message with quote box
-      const parts = message.split('\n\n');
-      const quoteLine = parts[0].replace('↩️ ', '');
-      const replyBody = parts.slice(1).join('\n\n') || '';
-
-      lineMessage = {
-        type: 'flex',
-        altText: replyBody || quoteLine,
-        contents: {
-          type: 'bubble',
-          size: 'kilo',
-          body: {
-            type: 'box',
-            layout: 'vertical',
-            spacing: 'sm',
-            contents: [
-              {
-                type: 'box',
-                layout: 'horizontal',
-                contents: [
-                  {
-                    type: 'box',
-                    layout: 'vertical',
-                    width: '3px',
-                    backgroundColor: '#6366F1',
-                    contents: [{ type: 'filler' }],
-                  },
-                  {
-                    type: 'box',
-                    layout: 'vertical',
-                    paddingStart: '8px',
-                    contents: [
-                      {
-                        type: 'text',
-                        text: quoteLine,
-                        size: 'xs',
-                        color: '#888888',
-                        wrap: true,
-                        maxLines: 3,
-                      },
-                    ],
-                  },
-                ],
-                paddingAll: '8px',
-                backgroundColor: '#F5F5F5',
-                cornerRadius: '6px',
-              },
-              {
-                type: 'text',
-                text: replyBody,
-                size: 'sm',
-                wrap: true,
-                color: '#333333',
-              },
-            ],
-          },
-        },
-      };
     } else if (mentions && mentions.length > 0) {
       // Use Text message v2 with mention substitution
       let textV2 = message;
