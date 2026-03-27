@@ -36,6 +36,8 @@ export default function LineChat() {
   const chatEndRef = useRef(null);
   const chatTopRef = useRef(null);
 
+  const [activeMentions, setActiveMentions] = useState([]);
+
   // Check LINE config
   const { data: configs = [] } = useQuery({
     queryKey: ['appConfig', 'line_oa'],
@@ -52,6 +54,18 @@ export default function LineChat() {
       return res.data?.users || [];
     },
     staleTime: 2 * 60_000,
+  });
+
+  // Fetch LINE group members for selected chat
+  const { data: lineMembers = [] } = useQuery({
+    queryKey: ['lineGroupMembers', selectedUserId],
+    queryFn: async () => {
+      if (!selectedUserId || selectedUser?.chatType !== 'group') return [];
+      const res = await base44.functions.invoke('listGroupMembers', { group_id: selectedUserId });
+      return res.data?.members || [];
+    },
+    enabled: !!selectedUserId && selectedUser?.chatType === 'group',
+    staleTime: 60_000,
   });
 
   // Poll messages every 15s to reduce API load
@@ -192,8 +206,10 @@ export default function LineChat() {
       message: msgText,
       display_name: selectedUser?.name,
       chat_type: selectedUser?.chatType || 'user',
+      mentions: activeMentions.length > 0 ? activeMentions : undefined,
     });
     setReplyTo(null);
+    setActiveMentions([]);
   };
 
   const handleReply = (msg) => {
@@ -399,6 +415,9 @@ export default function LineChat() {
                   onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
                   disabled={sendMutation.isPending}
                   users={users}
+                  lineMembers={lineMembers}
+                  chatType={selectedUser?.chatType || 'user'}
+                  onMentionsChange={setActiveMentions}
                 />
                 <Button onClick={handleSend} disabled={!newMessage.trim() || sendMutation.isPending} size="icon" className="shrink-0">
                   <Send className="w-4 h-4" />

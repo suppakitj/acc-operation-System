@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { line_user_id, message, display_name, chat_type, file_url, file_type } = await req.json();
+    const { line_user_id, message, display_name, chat_type, file_url, file_type, mentions } = await req.json();
 
     if (!line_user_id || (!message && !file_url)) {
       return Response.json({ error: 'line_user_id and (message or file_url) are required' }, { status: 400 });
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
         };
         savedMessageType = 'image';
       } else {
-        // For non-image files, send as text with link (LINE file message requires specific hosting)
+        // For non-image files, send as text with link
         const fileName = message || 'ไฟล์';
         lineMessage = {
           type: 'text',
@@ -47,6 +47,29 @@ Deno.serve(async (req) => {
         };
         savedMessageType = 'file';
       }
+    } else if (mentions && mentions.length > 0) {
+      // Use Text message v2 with mention substitution
+      let textV2 = message;
+      const substitution = {};
+
+      mentions.forEach((m, idx) => {
+        const placeholder = `mention${idx}`;
+        // Replace @displayName with {placeholder} in the text
+        textV2 = textV2.replace(`@${m.display_name}`, `{${placeholder}}`);
+        substitution[placeholder] = {
+          type: 'mention',
+          mentionee: {
+            type: 'user',
+            userId: m.line_user_id,
+          },
+        };
+      });
+
+      lineMessage = {
+        type: 'textV2',
+        text: textV2,
+        substitution,
+      };
     } else {
       lineMessage = { type: 'text', text: message };
     }
@@ -83,7 +106,7 @@ Deno.serve(async (req) => {
       chat_type: chat_type || 'user',
     });
 
-    console.log(`Sent ${savedMessageType} to ${line_user_id}`);
+    console.log(`Sent ${savedMessageType} to ${line_user_id} (mentions: ${mentions?.length || 0})`);
     return Response.json({ status: 'sent', type: savedMessageType });
   } catch (error) {
     console.error('Send message error:', error.message);

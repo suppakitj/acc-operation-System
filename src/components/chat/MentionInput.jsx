@@ -1,31 +1,66 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { AtSign } from 'lucide-react';
+import { AtSign, Users } from 'lucide-react';
 
 /**
- * MentionInput — a text input that shows a user dropdown when typing @.
+ * MentionInput — text input with @ dropdown.
  * Props:
  *  - value, onChange, onKeyDown, placeholder, disabled
- *  - users: [{ email, full_name }]
+ *  - users: [{ email, full_name }] — internal users
+ *  - lineMembers: [{ line_user_id, display_name, picture_url }] — LINE group members
+ *  - chatType: 'user' | 'group'
+ *  - onMentionsChange: (mentions) => void — callback with active LINE mentions
  */
-export default function MentionInput({ value, onChange, onKeyDown, placeholder, disabled, users = [] }) {
+export default function MentionInput({
+  value, onChange, onKeyDown, placeholder, disabled,
+  users = [], lineMembers = [], chatType = 'user', onMentionsChange
+}) {
   const [showMenu, setShowMenu] = useState(false);
   const [menuFilter, setMenuFilter] = useState('');
   const [mentionStart, setMentionStart] = useState(-1);
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [activeMentions, setActiveMentions] = useState([]);
   const inputRef = useRef(null);
   const menuRef = useRef(null);
 
-  const ALL_ITEM = { email: '__all__', full_name: 'All', isAll: true };
+  const isGroup = chatType === 'group';
 
-  const matchesFilter = (u) => {
-    if (!menuFilter) return true;
-    const q = menuFilter.toLowerCase();
-    return (u.full_name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
+  // Build combined list: LINE members first (for groups), then internal users
+  const buildItems = () => {
+    const items = [];
+    if (isGroup && lineMembers.length > 0) {
+      lineMembers.forEach(m => {
+        items.push({
+          key: `line_${m.line_user_id}`,
+          display_name: m.display_name,
+          subtitle: 'LINE member',
+          picture_url: m.picture_url,
+          isLineMember: true,
+          line_user_id: m.line_user_id,
+        });
+      });
+    }
+    // Internal users
+    users.forEach(u => {
+      items.push({
+        key: `user_${u.email}`,
+        display_name: u.full_name || u.email.split('@')[0],
+        subtitle: u.email,
+        isLineMember: false,
+      });
+    });
+    return items;
   };
 
-  const filteredUsers = users.filter(matchesFilter).slice(0, 8);
-  const showAll = !menuFilter || 'all'.includes(menuFilter.toLowerCase());
-  const filtered = showAll ? [ALL_ITEM, ...filteredUsers] : filteredUsers;
+  const allItems = buildItems();
+
+  const matchesFilter = (item) => {
+    if (!menuFilter) return true;
+    const q = menuFilter.toLowerCase();
+    return (item.display_name || '').toLowerCase().includes(q) ||
+           (item.subtitle || '').toLowerCase().includes(q);
+  };
+
+  const filtered = allItems.filter(matchesFilter).slice(0, 10);
 
   // Detect @ trigger
   const handleChange = useCallback((e) => {
@@ -33,12 +68,10 @@ export default function MentionInput({ value, onChange, onKeyDown, placeholder, 
     const cursorPos = e.target.selectionStart;
     onChange(e);
 
-    // Find the last @ before cursor
     const textBeforeCursor = val.substring(0, cursorPos);
     const lastAt = textBeforeCursor.lastIndexOf('@');
 
     if (lastAt >= 0) {
-      // Check there's no space between @ and cursor (simple heuristic)
       const afterAt = textBeforeCursor.substring(lastAt + 1);
       if (!afterAt.includes('\n')) {
         setShowMenu(true);
@@ -49,26 +82,48 @@ export default function MentionInput({ value, onChange, onKeyDown, placeholder, 
       }
     }
     setShowMenu(false);
-  }, [onChange]);
 
-  const insertMention = useCallback((user) => {
+    // Update active mentions based on current text
+    updateActiveMentions(val);
+  }, [onChange, activeMentions]);
+
+  const updateActiveMentions = useCallback((text) => {
+    // Keep only mentions whose @displayName still exists in the text
+    const kept = activeMentions.filter(m => text.includes(`@${m.display_name}`));
+    if (kept.length !== activeMentions.length) {
+      setActiveMentions(kept);
+      onMentionsChange?.(kept);
+    }
+  }, [activeMentions, onMentionsChange]);
+
+  const insertMention = useCallback((item) => {
     const before = value.substring(0, mentionStart);
     const after = value.substring(inputRef.current?.selectionStart || value.length);
-    const displayName = user.full_name || user.email.split('@')[0];
+    const displayName = item.display_name;
     const newVal = `${before}@${displayName} ${after}`;
-    // Trigger synthetic change
+
     onChange({ target: { value: newVal } });
     setShowMenu(false);
     setMenuFilter('');
-    // Focus and set cursor after the mention
+
+    // Track LINE member mention
+    if (item.isLineMember && item.line_user_id) {
+      const newMentions = [...activeMentions.filter(m => m.line_user_id !== item.line_user_id), {
+        line_user_id: item.line_user_id,
+        display_name: displayName,
+      }];
+      setActiveMentions(newMentions);
+      onMentionsChange?.(newMentions);
+    }
+
     setTimeout(() => {
       if (inputRef.current) {
-        const pos = before.length + displayName.length + 2; // @name + space
+        const pos = before.length + displayName.length + 2;
         inputRef.current.focus();
         inputRef.current.setSelectionRange(pos, pos);
       }
     }, 0);
-  }, [value, mentionStart, onChange]);
+  }, [value, mentionStart, onChange, activeMentions, onMentionsChange]);
 
   const handleKeyDown = useCallback((e) => {
     if (showMenu && filtered.length > 0) {
@@ -94,6 +149,14 @@ export default function MentionInput({ value, onChange, onKeyDown, placeholder, 
     }
     onKeyDown?.(e);
   }, [showMenu, filtered, selectedIdx, insertMention, onKeyDown]);
+
+  // Reset mentions when value is cleared
+  useEffect(() => {
+    if (!value) {
+      setActiveMentions([]);
+      onMentionsChange?.([]);
+    }
+  }, [value]);
 
   // Close on outside click
   useEffect(() => {
@@ -129,26 +192,33 @@ export default function MentionInput({ value, onChange, onKeyDown, placeholder, 
             <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] text-muted-foreground border-b mb-1">
               <AtSign className="w-3 h-3" /> Mention สมาชิก
             </div>
-            {filtered.map((user, idx) => (
+            {filtered.map((item, idx) => (
               <button
-                key={user.email}
+                key={item.key}
                 type="button"
                 className={`flex items-center gap-2 w-full px-2 py-1.5 rounded-sm text-sm text-left transition-colors ${
                   idx === selectedIdx ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'
                 }`}
                 onMouseEnter={() => setSelectedIdx(idx)}
-                onClick={() => insertMention(user)}
+                onClick={() => insertMention(item)}
               >
-                {user.isAll ? (
-                  <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center shrink-0 text-[10px] font-bold text-amber-700">@</div>
+                {item.picture_url ? (
+                  <img src={item.picture_url} className="w-6 h-6 rounded-full object-cover shrink-0" alt="" />
+                ) : item.isLineMember ? (
+                  <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                    <Users className="w-3 h-3 text-green-700" />
+                  </div>
                 ) : (
                   <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-[10px] font-medium text-primary">
-                    {(user.full_name || user.email)[0]?.toUpperCase()}
+                    {(item.display_name)[0]?.toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="text-xs font-medium truncate">{user.isAll ? '@All — แจ้งเตือนทุกคน' : (user.full_name || user.email.split('@')[0])}</p>
-                  {!user.isAll && <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>}
+                  <p className="text-xs font-medium truncate">
+                    {item.display_name}
+                    {item.isLineMember && <span className="ml-1 text-[9px] text-green-600 font-normal">LINE</span>}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground truncate">{item.subtitle}</p>
                 </div>
               </button>
             ))}

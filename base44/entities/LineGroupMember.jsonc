@@ -1,0 +1,27 @@
+{
+  "name": "LineGroupMember",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "description": "LINE Group ID"
+    },
+    "line_user_id": {
+      "type": "string",
+      "description": "LINE User ID \u0e02\u0e2d\u0e07\u0e2a\u0e21\u0e32\u0e0a\u0e34\u0e01"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e17\u0e35\u0e48\u0e41\u0e2a\u0e14\u0e07\u0e43\u0e19 LINE"
+    },
+    "picture_url": {
+      "type": "string",
+      "description": "URL \u0e23\u0e39\u0e1b\u0e42\u0e1b\u0e23\u0e44\u0e1f\u0e25\u0e4c"
+    }
+  },
+  "required": [
+    "group_id",
+    "line_user_id",
+    "display_name"
+  ]
+}

@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { createHmac } from 'node:crypto';
 
 Deno.serve(async (req) => {
@@ -190,6 +190,34 @@ Deno.serve(async (req) => {
         });
 
         console.log(`Saved incoming ${messageType} from ${senderName} in ${chatType} (${chatKey}): ${content}`);
+
+        // Track group member for mention support
+        if (isGroup && userId && groupId && senderName !== userId) {
+          try {
+            const existing = await base44.asServiceRole.entities.LineGroupMember.filter(
+              { group_id: groupId, line_user_id: userId }, '-created_date', 1
+            );
+            if (existing.length > 0) {
+              // Update display_name if changed
+              if (existing[0].display_name !== senderName || existing[0].picture_url !== senderImage) {
+                await base44.asServiceRole.entities.LineGroupMember.update(existing[0].id, {
+                  display_name: senderName,
+                  picture_url: senderImage || '',
+                });
+              }
+            } else {
+              await base44.asServiceRole.entities.LineGroupMember.create({
+                group_id: groupId,
+                line_user_id: userId,
+                display_name: senderName,
+                picture_url: senderImage || '',
+              });
+              console.log(`Tracked group member: ${senderName} (${userId}) in ${groupId}`);
+            }
+          } catch (e) {
+            console.warn('Failed to track group member:', e.message);
+          }
+        }
 
         // Update display_name and profile_image on older messages (batch — max 10 at a time)
         if (chatDisplayName || chatImage) {
