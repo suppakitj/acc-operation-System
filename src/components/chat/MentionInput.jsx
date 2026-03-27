@@ -183,12 +183,12 @@ export default function MentionInput({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
-        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+        className="flex h-9 w-full rounded-full border border-input bg-muted/40 px-4 py-1 text-[13px] transition-colors placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-500/30 focus-visible:bg-background disabled:cursor-not-allowed disabled:opacity-50"
       />
       {showMenu && filtered.length > 0 && (
         <div
           ref={menuRef}
-          className="absolute bottom-full mb-1 left-0 w-full max-h-[200px] overflow-y-auto rounded-md border bg-popover shadow-md z-50"
+          className="absolute bottom-full mb-1 left-0 w-full max-h-[200px] overflow-y-auto rounded-xl border bg-popover shadow-lg z-50"
         >
           <div className="p-1">
             <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] text-muted-foreground border-b mb-1">

@@ -1,25 +1,66 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Send, Search, MessageCircle, User, Users, ArrowLeft, AlertCircle, Settings, ChevronUp, Paperclip, Loader2, Image as ImageIcon, ScreenShare } from 'lucide-react';
+import { Send, Search, MessageCircle, User, Users, ArrowLeft, AlertCircle, Settings, ChevronUp, Paperclip, Loader2, ScreenShare, X, Smile } from 'lucide-react';
 import ChatBubble from '../components/chat/ChatBubble';
 import CreateTaskFromChat from '../components/chat/CreateTaskFromChat';
 import ScreenCaptureDialog from '../components/chat/ScreenCaptureDialog';
 import PinnedMessages from '../components/chat/PinnedMessages';
 import MentionInput from '../components/chat/MentionInput';
-import { format } from 'date-fns';
+import { format, isToday, isYesterday } from 'date-fns';
+import { th } from 'date-fns/locale';
 import { parseUTCDate } from '@/lib/dateUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '../components/LanguageContext';
+import { useUserList } from '@/hooks/useUserList';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
-import { useUserList } from '@/hooks/useUserList';
 
-const MESSAGES_PER_PAGE = 10;
+const MESSAGES_PER_PAGE = 20;
+
+function formatChatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = parseUTCDate(dateStr);
+  if (isToday(d)) return format(d, 'HH:mm');
+  if (isYesterday(d)) return 'เมื่อวาน';
+  return format(d, 'd MMM', { locale: th });
+}
+
+function getLastMessagePreview(messages) {
+  const last = messages[messages.length - 1];
+  if (!last) return '';
+  if (last.direction === 'outgoing') {
+    const prefix = 'คุณ: ';
+    if (last.message_type === 'image') return prefix + '📷 รูปภาพ';
+    if (last.message_type === 'sticker') return prefix + '😊 Sticker';
+    if (last.message_type === 'file') return prefix + '📎 ไฟล์';
+    return prefix + (last.content || '');
+  }
+  if (last.message_type === 'image') return '📷 รูปภาพ';
+  if (last.message_type === 'sticker') return '😊 Sticker';
+  if (last.message_type === 'file') return '📎 ไฟล์';
+  return last.content || '';
+}
+
+// Date separator component
+function DateSeparator({ date }) {
+  const d = parseUTCDate(date);
+  let label;
+  if (isToday(d)) label = 'วันนี้';
+  else if (isYesterday(d)) label = 'เมื่อวาน';
+  else label = format(d, 'd MMMM yyyy', { locale: th });
+
+  return (
+    <div className="flex items-center gap-3 py-3">
+      <div className="flex-1 h-px bg-border" />
+      <span className="text-[10px] font-medium text-muted-foreground bg-background px-2 rounded-full">{label}</span>
+      <div className="flex-1 h-px bg-border" />
+    </div>
+  );
+}
 
 export default function LineChat() {
   const { t } = useLanguage();
@@ -36,10 +77,8 @@ export default function LineChat() {
   const queryClient = useQueryClient();
   const chatEndRef = useRef(null);
   const chatTopRef = useRef(null);
-
   const [activeMentions, setActiveMentions] = useState([]);
 
-  // Check LINE config
   const { data: configs = [] } = useQuery({
     queryKey: ['appConfig', 'line_oa'],
     queryFn: () => base44.entities.AppConfig.list(),
@@ -48,10 +87,8 @@ export default function LineChat() {
   const getConfigVal = (key) => configs.find(c => c.key === key)?.value || '';
   const isLineConfigured = !!(getConfigVal('line_channel_id') && getConfigVal('line_channel_secret') && getConfigVal('line_access_token'));
 
-  // Fetch users for @mention — reuse shared hook for cache sharing
   const { data: users = [] } = useUserList();
 
-  // Poll messages every 15s to reduce API load
   const { data: messages = [] } = useQuery({
     queryKey: ['lineMessages'],
     queryFn: async () => {
@@ -65,7 +102,6 @@ export default function LineChat() {
   const fileInputRef = useRef(null);
   const [uploadingFile, setUploadingFile] = useState(false);
 
-  // Send via backend function (actual LINE API)
   const sendMutation = useMutation({
     mutationFn: async ({ line_user_id, message, display_name, chat_type, file_url, file_type }) => {
       const res = await base44.functions.invoke('lineSendMessage', { line_user_id, message, display_name, chat_type, file_url, file_type });
@@ -83,18 +119,14 @@ export default function LineChat() {
     const file = e.target.files?.[0];
     if (!file || !selectedUserId) return;
     e.target.value = '';
-
     setUploadingFile(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       const isImage = file.type.startsWith('image/');
       sendMutation.mutate({
-        line_user_id: selectedUserId,
-        message: file.name,
-        display_name: selectedUser?.name,
-        chat_type: selectedUser?.chatType || 'user',
-        file_url,
-        file_type: isImage ? 'image' : 'file',
+        line_user_id: selectedUserId, message: file.name,
+        display_name: selectedUser?.name, chat_type: selectedUser?.chatType || 'user',
+        file_url, file_type: isImage ? 'image' : 'file',
       });
     } catch (err) {
       toast.error('อัปโหลดไฟล์ล้มเหลว: ' + err.message);
@@ -103,7 +135,6 @@ export default function LineChat() {
     }
   };
 
-  // Mark messages as read (via backend to access service-role data)
   const markReadMutation = useMutation({
     mutationFn: async (messageIds) => {
       await base44.functions.invoke('markLineMessagesRead', { messageIds });
@@ -119,7 +150,6 @@ export default function LineChat() {
     userGroups[key].messages.push(m);
     if (!m.is_read && m.direction === 'incoming') userGroups[key].unread++;
     if (parseUTCDate(m.created_date) > parseUTCDate(userGroups[key].lastDate)) userGroups[key].lastDate = m.created_date;
-    // Keep the latest non-empty profile image
     if (m.profile_image && !userGroups[key].image) userGroups[key].image = m.profile_image;
   });
 
@@ -128,11 +158,8 @@ export default function LineChat() {
     .sort((a, b) => new Date(b.lastDate) - new Date(a.lastDate));
 
   const selectedUser = selectedUserId ? userGroups[selectedUserId] : null;
-
-  // Determine if current chat is a group
   const isGroupChat = selectedUser?.chatType === 'group';
 
-  // Fetch LINE group members for selected group chat
   const { data: lineMembers = [] } = useQuery({
     queryKey: ['lineGroupMembers', selectedUserId],
     queryFn: async () => {
@@ -142,30 +169,21 @@ export default function LineChat() {
     enabled: !!selectedUserId && isGroupChat,
     staleTime: 60_000,
   });
+
   const allChatMessages = selectedUser?.messages?.sort((a, b) => parseUTCDate(a.created_date) - parseUTCDate(b.created_date)) || [];
   const totalMessages = allChatMessages.length;
   const hasOlderMessages = totalMessages > visibleCount;
   const chatMessages = hasOlderMessages ? allChatMessages.slice(totalMessages - visibleCount) : allChatMessages;
 
-  // Reset visible count and reply when switching chats
-  useEffect(() => {
-    setVisibleCount(MESSAGES_PER_PAGE);
-    setReplyTo(null);
-  }, [selectedUserId]);
+  useEffect(() => { setVisibleCount(MESSAGES_PER_PAGE); setReplyTo(null); }, [selectedUserId]);
 
   const handleLoadOlder = useCallback(() => {
     setVisibleCount(prev => prev + MESSAGES_PER_PAGE);
-    // Keep scroll position near top after loading
-    setTimeout(() => {
-      chatTopRef.current?.scrollIntoView({ behavior: 'instant' });
-    }, 50);
+    setTimeout(() => { chatTopRef.current?.scrollIntoView({ behavior: 'instant' }); }, 50);
   }, []);
 
-  // Auto-scroll and mark read
   useEffect(() => {
-    if (selectedUserId && chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (selectedUserId && chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     if (selectedUser) {
       const unreadIds = selectedUser.messages.filter(m => !m.is_read && m.direction === 'incoming').map(m => m.id);
       if (unreadIds.length > 0) markReadMutation.mutate(unreadIds);
@@ -178,12 +196,9 @@ export default function LineChat() {
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       sendMutation.mutate({
-        line_user_id: selectedUserId,
-        message: 'Screenshot',
-        display_name: selectedUser?.name,
-        chat_type: selectedUser?.chatType || 'user',
-        file_url,
-        file_type: 'image',
+        line_user_id: selectedUserId, message: 'Screenshot',
+        display_name: selectedUser?.name, chat_type: selectedUser?.chatType || 'user',
+        file_url, file_type: 'image',
       });
       setCaptureDialogOpen(false);
     } catch (err) {
@@ -199,10 +214,8 @@ export default function LineChat() {
       ? `↩️ ${replyTo.sender_name || replyTo.display_name || ''}: "${replyTo.content || ''}"\n\n${newMessage.trim()}`
       : newMessage.trim();
     sendMutation.mutate({
-      line_user_id: selectedUserId,
-      message: msgText,
-      display_name: selectedUser?.name,
-      chat_type: selectedUser?.chatType || 'user',
+      line_user_id: selectedUserId, message: msgText,
+      display_name: selectedUser?.name, chat_type: selectedUser?.chatType || 'user',
       mentions: activeMentions.length > 0 ? activeMentions : undefined,
       reply_to_id: replyTo?.id || undefined,
     });
@@ -210,15 +223,20 @@ export default function LineChat() {
     setActiveMentions([]);
   };
 
-  const handleReply = (msg) => {
-    setReplyTo(msg);
-  };
+  const handleReply = (msg) => setReplyTo(msg);
+  const handlePin = (msg) => setPinnedIds(prev => prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]);
 
-  const handlePin = (msg) => {
-    setPinnedIds(prev =>
-      prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]
-    );
-  };
+  // Group messages by date
+  const messagesWithSeparators = [];
+  let lastDateStr = '';
+  chatMessages.forEach(m => {
+    const dateStr = m.created_date ? format(parseUTCDate(m.created_date), 'yyyy-MM-dd') : '';
+    if (dateStr && dateStr !== lastDateStr) {
+      messagesWithSeparators.push({ type: 'separator', date: m.created_date, key: `sep-${dateStr}` });
+      lastDateStr = dateStr;
+    }
+    messagesWithSeparators.push({ type: 'message', data: m, key: m.id });
+  });
 
   // Not configured banner
   if (!isLineConfigured && configs.length > 0) {
@@ -228,234 +246,293 @@ export default function LineChat() {
           <h1 className="text-xl md:text-2xl font-bold">{t('line_title')}</h1>
           <p className="text-sm text-muted-foreground">{t('line_subtitle')}</p>
         </div>
-        <Card className="border-yellow-300 bg-yellow-50/50">
-          <CardContent className="p-6 text-center space-y-3">
-            <AlertCircle className="w-10 h-10 text-yellow-500 mx-auto" />
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-center max-w-md space-y-4 p-8">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center mx-auto shadow-lg">
+              <MessageCircle className="w-8 h-8 text-white" />
+            </div>
             <h3 className="font-semibold text-lg">LINE OA ยังไม่ได้ตั้งค่า</h3>
             <p className="text-sm text-muted-foreground">กรุณาตั้งค่า Channel ID, Channel Secret และ Channel Access Token ก่อนใช้งาน Chat</p>
             <Link to="/AppSettings">
-              <Button className="gap-2 mt-2"><Settings className="w-4 h-4" /> ไปตั้งค่า LINE OA</Button>
+              <Button className="gap-2"><Settings className="w-4 h-4" /> ไปตั้งค่า LINE OA</Button>
             </Link>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold">{t('line_title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('line_subtitle')}</p>
-        </div>
-        <Badge variant="outline" className="bg-green-50 text-green-700 text-[10px] gap-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-green-500" /> LINE Connected
-        </Badge>
-      </div>
+  const totalUnread = Object.values(userGroups).reduce((s, u) => s + u.unread, 0);
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-200px)] md:h-[calc(100vh-220px)]">
-        {/* Contact List */}
-        <Card className={`lg:col-span-1 flex flex-col ${selectedUserId ? 'hidden lg:flex' : 'flex'}`}>
-          <CardHeader className="pb-2 shrink-0">
+  return (
+    <div className="h-[calc(100vh-120px)] md:h-[calc(100vh-100px)] flex flex-col">
+      {/* Main Chat Container */}
+      <div className="flex-1 flex rounded-xl border bg-card shadow-sm overflow-hidden">
+        {/* ── Contact Sidebar ── */}
+        <div className={`w-full lg:w-[340px] xl:w-[380px] border-r flex flex-col bg-card ${selectedUserId ? 'hidden lg:flex' : 'flex'}`}>
+          {/* Sidebar Header */}
+          <div className="p-4 space-y-3 shrink-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold tracking-tight">แชท</h2>
+                {totalUnread > 0 && (
+                  <p className="text-[11px] text-muted-foreground">{totalUnread} ข้อความใหม่</p>
+                )}
+              </div>
+              <Badge variant="outline" className="bg-green-50 text-green-700 text-[10px] gap-1.5 border-green-200">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> LINE
+              </Badge>
+            </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder={t('search')} value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
+              <Input
+                placeholder="ค้นหาชื่อ..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9 h-9 bg-muted/50 border-0 focus-visible:ring-1 text-sm rounded-lg"
+              />
             </div>
-          </CardHeader>
-          <CardContent className="flex-1 overflow-hidden p-0">
-            <ScrollArea className="h-full">
-              {userList.length === 0 ? (
-                <div className="p-6 text-center text-muted-foreground text-sm">
-                  <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                  <p>{t('no_messages')}</p>
-                  <p className="text-[11px] mt-1">เมื่อมีคนส่งข้อความมาที่ LINE OA จะแสดงที่นี่</p>
-                </div>
-              ) : userList.map(u => (
-                <div key={u.id} onClick={() => setSelectedUserId(u.id)}
-                  className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/50 transition-colors border-b ${selectedUserId === u.id ? 'bg-muted' : ''}`}>
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
-                    {u.image ? <img src={u.image} className="w-full h-full object-cover" alt="" /> : (u.chatType === 'group' ? <Users className="w-5 h-5 text-primary" /> : <User className="w-5 h-5 text-primary" />)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium truncate">{u.name}</p>
-                      {u.lastDate && <span className="text-[10px] text-muted-foreground shrink-0">{format(parseUTCDate(u.lastDate), 'HH:mm')}</span>}
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {(() => {
-                        const last = u.messages[u.messages.length - 1];
-                        if (!last) return '';
-                        if (last.message_type === 'image') return '🖼️ รูปภาพ';
-                        if (last.message_type === 'sticker') return '😊 Sticker';
-                        if (last.message_type === 'file') return '📎 ไฟล์';
-                        return last.content;
-                      })()}
-                    </p>
-                  </div>
-                  {u.unread > 0 && <Badge className="bg-destructive text-destructive-foreground text-[10px]">{u.unread}</Badge>}
-                </div>
-              ))}
-            </ScrollArea>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Chat Area */}
-        <Card className={`lg:col-span-2 flex flex-col ${selectedUserId ? 'flex' : 'hidden lg:flex'}`}>
+          {/* Contact List */}
+          <ScrollArea className="flex-1">
+            {userList.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mb-3">
+                  <MessageCircle className="w-6 h-6 text-muted-foreground/40" />
+                </div>
+                <p className="text-sm font-medium text-muted-foreground">{search ? 'ไม่พบผลลัพธ์' : 'ยังไม่มีข้อความ'}</p>
+                <p className="text-[11px] text-muted-foreground/60 mt-1">เมื่อมีคนส่งข้อความมาจะแสดงที่นี่</p>
+              </div>
+            ) : userList.map(u => {
+              const isActive = selectedUserId === u.id;
+              const hasUnread = u.unread > 0;
+              return (
+                <div
+                  key={u.id}
+                  onClick={() => setSelectedUserId(u.id)}
+                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-150 relative
+                    ${isActive ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-muted/50 border-l-2 border-l-transparent'}
+                    ${hasUnread && !isActive ? 'bg-primary/[0.02]' : ''}`}
+                >
+                  {/* Avatar */}
+                  <div className="relative shrink-0">
+                    <div className={`w-11 h-11 rounded-full flex items-center justify-center overflow-hidden ${u.image ? '' : 'bg-gradient-to-br from-green-400 to-green-600'}`}>
+                      {u.image ? (
+                        <img src={u.image} className="w-full h-full object-cover" alt="" />
+                      ) : u.chatType === 'group' ? (
+                        <Users className="w-5 h-5 text-white" />
+                      ) : (
+                        <span className="text-white font-semibold text-sm">{u.name?.[0]?.toUpperCase() || '?'}</span>
+                      )}
+                    </div>
+                    {u.chatType === 'group' && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-blue-500 border-2 border-card flex items-center justify-center">
+                        <Users className="w-2 h-2 text-white" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className={`text-sm truncate ${hasUnread ? 'font-semibold text-foreground' : 'font-medium text-foreground/80'}`}>{u.name}</p>
+                      <span className={`text-[10px] shrink-0 ${hasUnread ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+                        {formatChatDate(u.lastDate)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className={`text-xs truncate flex-1 ${hasUnread ? 'text-foreground/70 font-medium' : 'text-muted-foreground'}`}>
+                        {getLastMessagePreview(u.messages)}
+                      </p>
+                      {hasUnread && (
+                        <span className="shrink-0 min-w-[18px] h-[18px] rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center px-1">
+                          {u.unread > 99 ? '99+' : u.unread}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </ScrollArea>
+        </div>
+
+        {/* ── Chat Area ── */}
+        <div className={`flex-1 flex flex-col min-w-0 ${selectedUserId ? 'flex' : 'hidden lg:flex'}`}>
           {!selectedUser ? (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-              <div className="text-center"><MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-20" /><p>{t('select_chat')}</p></div>
+            // Empty state
+            <div className="flex-1 flex items-center justify-center bg-muted/20">
+              <div className="text-center px-6">
+                <div className="w-20 h-20 rounded-full bg-muted/60 flex items-center justify-center mx-auto mb-4">
+                  <MessageCircle className="w-8 h-8 text-muted-foreground/30" />
+                </div>
+                <h3 className="text-base font-medium text-muted-foreground/60">เลือกการสนทนา</h3>
+                <p className="text-xs text-muted-foreground/40 mt-1">เลือกแชทจากรายชื่อทางซ้ายเพื่อเริ่มสนทนา</p>
+              </div>
             </div>
           ) : (
             <>
-              <CardHeader className="pb-2 border-b shrink-0">
-                <div className="flex items-center gap-3">
-                  <Button variant="ghost" size="icon" className="lg:hidden shrink-0" onClick={() => setSelectedUserId(null)}>
-                    <ArrowLeft className="w-5 h-5" />
-                  </Button>
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
-                    {selectedUser.image ? <img src={selectedUser.image} className="w-full h-full object-cover" alt="" /> : <User className="w-4 h-4 text-primary" />}
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">{selectedUser.name}</CardTitle>
-                    <p className="text-[10px] text-muted-foreground">LINE User ID: {selectedUserId.substring(0, 12)}...</p>
+              {/* Chat Header */}
+              <div className="flex items-center gap-3 px-4 py-3 border-b bg-card/80 backdrop-blur-sm shrink-0">
+                <Button variant="ghost" size="icon" className="lg:hidden shrink-0 h-8 w-8" onClick={() => setSelectedUserId(null)}>
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                <div className="relative shrink-0">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center overflow-hidden ${selectedUser.image ? '' : 'bg-gradient-to-br from-green-400 to-green-600'}`}>
+                    {selectedUser.image ? (
+                      <img src={selectedUser.image} className="w-full h-full object-cover" alt="" />
+                    ) : (
+                      <span className="text-white font-semibold text-xs">{selectedUser.name?.[0]?.toUpperCase() || '?'}</span>
+                    )}
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-hidden p-0 flex flex-col">
-                <PinnedMessages
-                  messages={allChatMessages}
-                  pinnedIds={pinnedIds}
-                  onUnpin={handlePin}
-                  onScrollTo={(id) => {
-                    const el = document.getElementById(`msg-${id}`);
-                    if (el) {
-                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      el.classList.add('bg-amber-50');
-                      setTimeout(() => el.classList.remove('bg-amber-50'), 2000);
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold truncate">{selectedUser.name}</h3>
+                  <p className="text-[10px] text-muted-foreground">
+                    {isGroupChat ? `${lineMembers.length || '—'} สมาชิก` : 'LINE Chat'}
+                  </p>
+                </div>
+                {isGroupChat && (
+                  <Badge variant="secondary" className="text-[10px] gap-1 shrink-0">
+                    <Users className="w-3 h-3" /> กลุ่ม
+                  </Badge>
+                )}
+              </div>
+
+              {/* Pinned Messages */}
+              <PinnedMessages
+                messages={allChatMessages}
+                pinnedIds={pinnedIds}
+                onUnpin={handlePin}
+                onScrollTo={(id) => {
+                  const el = document.getElementById(`msg-${id}`);
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.classList.add('bg-amber-50');
+                    setTimeout(() => el.classList.remove('bg-amber-50'), 2000);
+                  }
+                }}
+              />
+
+              {/* Messages */}
+              <ScrollArea className="flex-1">
+                <div className="px-4 py-3 space-y-1">
+                  {hasOlderMessages && (
+                    <div className="flex justify-center py-2">
+                      <Button variant="ghost" size="sm" onClick={handleLoadOlder}
+                        className="text-xs text-muted-foreground gap-1.5 hover:text-foreground rounded-full px-4 h-7 bg-muted/50">
+                        <ChevronUp className="w-3.5 h-3.5" />
+                        โหลดข้อความเก่า ({totalMessages - visibleCount})
+                      </Button>
+                    </div>
+                  )}
+                  <div ref={chatTopRef} />
+                  {messagesWithSeparators.map(item => {
+                    if (item.type === 'separator') {
+                      return <DateSeparator key={item.key} date={item.date} />;
                     }
-                  }}
-                />
-                <ScrollArea className="flex-1 p-3 md:p-4">
-                  <div className="space-y-3">
-                    {hasOlderMessages && (
-                      <div className="flex justify-center py-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleLoadOlder}
-                          className="text-xs text-muted-foreground gap-1.5 hover:text-foreground"
-                        >
-                          <ChevronUp className="w-3.5 h-3.5" />
-                          โหลดข้อความเก่า ({totalMessages - visibleCount} ข้อความ)
-                        </Button>
-                      </div>
-                    )}
-                    <div ref={chatTopRef} />
-                    {chatMessages.map(m => (
-                      <div key={m.id} id={`msg-${m.id}`} className="transition-colors duration-1000 rounded-lg">
-                      <ChatBubble
-                        message={m}
-                        onCreateTask={(msg) => { setTaskMessage(msg); setTaskDialogOpen(true); }}
-                        onReply={handleReply}
-                        onPin={handlePin}
-                        pinnedIds={pinnedIds}
-                        onQuoteClick={(msgId) => {
-                          // If the message is not visible, load more
-                          const idx = allChatMessages.findIndex(m => m.id === msgId);
-                          if (idx >= 0 && idx < totalMessages - visibleCount) {
-                            setVisibleCount(totalMessages - idx + 5);
-                          }
-                          setTimeout(() => {
-                            const el = document.getElementById(`msg-${msgId}`);
-                            if (el) {
-                              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                              el.classList.add('bg-primary/10');
-                              setTimeout(() => el.classList.remove('bg-primary/10'), 2000);
+                    const m = item.data;
+                    return (
+                      <div key={m.id} id={`msg-${m.id}`} className="transition-colors duration-700 rounded-lg">
+                        <ChatBubble
+                          message={m}
+                          onCreateTask={(msg) => { setTaskMessage(msg); setTaskDialogOpen(true); }}
+                          onReply={handleReply}
+                          onPin={handlePin}
+                          pinnedIds={pinnedIds}
+                          onQuoteClick={(msgId) => {
+                            const idx = allChatMessages.findIndex(m => m.id === msgId);
+                            if (idx >= 0 && idx < totalMessages - visibleCount) {
+                              setVisibleCount(totalMessages - idx + 5);
                             }
-                          }, 100);
-                        }}
-                      />
+                            setTimeout(() => {
+                              const el = document.getElementById(`msg-${msgId}`);
+                              if (el) {
+                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                el.classList.add('bg-primary/10');
+                                setTimeout(() => el.classList.remove('bg-primary/10'), 2000);
+                              }
+                            }, 100);
+                          }}
+                        />
                       </div>
-                    ))}
-                    <div ref={chatEndRef} />
-                  </div>
-                </ScrollArea>
-              </CardContent>
+                    );
+                  })}
+                  <div ref={chatEndRef} />
+                </div>
+              </ScrollArea>
+
+              {/* Reply Preview */}
               {replyTo && (
-                <div className="px-3 pt-2 pb-0 border-t bg-muted/30 flex items-center gap-2">
-                  <div className="flex-1 min-w-0 border-l-2 border-primary pl-2 py-1">
-                    <p className="text-[11px] font-medium text-primary truncate">{replyTo.sender_name || replyTo.display_name || ''}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{replyTo.content || (replyTo.message_type === 'image' ? '🖼️ รูปภาพ' : '📎 ไฟล์')}</p>
+                <div className="px-4 py-2 border-t bg-muted/30">
+                  <div className="flex items-center gap-2 bg-card rounded-lg px-3 py-2 border">
+                    <div className="w-1 h-8 rounded-full bg-primary shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-semibold text-primary truncate">{replyTo.sender_name || replyTo.display_name || ''}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{replyTo.content || (replyTo.message_type === 'image' ? '📷 รูปภาพ' : '📎 ไฟล์')}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 rounded-full hover:bg-destructive/10" onClick={() => setReplyTo(null)}>
+                      <X className="w-3.5 h-3.5 text-muted-foreground" />
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setReplyTo(null)}>
-                    <span className="text-xs">✕</span>
-                  </Button>
                 </div>
               )}
-              <div className={`p-3 ${!replyTo ? 'border-t' : ''} flex gap-2 shrink-0`}>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.zip,.txt"
-                  onChange={handleFileSend}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingFile || sendMutation.isPending}
-                  title="แนบไฟล์/รูปภาพ"
-                >
-                  {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0"
-                  onClick={() => setCaptureDialogOpen(true)}
-                  disabled={sendMutation.isPending}
-                  title="Capture Screen"
-                >
-                  <ScreenShare className="w-4 h-4" />
-                </Button>
-                <MentionInput
-                  placeholder={t('type_message')}
-                  value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                  disabled={sendMutation.isPending}
-                  users={users}
-                  lineMembers={lineMembers}
-                  chatType={selectedUser?.chatType || 'user'}
-                  onMentionsChange={setActiveMentions}
-                />
-                <Button onClick={handleSend} disabled={!newMessage.trim() || sendMutation.isPending} size="icon" className="shrink-0">
-                  <Send className="w-4 h-4" />
-                </Button>
+
+              {/* Input Area */}
+              <div className="px-4 py-3 border-t bg-card shrink-0">
+                <div className="flex items-center gap-2">
+                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.zip,.txt" onChange={handleFileSend} />
+                  <div className="flex items-center gap-0.5">
+                    <Button
+                      variant="ghost" size="icon"
+                      className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingFile || sendMutation.isPending}
+                      title="แนบไฟล์"
+                    >
+                      {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+                    </Button>
+                    <Button
+                      variant="ghost" size="icon"
+                      className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+                      onClick={() => setCaptureDialogOpen(true)}
+                      disabled={sendMutation.isPending}
+                      title="Capture Screen"
+                    >
+                      <ScreenShare className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="flex-1">
+                    <MentionInput
+                      placeholder="พิมพ์ข้อความ..."
+                      value={newMessage}
+                      onChange={e => setNewMessage(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                      disabled={sendMutation.isPending}
+                      users={users}
+                      lineMembers={lineMembers}
+                      chatType={selectedUser?.chatType || 'user'}
+                      onMentionsChange={setActiveMentions}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSend}
+                    disabled={!newMessage.trim() || sendMutation.isPending}
+                    size="icon"
+                    className="h-9 w-9 rounded-full shrink-0 bg-green-600 hover:bg-green-700 shadow-sm"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </>
           )}
-        </Card>
+        </div>
       </div>
 
-      {/* Screen Capture dialog */}
-      <ScreenCaptureDialog
-        open={captureDialogOpen}
-        onOpenChange={setCaptureDialogOpen}
-        onSend={handleCaptureSend}
-        sending={sendingCapture}
-      />
-
-      {/* Create Task from LINE message dialog */}
-      <CreateTaskFromChat
-        open={taskDialogOpen}
-        onOpenChange={setTaskDialogOpen}
-        message={taskMessage}
-        chatDisplayName={selectedUser?.name}
-      />
+      <ScreenCaptureDialog open={captureDialogOpen} onOpenChange={setCaptureDialogOpen} onSend={handleCaptureSend} sending={sendingCapture} />
+      <CreateTaskFromChat open={taskDialogOpen} onOpenChange={setTaskDialogOpen} message={taskMessage} chatDisplayName={selectedUser?.name} />
     </div>
   );
 }
