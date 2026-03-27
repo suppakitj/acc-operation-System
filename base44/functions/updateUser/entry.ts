@@ -9,8 +9,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (currentUser.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    const allowedRoles = ['admin', 'management', 'manager'];
+    if (!allowedRoles.includes(currentUser.role)) {
+      return Response.json({ error: 'Forbidden: Admin/Management/Manager access required' }, { status: 403 });
     }
 
     const { userId, data } = await req.json();

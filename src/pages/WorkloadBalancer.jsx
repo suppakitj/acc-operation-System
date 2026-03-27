@@ -91,15 +91,18 @@ export default function WorkloadBalancer() {
   const canEditCapacity = ['admin', 'management', 'manager'].includes(ac.role);
 
   const capacityMutation = useMutation({
-    mutationFn: ({ email, maxTasks }) => {
+    mutationFn: async ({ email, maxTasks }) => {
       const targetUser = users.find(u => u.email === email);
       if (!targetUser) throw new Error('User not found');
-      return base44.entities.User.update(targetUser.id, { max_tasks: maxTasks });
+      const res = await base44.functions.invoke('updateUser', { userId: targetUser.id, data: { max_tasks: maxTasks } });
+      if (res.data?.error) throw new Error(res.data.error);
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('อัปเดต Capacity สำเร็จ');
     },
+    onError: (err) => toast.error('อัปเดตไม่สำเร็จ: ' + err.message),
   });
 
   const handleTaskSubmit = (data) => {
