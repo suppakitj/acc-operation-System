@@ -9,6 +9,7 @@ import { Send, Search, MessageCircle, User, Users, ArrowLeft, AlertCircle, Setti
 import ChatBubble from '../components/chat/ChatBubble';
 import CreateTaskFromChat from '../components/chat/CreateTaskFromChat';
 import ScreenCaptureDialog from '../components/chat/ScreenCaptureDialog';
+import PinnedMessages from '../components/chat/PinnedMessages';
 import { format } from 'date-fns';
 import { parseUTCDate } from '@/lib/dateUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -296,8 +297,21 @@ export default function LineChat() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 overflow-hidden p-0">
-                <ScrollArea className="h-full p-3 md:p-4">
+              <CardContent className="flex-1 overflow-hidden p-0 flex flex-col">
+                <PinnedMessages
+                  messages={allChatMessages}
+                  pinnedIds={pinnedIds}
+                  onUnpin={handlePin}
+                  onScrollTo={(id) => {
+                    const el = document.getElementById(`msg-${id}`);
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      el.classList.add('bg-amber-50');
+                      setTimeout(() => el.classList.remove('bg-amber-50'), 2000);
+                    }
+                  }}
+                />
+                <ScrollArea className="flex-1 p-3 md:p-4">
                   <div className="space-y-3">
                     {hasOlderMessages && (
                       <div className="flex justify-center py-2">
@@ -314,14 +328,15 @@ export default function LineChat() {
                     )}
                     <div ref={chatTopRef} />
                     {chatMessages.map(m => (
+                      <div key={m.id} id={`msg-${m.id}`} className="transition-colors duration-1000 rounded-lg">
                       <ChatBubble
-                        key={m.id}
                         message={m}
                         onCreateTask={(msg) => { setTaskMessage(msg); setTaskDialogOpen(true); }}
                         onReply={handleReply}
                         onPin={handlePin}
                         pinnedIds={pinnedIds}
                       />
+                      </div>
                     ))}
                     <div ref={chatEndRef} />
                   </div>
