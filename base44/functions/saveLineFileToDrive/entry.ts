@@ -51,7 +51,7 @@ async function findOrCreateFolder(accessToken, name, parentId) {
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
 
-  const { file_url, file_name, content_type, chat_display_name, message_type } = await req.json();
+  const { file_url, file_name, content_type, chat_display_name, message_type, sender_name } = await req.json();
 
   if (!file_url || !chat_display_name) {
     return Response.json({ error: 'file_url and chat_display_name are required' }, { status: 400 });
@@ -77,15 +77,17 @@ Deno.serve(async (req) => {
 
   // Sanitize folder name (remove special chars)
   const safeName = chat_display_name.replace(/[\/\\?%*:|"<>]/g, '_').trim() || 'Unknown';
+  const safeSender = (sender_name || 'Unknown').replace(/[\/\\?%*:|"<>]/g, '_').trim() || 'Unknown';
 
-  console.log(`Saving file to Drive: LINE Files / ${safeName} / ${year} / ${month} / ${day} / ${file_name}`);
+  console.log(`Saving file to Drive: LINE Files / ${safeName} / ${year} / ${month} / ${day} / ${safeSender} / ${file_name}`);
 
-  // Create nested folder structure
+  // Create nested folder structure: chat > year > month > day > sender
   const rootFolderId = await findOrCreateFolder(accessToken, 'LINE Files', null);
   const customerFolderId = await findOrCreateFolder(accessToken, safeName, rootFolderId);
   const yearFolderId = await findOrCreateFolder(accessToken, year, customerFolderId);
   const monthFolderId = await findOrCreateFolder(accessToken, month, yearFolderId);
   const dayFolderId = await findOrCreateFolder(accessToken, day, monthFolderId);
+  const senderFolderId = await findOrCreateFolder(accessToken, safeSender, dayFolderId);
 
   // Download the file
   const fileRes = await fetch(file_url);
@@ -101,7 +103,7 @@ Deno.serve(async (req) => {
   // Upload to Google Drive using multipart upload
   const metadata = {
     name: finalFileName,
-    parents: [dayFolderId],
+    parents: [senderFolderId],
   };
 
   const boundary = 'line_drive_boundary_' + Date.now();
@@ -146,6 +148,6 @@ Deno.serve(async (req) => {
     drive_file_id: driveFile.id,
     drive_file_name: driveFile.name,
     drive_link: driveFile.webViewLink,
-    folder_path: `LINE Files/${safeName}/${year}/${month}/${day}`,
+    folder_path: `LINE Files/${safeName}/${year}/${month}/${day}/${safeSender}`,
   });
 });

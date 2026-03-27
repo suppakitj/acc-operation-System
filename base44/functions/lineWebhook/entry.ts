@@ -262,6 +262,7 @@ Deno.serve(async (req) => {
               content_type: driveContentType,
               chat_display_name: chatDisplayName,
               message_type: messageType,
+              sender_name: senderName || chatDisplayName,
             });
             console.log(`Auto-saved to Google Drive: ${driveRes?.folder_path || 'done'}`);
             // Mark as saved to Drive
