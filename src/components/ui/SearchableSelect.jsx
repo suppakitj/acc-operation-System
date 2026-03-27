@@ -1,6 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { ChevronDown, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+/**
+ * DropdownPortal — renders dropdown content via a portal positioned
+ * below the trigger so it escapes overflow:hidden/auto containers (e.g. Dialogs).
+ */
+function DropdownPortal({ containerRef, children }) {
+  const [style, setStyle] = useState({});
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setStyle({
+      position: 'fixed',
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+      zIndex: 9999,
+    });
+  }, [containerRef]);
+
+  return ReactDOM.createPortal(
+    <div
+      data-searchable-portal
+      style={style}
+      className="rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
+    >
+      {children}
+    </div>,
+    document.body
+  );
+}
 
 /**
  * SearchableSelect — a dropdown with built-in search filtering.
@@ -26,11 +58,17 @@ export default function SearchableSelect({
   const containerRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Close on outside click
+  const portalRef = useRef(null);
+
+  // Close on outside click (check both trigger container and portal)
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      const inContainer = containerRef.current?.contains(e.target);
+      // Check if click is inside portal (the fixed dropdown)
+      const portalEl = document.querySelector('[data-searchable-portal]');
+      const inPortal = portalEl?.contains(e.target);
+      if (!inContainer && !inPortal) {
         setOpen(false);
         setSearch('');
       }
@@ -75,10 +113,9 @@ export default function SearchableSelect({
         <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown — rendered via portal to escape overflow:hidden containers like Dialogs */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full min-w-[8rem] rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95">
-          {/* Search input */}
+        <DropdownPortal containerRef={containerRef}>
           <div className="flex items-center border-b px-2 py-1.5">
             <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0 mr-1.5" />
             <input
@@ -94,7 +131,6 @@ export default function SearchableSelect({
               </button>
             )}
           </div>
-          {/* Options list */}
           <div className="max-h-[200px] overflow-y-auto p-1">
             {filtered.length === 0 ? (
               <div className="py-4 text-center text-xs text-muted-foreground">ไม่พบข้อมูล</div>
@@ -114,7 +150,7 @@ export default function SearchableSelect({
               ))
             )}
           </div>
-        </div>
+        </DropdownPortal>
       )}
     </div>
   );
