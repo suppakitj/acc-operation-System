@@ -134,14 +134,17 @@ export default function LineChat() {
 
   const selectedUser = selectedUserId ? userGroups[selectedUserId] : null;
 
-  // Fetch LINE group members for selected chat
+  // Determine if current chat is a group
+  const isGroupChat = selectedUser?.chatType === 'group';
+
+  // Fetch LINE group members for selected group chat
   const { data: lineMembers = [] } = useQuery({
     queryKey: ['lineGroupMembers', selectedUserId],
     queryFn: async () => {
       const res = await base44.functions.invoke('listGroupMembers', { group_id: selectedUserId });
       return res.data?.members || [];
     },
-    enabled: !!selectedUserId && selectedUser?.chatType === 'group',
+    enabled: !!selectedUserId && isGroupChat,
     staleTime: 60_000,
   });
   const allChatMessages = selectedUser?.messages?.sort((a, b) => parseUTCDate(a.created_date) - parseUTCDate(b.created_date)) || [];
