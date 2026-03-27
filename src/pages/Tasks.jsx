@@ -71,12 +71,12 @@ export default function Tasks() {
     else createMutation.mutate(data);
   };
 
-  // Clamp a Date to working hours (08:30–17:30) on the same day
+  // Clamp a Date to working hours (09:00–18:00) on the same day
   const clampToWorkHours = (date) => {
     const d = new Date(date);
-    const h = d.getHours(), m = d.getMinutes();
-    if (h < 8 || (h === 8 && m < 30)) { d.setHours(8, 30, 0, 0); }
-    if (h > 17 || (h === 17 && m > 30)) { d.setHours(17, 30, 0, 0); }
+    const h = d.getHours();
+    if (h < 9) { d.setHours(9, 0, 0, 0); }
+    if (h >= 18) { d.setHours(18, 0, 0, 0); }
     return d;
   };
 
