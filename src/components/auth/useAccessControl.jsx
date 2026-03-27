@@ -131,6 +131,9 @@ export function useAccessControl(user) {
       // Workload Balancer
       if (p('workload') !== 'no') menus.push('workload');
 
+      // Customer Profile
+      if (p('customer_profile') !== 'no') menus.push('customer_profile');
+
       return menus;
     };
 
