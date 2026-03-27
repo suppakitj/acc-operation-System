@@ -56,18 +56,6 @@ export default function LineChat() {
     staleTime: 2 * 60_000,
   });
 
-  // Fetch LINE group members for selected chat
-  const { data: lineMembers = [] } = useQuery({
-    queryKey: ['lineGroupMembers', selectedUserId],
-    queryFn: async () => {
-      if (!selectedUserId || selectedUser?.chatType !== 'group') return [];
-      const res = await base44.functions.invoke('listGroupMembers', { group_id: selectedUserId });
-      return res.data?.members || [];
-    },
-    enabled: !!selectedUserId && selectedUser?.chatType === 'group',
-    staleTime: 60_000,
-  });
-
   // Poll messages every 15s to reduce API load
   const { data: messages = [] } = useQuery({
     queryKey: ['lineMessages'],
@@ -145,6 +133,17 @@ export default function LineChat() {
     .sort((a, b) => new Date(b.lastDate) - new Date(a.lastDate));
 
   const selectedUser = selectedUserId ? userGroups[selectedUserId] : null;
+
+  // Fetch LINE group members for selected chat
+  const { data: lineMembers = [] } = useQuery({
+    queryKey: ['lineGroupMembers', selectedUserId],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('listGroupMembers', { group_id: selectedUserId });
+      return res.data?.members || [];
+    },
+    enabled: !!selectedUserId && selectedUser?.chatType === 'group',
+    staleTime: 60_000,
+  });
   const allChatMessages = selectedUser?.messages?.sort((a, b) => parseUTCDate(a.created_date) - parseUTCDate(b.created_date)) || [];
   const totalMessages = allChatMessages.length;
   const hasOlderMessages = totalMessages > visibleCount;
