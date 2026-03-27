@@ -52,7 +52,7 @@ export default function Tasks() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tasks'] }); setShowForm(false); setEditingTask(null); },
   });
 
-  const handleSubmit = (data) => {
+  const handleSubmit = async (data) => {
     // Auto set completed_date when status changes to completed
     if (data.status === 'completed' && !data.completed_date) {
       data.completed_date = format(new Date(), 'yyyy-MM-dd');
@@ -61,8 +61,48 @@ export default function Tasks() {
     if (data.status !== 'completed') {
       data.completed_date = null;
     }
+
+    // Auto time tracking on status change
+    if (editingTask && currentUser && editingTask.status !== data.status) {
+      autoTimeTrack(editingTask, data.status, currentUser);
+    }
+
     if (editingTask) updateMutation.mutate({ id: editingTask.id, data });
     else createMutation.mutate(data);
+  };
+
+  // Auto start/stop timer when status changes
+  const autoTimeTrack = async (task, newStatus, user) => {
+    try {
+      const entries = await base44.entities.TimeEntry.filter({ task_id: task.id, is_running: true }, '-created_date', 10);
+      const myRunning = entries.find(e => e.user_email === user.email);
+
+      if (newStatus === 'in_progress' && !myRunning) {
+        // Auto-start timer
+        await base44.entities.TimeEntry.create({
+          task_id: task.id, task_title: task.title,
+          customer_id: task.customer_id || '', customer_name: task.customer_name || '',
+          service_type: task.service_type || '', department: task.department || '',
+          user_email: user.email, user_name: user.full_name || user.email,
+          start_time: new Date().toISOString(), is_running: true,
+          description: 'เริ่มอัตโนมัติ (status → In Progress)',
+        });
+      } else if ((newStatus === 'completed' || newStatus === 'review') && myRunning) {
+        // Auto-stop timer
+        const endTime = new Date();
+        const startTime = new Date(myRunning.start_time);
+        const duration = Math.max(0, (endTime - startTime) / 60000);
+        await base44.entities.TimeEntry.update(myRunning.id, {
+          end_time: endTime.toISOString(),
+          duration_minutes: Math.round(duration * 100) / 100,
+          is_running: false,
+          description: (myRunning.description || '') + ` (หยุดอัตโนมัติ: status → ${newStatus})`,
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
+    } catch (e) {
+      console.warn('Auto time track failed:', e.message);
+    }
   };
 
   const filtered = useMemo(() => {
