@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
       phone: u.phone,
       nickname: u.nickname || '',
       initials: u.initials || '',
+      max_tasks: u.max_tasks,
       created_date: u.created_date,
       updated_date: u.updated_date,
     }));
