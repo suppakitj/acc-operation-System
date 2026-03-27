@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Bell, CheckCheck, AlertTriangle, Clock, AlertCircle, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
+import { parseUTCDate } from '@/lib/dateUtils';
 
 export default function Notifications() {
   const { t } = useLanguage();
@@ -66,7 +67,7 @@ export default function Notifications() {
                    <div className="flex items-center gap-2 mt-2 flex-wrap">
                      <Badge variant="secondary" className={config.color}>{config.label}</Badge>
                      {n.customer_name && <span className="text-xs text-muted-foreground">{n.customer_name}</span>}
-                     <span className="text-xs text-muted-foreground">{format(new Date(n.created_date), 'dd/MM/yyyy HH:mm')}</span>
+                     <span className="text-xs text-muted-foreground">{format(parseUTCDate(n.created_date), 'dd/MM/yyyy HH:mm')}</span>
                    </div>
                  </div>
                </CardContent>

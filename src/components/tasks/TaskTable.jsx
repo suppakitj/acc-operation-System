@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, differenceInDays } from 'date-fns';
 import { useLanguage } from '../LanguageContext';
+import { parseUTCDate } from '@/lib/dateUtils';
 
 const PRIORITY_DOT = { low: 'bg-gray-400', medium: 'bg-blue-500', high: 'bg-orange-500', urgent: 'bg-red-500' };
 const PRIORITY_LABEL = { low: 'Low', medium: 'Medium', high: 'High', urgent: 'Urgent' };
@@ -143,6 +144,7 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
                 <td className="px-2 py-2.5">
                   <p className={`text-xs font-medium ${isOverdue ? 'text-red-600' : ''}`}>
                     {task.due_date ? format(new Date(task.due_date), 'dd MMM yy') : '-'}
+
                   </p>
                 </td>
                 <td className="px-2 py-2.5 hidden sm:table-cell">
@@ -172,7 +174,7 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
                 </td>
                 <td className="px-2 py-2.5 hidden lg:table-cell">
                   <span className="text-[11px] text-muted-foreground">
-                    {task.updated_date ? format(new Date(task.updated_date), 'dd MMM HH:mm') : '-'}
+                    {task.updated_date ? format(parseUTCDate(task.updated_date), 'dd MMM HH:mm') : '-'}
                   </span>
                 </td>
               </tr>

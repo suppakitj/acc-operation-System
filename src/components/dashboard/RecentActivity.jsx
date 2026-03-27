@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle2, AlertTriangle, Clock, UserCheck } from 'lucide-react';
 import { format } from 'date-fns';
+import { parseUTCDate } from '@/lib/dateUtils';
 
 const ICONS = {
   completed: { icon: CheckCircle2, color: 'text-emerald-500' },
@@ -14,7 +15,7 @@ const ICONS = {
 export default function RecentActivity({ tasks }) {
   const recent = tasks
     .filter(t => t.status !== 'cancelled')
-    .sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date))
+    .sort((a, b) => parseUTCDate(b.updated_date || b.created_date) - parseUTCDate(a.updated_date || a.created_date))
     .slice(0, 5);
 
   const getActivityLabel = (task) => {
@@ -54,7 +55,7 @@ export default function RecentActivity({ tasks }) {
                   <p className="text-xs font-medium leading-snug truncate">{getActivityLabel(task)}</p>
                 </div>
                 <span className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap mt-0.5">
-                  {format(new Date(task.updated_date || task.created_date), 'd MMM HH:mm')}
+                  {format(parseUTCDate(task.updated_date || task.created_date), 'd MMM HH:mm')}
                 </span>
               </div>
             );

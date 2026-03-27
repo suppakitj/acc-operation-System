@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { FileText, Download, Image as ImageIcon, ClipboardPlus } from 'lucide-react';
+import { parseUTCDate } from '@/lib/dateUtils';
 import { Button } from '@/components/ui/button';
 
 export default function ChatBubble({ message, onCreateTask }) {
@@ -96,7 +97,7 @@ export default function ChatBubble({ message, onCreateTask }) {
         )}
         <div className={`flex items-center gap-1 mt-1 ${isSticker ? 'text-muted-foreground' : timeClass}`}>
           <span className="text-[10px]">
-            {message.created_date && format(new Date(message.created_date), 'HH:mm')}
+            {message.created_date && format(parseUTCDate(message.created_date), 'HH:mm')}
           </span>
         </div>
       </div>

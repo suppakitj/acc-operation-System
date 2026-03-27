@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
+import { parseUTCDate } from '@/lib/dateUtils';
 import { useAccessControl } from '../components/auth/useAccessControl';
 import TablePagination, { paginateData } from '../components/shared/TablePagination';
 
@@ -61,7 +62,7 @@ export default function AuditLog() {
                    <span className="text-sm font-medium">{log.entity_type}</span>
                    {log.entity_name && <span className="text-sm text-muted-foreground hidden sm:inline">— {log.entity_name}</span>}
                  </div>
-                 <p className="text-xs text-muted-foreground mt-0.5">{log.user_name || log.user_email} · {log.created_date && format(new Date(log.created_date), 'dd/MM/yyyy HH:mm')}</p>
+                 <p className="text-xs text-muted-foreground mt-0.5">{log.user_name || log.user_email} · {log.created_date && format(parseUTCDate(log.created_date), 'dd/MM/yyyy HH:mm')}</p>
                </div>
              </CardContent>
            </Card>

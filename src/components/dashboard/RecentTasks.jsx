@@ -2,11 +2,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '../shared/StatusBadge';
 import { useLanguage } from '../LanguageContext';
+import { parseUTCDate } from '@/lib/dateUtils';
 
 export default function RecentTasks({ tasks }) {
   const { t } = useLanguage();
   const recent = tasks
-    .sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date))
+    .sort((a, b) => parseUTCDate(b.updated_date || b.created_date) - parseUTCDate(a.updated_date || a.created_date))
     .slice(0, 8);
 
   return (

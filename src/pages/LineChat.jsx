@@ -10,6 +10,7 @@ import ChatBubble from '../components/chat/ChatBubble';
 import CreateTaskFromChat from '../components/chat/CreateTaskFromChat';
 import ScreenCaptureDialog from '../components/chat/ScreenCaptureDialog';
 import { format } from 'date-fns';
+import { parseUTCDate } from '@/lib/dateUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '../components/LanguageContext';
 import { toast } from 'sonner';
@@ -106,7 +107,7 @@ export default function LineChat() {
     if (!userGroups[key]) userGroups[key] = { id: key, name: m.display_name || m.customer_name || '?', image: '', messages: [], unread: 0, lastDate: m.created_date, chatType: m.chat_type || 'user' };
     userGroups[key].messages.push(m);
     if (!m.is_read && m.direction === 'incoming') userGroups[key].unread++;
-    if (m.created_date > userGroups[key].lastDate) userGroups[key].lastDate = m.created_date;
+    if (parseUTCDate(m.created_date) > parseUTCDate(userGroups[key].lastDate)) userGroups[key].lastDate = m.created_date;
     // Keep the latest non-empty profile image
     if (m.profile_image && !userGroups[key].image) userGroups[key].image = m.profile_image;
   });
@@ -116,7 +117,7 @@ export default function LineChat() {
     .sort((a, b) => new Date(b.lastDate) - new Date(a.lastDate));
 
   const selectedUser = selectedUserId ? userGroups[selectedUserId] : null;
-  const allChatMessages = selectedUser?.messages?.sort((a, b) => new Date(a.created_date) - new Date(b.created_date)) || [];
+  const allChatMessages = selectedUser?.messages?.sort((a, b) => parseUTCDate(a.created_date) - parseUTCDate(b.created_date)) || [];
   const totalMessages = allChatMessages.length;
   const hasOlderMessages = totalMessages > visibleCount;
   const chatMessages = hasOlderMessages ? allChatMessages.slice(totalMessages - visibleCount) : allChatMessages;
@@ -236,7 +237,7 @@ export default function LineChat() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium truncate">{u.name}</p>
-                      {u.lastDate && <span className="text-[10px] text-muted-foreground shrink-0">{format(new Date(u.lastDate), 'HH:mm')}</span>}
+                      {u.lastDate && <span className="text-[10px] text-muted-foreground shrink-0">{format(parseUTCDate(u.lastDate), 'HH:mm')}</span>}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">
                       {(() => {

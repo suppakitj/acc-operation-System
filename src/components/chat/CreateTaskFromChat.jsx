@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { toast } from 'sonner';
 import { ClipboardPlus } from 'lucide-react';
+import { parseUTCDate } from '@/lib/dateUtils';
 
 const SERVICES = [
   { value: 'accounting', label: 'ทำบัญชี' },
@@ -133,7 +134,7 @@ export default function CreateTaskFromChat({ open, onOpenChange, message, chatDi
           )}
           {message?.content && <p className="whitespace-pre-wrap">{message.content}</p>}
           <p className="text-[10px] text-muted-foreground">
-            จาก: {message?.sender_name || chatDisplayName} · {message?.created_date && new Date(message.created_date).toLocaleString('th-TH')}
+            จาก: {message?.sender_name || chatDisplayName} · {message?.created_date && parseUTCDate(message.created_date).toLocaleString('th-TH')}
           </p>
         </div>
 
