@@ -10,6 +10,7 @@ import ChatBubble from '../components/chat/ChatBubble';
 import CreateTaskFromChat from '../components/chat/CreateTaskFromChat';
 import ScreenCaptureDialog from '../components/chat/ScreenCaptureDialog';
 import PinnedMessages from '../components/chat/PinnedMessages';
+import MentionInput from '../components/chat/MentionInput';
 import { format } from 'date-fns';
 import { parseUTCDate } from '@/lib/dateUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -42,6 +43,16 @@ export default function LineChat() {
   });
   const getConfigVal = (key) => configs.find(c => c.key === key)?.value || '';
   const isLineConfigured = !!(getConfigVal('line_channel_id') && getConfigVal('line_channel_secret') && getConfigVal('line_access_token'));
+
+  // Fetch users for @mention
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('listUsers', {});
+      return res.data?.users || [];
+    },
+    staleTime: 2 * 60_000,
+  });
 
   // Poll messages every 15s to reduce API load
   const { data: messages = [] } = useQuery({
@@ -381,12 +392,13 @@ export default function LineChat() {
                 >
                   <ScreenShare className="w-4 h-4" />
                 </Button>
-                <Input
+                <MentionInput
                   placeholder={t('type_message')}
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
                   disabled={sendMutation.isPending}
+                  users={users}
                 />
                 <Button onClick={handleSend} disabled={!newMessage.trim() || sendMutation.isPending} size="icon" className="shrink-0">
                   <Send className="w-4 h-4" />
