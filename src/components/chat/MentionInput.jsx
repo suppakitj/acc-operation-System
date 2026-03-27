@@ -15,11 +15,17 @@ export default function MentionInput({ value, onChange, onKeyDown, placeholder, 
   const inputRef = useRef(null);
   const menuRef = useRef(null);
 
-  const filtered = users.filter(u => {
+  const ALL_ITEM = { email: '__all__', full_name: 'All', isAll: true };
+
+  const matchesFilter = (u) => {
     if (!menuFilter) return true;
     const q = menuFilter.toLowerCase();
     return (u.full_name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
-  }).slice(0, 8);
+  };
+
+  const filteredUsers = users.filter(matchesFilter).slice(0, 8);
+  const showAll = !menuFilter || 'all'.includes(menuFilter.toLowerCase());
+  const filtered = showAll ? [ALL_ITEM, ...filteredUsers] : filteredUsers;
 
   // Detect @ trigger
   const handleChange = useCallback((e) => {
@@ -133,12 +139,16 @@ export default function MentionInput({ value, onChange, onKeyDown, placeholder, 
                 onMouseEnter={() => setSelectedIdx(idx)}
                 onClick={() => insertMention(user)}
               >
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-[10px] font-medium text-primary">
-                  {(user.full_name || user.email)[0]?.toUpperCase()}
-                </div>
+                {user.isAll ? (
+                  <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center shrink-0 text-[10px] font-bold text-amber-700">@</div>
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-[10px] font-medium text-primary">
+                    {(user.full_name || user.email)[0]?.toUpperCase()}
+                  </div>
+                )}
                 <div className="min-w-0">
-                  <p className="text-xs font-medium truncate">{user.full_name || user.email.split('@')[0]}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                  <p className="text-xs font-medium truncate">{user.isAll ? '@All — แจ้งเตือนทุกคน' : (user.full_name || user.email.split('@')[0])}</p>
+                  {!user.isAll && <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>}
                 </div>
               </button>
             ))}
