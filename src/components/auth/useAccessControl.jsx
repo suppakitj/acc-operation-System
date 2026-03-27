@@ -122,6 +122,9 @@ export function useAccessControl(user) {
       // OCR
       if (p('ocr') !== 'no') menus.push('ocr');
 
+      // Task Generation
+      if (p('task_generation') !== 'no') menus.push('task_generation');
+
       return menus;
     };
 

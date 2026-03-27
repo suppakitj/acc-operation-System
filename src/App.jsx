@@ -32,6 +32,7 @@ import TaskCalendar from './pages/TaskCalendar';
 import OcrProcessing from './pages/OcrProcessing';
 import LineFiles from './pages/LineFiles';
 import ReferralCommission from './pages/ReferralCommission';
+import TaskGeneration from './pages/TaskGeneration';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -83,6 +84,7 @@ const AuthenticatedApp = () => {
         <Route path="/OcrProcessing" element={<OcrProcessing />} />
         <Route path="/LineFiles" element={<LineFiles />} />
         <Route path="/ReferralCommission" element={<ReferralCommission />} />
+        <Route path="/TaskGeneration" element={<TaskGeneration />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
