@@ -24,10 +24,11 @@ export default function MentionInput({
 
   const isGroup = chatType === 'group';
 
-  // Build combined list: LINE members first (for groups), then internal users
+  // Build list: LINE members only for groups, internal users only for 1-on-1
   const buildItems = () => {
     const items = [];
-    if (isGroup && lineMembers.length > 0) {
+    if (isGroup) {
+      // Group chat: show only LINE group members
       lineMembers.forEach(m => {
         items.push({
           key: `line_${m.line_user_id}`,
@@ -38,16 +39,17 @@ export default function MentionInput({
           line_user_id: m.line_user_id,
         });
       });
-    }
-    // Internal users
-    users.forEach(u => {
-      items.push({
-        key: `user_${u.email}`,
-        display_name: u.full_name || u.email.split('@')[0],
-        subtitle: u.email,
-        isLineMember: false,
+    } else {
+      // 1-on-1 chat: show internal users
+      users.forEach(u => {
+        items.push({
+          key: `user_${u.email}`,
+          display_name: u.full_name || u.email.split('@')[0],
+          subtitle: u.email,
+          isLineMember: false,
+        });
       });
-    });
+    }
     return items;
   };
 
