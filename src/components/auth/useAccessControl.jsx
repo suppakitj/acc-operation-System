@@ -128,6 +128,9 @@ export function useAccessControl(user) {
       // Time Tracking
       if (p('time_tracking') !== 'no') menus.push('time_tracking');
 
+      // Workload Balancer
+      if (p('workload') !== 'no') menus.push('workload');
+
       return menus;
     };
 

@@ -1,0 +1,114 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string",
+      "description": "\u0e23\u0e2b\u0e31\u0e2a\u0e1e\u0e19\u0e31\u0e01\u0e07\u0e32\u0e19 (Auto-generated)"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "management",
+        "manager",
+        "super_supervisor",
+        "staff"
+      ],
+      "default": "staff",
+      "description": "\u0e15\u0e33\u0e41\u0e2b\u0e19\u0e48\u0e07\u0e43\u0e19\u0e23\u0e30\u0e1a\u0e1a"
+    },
+    "nickname": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e40\u0e25\u0e48\u0e19"
+    },
+    "initials": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e22\u0e48\u0e2d"
+    },
+    "departments": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "management",
+          "accounting",
+          "consulting",
+          "audit",
+          "billing",
+          "it"
+        ]
+      },
+      "description": "\u0e41\u0e1c\u0e19\u0e01\u0e17\u0e35\u0e48\u0e2a\u0e31\u0e07\u0e01\u0e31\u0e14 (\u0e2b\u0e25\u0e32\u0e22\u0e41\u0e1c\u0e19\u0e01\u0e44\u0e14\u0e49)"
+    },
+    "department": {
+      "type": "string",
+      "enum": [
+        "management",
+        "accounting",
+        "consulting",
+        "audit",
+        "billing",
+        "it"
+      ],
+      "description": "\u0e41\u0e1c\u0e19\u0e01\u0e2b\u0e25\u0e31\u0e01"
+    },
+    "position": {
+      "type": "string",
+      "description": "\u0e15\u0e33\u0e41\u0e2b\u0e19\u0e48\u0e07\u0e07\u0e32\u0e19 \u0e40\u0e0a\u0e48\u0e19 \u0e2b\u0e31\u0e27\u0e2b\u0e19\u0e49\u0e32\u0e17\u0e35\u0e21, \u0e40\u0e08\u0e49\u0e32\u0e2b\u0e19\u0e49\u0e32\u0e17\u0e35\u0e48\u0e1a\u0e31\u0e0d\u0e0a\u0e35"
+    },
+    "username": {
+      "type": "string",
+      "description": "Username \u0e2a\u0e33\u0e2b\u0e23\u0e31\u0e1a\u0e41\u0e2a\u0e14\u0e07\u0e1c\u0e25"
+    },
+    "phone": {
+      "type": "string",
+      "description": "\u0e40\u0e1a\u0e2d\u0e23\u0e4c\u0e42\u0e17\u0e23"
+    },
+    "max_tasks": {
+      "type": "number",
+      "default": 10,
+      "description": "\u0e08\u0e33\u0e19\u0e27\u0e19\u0e07\u0e32\u0e19\u0e2a\u0e39\u0e07\u0e2a\u0e38\u0e14\u0e17\u0e35\u0e48\u0e23\u0e31\u0e1a\u0e44\u0e14\u0e49\u0e1e\u0e23\u0e49\u0e2d\u0e21\u0e01\u0e31\u0e19 (Capacity)"
+    },
+    "user_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "description": "\u0e2a\u0e16\u0e32\u0e19\u0e30\u0e01\u0e32\u0e23\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19"
+    },
+    "theme": {
+      "type": "string",
+      "enum": [
+        "default",
+        "emerald",
+        "purple",
+        "rose",
+        "dark"
+      ],
+      "default": "default"
+    },
+    "notification_email": {
+      "type": "boolean",
+      "default": true
+    },
+    "notification_line": {
+      "type": "boolean",
+      "default": true
+    },
+    "menu_permissions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u0e40\u0e21\u0e19\u0e39\u0e17\u0e35\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e40\u0e02\u0e49\u0e32\u0e16\u0e36\u0e07\u0e44\u0e14\u0e49"
+    },
+    "last_modified_by": {
+      "type": "string",
+      "description": "\u0e1c\u0e39\u0e49\u0e41\u0e01\u0e49\u0e44\u0e02\u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14"
+    }
+  },
+  "required": []
+}

@@ -34,6 +34,7 @@ import LineFiles from './pages/LineFiles';
 import ReferralCommission from './pages/ReferralCommission';
 import TaskGeneration from './pages/TaskGeneration';
 import TimeTracking from './pages/TimeTracking';
+import WorkloadBalancer from './pages/WorkloadBalancer';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -87,6 +88,7 @@ const AuthenticatedApp = () => {
         <Route path="/ReferralCommission" element={<ReferralCommission />} />
         <Route path="/TaskGeneration" element={<TaskGeneration />} />
         <Route path="/TimeTracking" element={<TimeTracking />} />
+        <Route path="/WorkloadBalancer" element={<WorkloadBalancer />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
