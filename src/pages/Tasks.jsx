@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Download } from 'lucide-react';
 import TaskForm from '../components/tasks/TaskForm';
+import OTConfirmDialog from '../components/tasks/OTConfirmDialog';
 import TaskStatsRow from '../components/tasks/TaskStatsRow';
 import TaskDeptTabs from '../components/tasks/TaskDeptTabs';
 import TaskFilters from '../components/tasks/TaskFilters';
@@ -14,6 +15,23 @@ import TaskTable from '../components/tasks/TaskTable';
 import TablePagination, { paginateData } from '../components/shared/TablePagination';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
+
+const WORK_START_H = 9, WORK_START_M = 0;
+const WORK_END_H = 18, WORK_END_M = 0;
+
+function isOutsideWorkHours(date) {
+  const d = new Date(date);
+  const mins = d.getHours() * 60 + d.getMinutes();
+  return mins < WORK_START_H * 60 + WORK_START_M || mins > WORK_END_H * 60 + WORK_END_M;
+}
+
+function clampToWorkHours(date) {
+  const d = new Date(date);
+  const mins = d.getHours() * 60 + d.getMinutes();
+  if (mins < WORK_START_H * 60 + WORK_START_M) { d.setHours(WORK_START_H, WORK_START_M, 0, 0); }
+  if (mins > WORK_END_H * 60 + WORK_END_M) { d.setHours(WORK_END_H, WORK_END_M, 0, 0); }
+  return d;
+}
 
 export default function Tasks() {
   const { t } = useLanguage();
@@ -26,6 +44,7 @@ export default function Tasks() {
   const [sortDir, setSortDir] = useState('asc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [otDialog, setOtDialog] = useState({ open: false, resolve: null });
   const [filters, setFilters] = useState({
     search: '', department: 'all', status: 'all', priority: 'all',
     owner: 'all', serviceType: 'all', client: 'all', taskType: 'all',
@@ -64,51 +83,49 @@ export default function Tasks() {
 
     // Auto time tracking on status change
     if (editingTask && currentUser && editingTask.status !== data.status) {
-      autoTimeTrack(editingTask, data.status, currentUser);
+      const nowOutside = isOutsideWorkHours(new Date());
+      let isOT = false;
+      if (nowOutside) {
+        isOT = await new Promise((resolve) => setOtDialog({ open: true, resolve }));
+      }
+      autoTimeTrack(editingTask, data.status, currentUser, isOT);
     }
 
     if (editingTask) updateMutation.mutate({ id: editingTask.id, data });
     else createMutation.mutate(data);
   };
 
-  // Clamp a Date to working hours (08:30–17:30) on the same day
-  const clampToWorkHours = (date) => {
-    const d = new Date(date);
-    const h = d.getHours(), m = d.getMinutes();
-    if (h < 8 || (h === 8 && m < 30)) { d.setHours(8, 30, 0, 0); }
-    if (h > 17 || (h === 17 && m > 30)) { d.setHours(17, 30, 0, 0); }
-    return d;
-  };
-
   // Auto start/stop timer when status changes
-  const autoTimeTrack = async (task, newStatus, user) => {
+  const autoTimeTrack = async (task, newStatus, user, isOT = false) => {
     try {
       const entries = await base44.entities.TimeEntry.filter({ task_id: task.id, is_running: true }, '-created_date', 10);
       const myRunning = entries.find(e => e.user_email === user.email);
 
       if (newStatus === 'in_progress' && !myRunning) {
-        // Auto-start timer — clamp to working hours
-        const startTime = clampToWorkHours(new Date());
+        const now = new Date();
+        const startTime = isOT ? now : clampToWorkHours(now);
+        const otLabel = isOT ? ' [OT]' : '';
         await base44.entities.TimeEntry.create({
           task_id: task.id, task_title: task.title,
           customer_id: task.customer_id || '', customer_name: task.customer_name || '',
           service_type: task.service_type || '', department: task.department || '',
           user_email: user.email, user_name: user.full_name || user.email,
-          start_time: startTime.toISOString(), is_running: true,
-          description: 'เริ่มอัตโนมัติ (status → In Progress)',
+          start_time: startTime.toISOString(), is_running: true, is_overtime: isOT,
+          description: `เริ่มอัตโนมัติ (status → In Progress)${otLabel}`,
         });
       } else if ((newStatus === 'completed' || newStatus === 'review') && myRunning) {
-        // Auto-stop timer — clamp both start & end to working hours
         const rawStart = new Date(myRunning.start_time);
         const rawEnd = new Date();
-        const clampedStart = clampToWorkHours(rawStart);
-        const clampedEnd = clampToWorkHours(rawEnd);
-        const duration = Math.max(0, (clampedEnd - clampedStart) / 60000);
+        const entryIsOT = isOT || myRunning.is_overtime;
+        const effectiveStart = entryIsOT ? rawStart : clampToWorkHours(rawStart);
+        const effectiveEnd = entryIsOT ? rawEnd : clampToWorkHours(rawEnd);
+        const duration = Math.max(0, (effectiveEnd - effectiveStart) / 60000);
+        const otLabel = entryIsOT ? ' [OT]' : '';
         await base44.entities.TimeEntry.update(myRunning.id, {
-          end_time: clampedEnd.toISOString(),
+          end_time: effectiveEnd.toISOString(),
           duration_minutes: Math.round(duration * 100) / 100,
-          is_running: false,
-          description: (myRunning.description || '') + ` (หยุดอัตโนมัติ: status → ${newStatus})`,
+          is_running: false, is_overtime: entryIsOT,
+          description: (myRunning.description || '') + ` (หยุดอัตโนมัติ: status → ${newStatus})${otLabel}`,
         });
       }
       queryClient.invalidateQueries({ queryKey: ['timeEntries'] });
@@ -221,6 +238,15 @@ export default function Tasks() {
           <TaskForm task={editingTask} onSubmit={handleSubmit} isLoading={createMutation.isPending || updateMutation.isPending} permissions={ac} currentUser={currentUser} />
         </DialogContent>
       </Dialog>
+
+      {/* OT Confirmation Dialog */}
+      <OTConfirmDialog
+        open={otDialog.open}
+        onConfirm={(isOT) => {
+          otDialog.resolve?.(isOT);
+          setOtDialog({ open: false, resolve: null });
+        }}
+      />
     </div>
   );
 }
