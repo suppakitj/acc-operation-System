@@ -86,6 +86,21 @@ export default function WorkloadBalancer() {
     reassignMutation.mutate({ taskId: task.id, newEmail });
   };
 
+  // Capacity edit — only admin/management/manager
+  const canEditCapacity = ['admin', 'management', 'manager'].includes(ac.role);
+
+  const capacityMutation = useMutation({
+    mutationFn: ({ email, maxTasks }) => {
+      const targetUser = users.find(u => u.email === email);
+      if (!targetUser) throw new Error('User not found');
+      return base44.entities.User.update(targetUser.id, { max_tasks: maxTasks });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('อัปเดต Capacity สำเร็จ');
+    },
+  });
+
   const handleTaskSubmit = (data) => {
     if (editingTask) updateMutation.mutate({ id: editingTask.id, data });
   };
@@ -155,6 +170,8 @@ export default function WorkloadBalancer() {
             person={person}
             onTaskClick={(task) => setEditingTask(task)}
             onReassign={handleReassign}
+            canEditCapacity={canEditCapacity}
+            onCapacityChange={(email, val) => capacityMutation.mutate({ email, maxTasks: val })}
           />
         ))}
       </div>

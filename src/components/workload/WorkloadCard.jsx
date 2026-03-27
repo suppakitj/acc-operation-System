@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { AlertTriangle, CheckCircle2, Clock, User } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { AlertTriangle, CheckCircle2, Clock, User, Pencil, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const PRIORITY_COLORS = {
@@ -17,8 +17,10 @@ const STATUS_LABELS = {
   review: 'ตรวจ',
 };
 
-export default function WorkloadCard({ person, onTaskClick, onReassign }) {
+export default function WorkloadCard({ person, onTaskClick, onReassign, canEditCapacity, onCapacityChange }) {
   const { name, email, department, position, maxTasks, activeTasks, overdueTasks } = person;
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState(String(maxTasks));
   const utilization = maxTasks > 0 ? Math.round((activeTasks.length / maxTasks) * 100) : 0;
   const isOverloaded = activeTasks.length > maxTasks;
   const isLight = activeTasks.length <= maxTasks * 0.4;
@@ -66,9 +68,38 @@ export default function WorkloadCard({ person, onTaskClick, onReassign }) {
       {/* Capacity bar */}
       <div className="mb-3">
         <div className="flex justify-between items-center mb-1">
-          <span className="text-[10px] text-muted-foreground">
-            {activeTasks.length} / {maxTasks} งาน ({utilization}%)
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-muted-foreground">
+              {activeTasks.length} /
+            </span>
+            {editing ? (
+              <div className="flex items-center gap-0.5">
+                <Input
+                  type="number" min="1" max="99"
+                  value={editValue}
+                  onChange={e => setEditValue(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      const v = parseInt(editValue);
+                      if (v > 0) { onCapacityChange?.(email, v); setEditing(false); }
+                    }
+                    if (e.key === 'Escape') setEditing(false);
+                  }}
+                  className="h-5 w-10 text-[10px] px-1 py-0 text-center"
+                  autoFocus
+                />
+                <button onClick={() => { const v = parseInt(editValue); if (v > 0) { onCapacityChange?.(email, v); setEditing(false); } }} className="text-emerald-600 hover:text-emerald-800"><Check className="w-3 h-3" /></button>
+                <button onClick={() => setEditing(false)} className="text-muted-foreground hover:text-foreground"><X className="w-3 h-3" /></button>
+              </div>
+            ) : (
+              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                {maxTasks} งาน ({utilization}%)
+                {canEditCapacity && (
+                  <button onClick={() => { setEditValue(String(maxTasks)); setEditing(true); }} className="text-muted-foreground/50 hover:text-primary ml-0.5"><Pencil className="w-2.5 h-2.5" /></button>
+                )}
+              </span>
+            )}
+          </div>
           {overdueTasks > 0 && (
             <Badge variant="destructive" className="text-[9px] h-4 px-1.5">
               {overdueTasks} เกินกำหนด
