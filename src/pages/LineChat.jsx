@@ -103,10 +103,13 @@ export default function LineChat() {
     queryFn: async () => {
       const res = await base44.functions.invoke('listLineMessages', {});
       let msgs = res.data?.messages;
+      // Defensive: handle string, null, undefined, or non-array
       if (typeof msgs === 'string') {
         try { msgs = JSON.parse(msgs); } catch { msgs = []; }
       }
-      return Array.isArray(msgs) ? msgs : [];
+      if (!Array.isArray(msgs)) return [];
+      // Filter out any malformed entries (must have at least id and content/message_type)
+      return msgs.filter(m => m && typeof m === 'object' && m.id);
     },
     refetchInterval: 15_000,
     staleTime: 12_000,
