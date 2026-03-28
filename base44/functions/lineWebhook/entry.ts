@@ -264,10 +264,11 @@ Deno.serve(async (req) => {
               message_type: messageType,
               sender_name: senderName || chatDisplayName,
             });
-            console.log(`Auto-saved to Google Drive: ${driveRes?.folder_path || 'done'}`);
+            const driveData = driveRes?.data || driveRes;
+            console.log(`Auto-saved to Google Drive: ${driveData?.folder_path || 'done'}`);
             // Mark as saved to Drive
-            if (createdMsg?.id && (driveRes?.success || driveRes?.drive_file_id)) {
-              await base44.asServiceRole.entities.LineMessage.update(createdMsg.id, { drive_saved: true });
+            if (createdMsg?.id && (driveData?.success || driveData?.drive_file_id)) {
+              await base44.asServiceRole.entities.LineMessage.update(createdMsg.id, { drive_saved: true, gdrive_file_id: driveData.drive_file_id || '' });
             }
           } catch (driveErr) {
             console.warn('Auto-save to Drive failed (non-blocking):', driveErr.message);
