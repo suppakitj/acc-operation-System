@@ -102,7 +102,8 @@ export default function LineChat() {
     queryKey: ['lineMessages'],
     queryFn: async () => {
       const res = await base44.functions.invoke('listLineMessages', {});
-      return res.data?.messages || [];
+      const msgs = res.data?.messages;
+      return Array.isArray(msgs) ? msgs : [];
     },
     refetchInterval: 15_000,
     staleTime: 12_000,
