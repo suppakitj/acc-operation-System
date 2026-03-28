@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import JSZip from 'npm:jszip@3.10.1';
 
 const MAX_SIZE = 20 * 1024 * 1024; // 20 MB

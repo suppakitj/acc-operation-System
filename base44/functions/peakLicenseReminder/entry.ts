@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const PKG_LABELS = { trial: 'TRIAL', basic: 'BASIC', pro: 'PRO', pro_plus: 'PRO Plus' };
 
