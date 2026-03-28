@@ -60,9 +60,24 @@ Deno.serve(async (req) => {
     const lineToken = getVal('line_access_token');
     const acctGroup = getVal('line_group_dept_accounting');
 
-    const licenses = await base44.asServiceRole.entities.PeakLicense.filter({});
+    // Skip holidays — don't send reminders on holidays
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
+    const dayOfWeek = today.getDay(); // 0=Sun, 6=Sat
+
+    // Skip weekends
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      return Response.json({ success: true, skipped: true, reason: 'weekend' });
+    }
+
+    // Skip holidays from HolidayMaster
+    const holidays = await base44.asServiceRole.entities.HolidayMaster.filter({ status: 'active' });
+    const isHoliday = holidays.some(h => h.date === todayStr);
+    if (isHoliday) {
+      return Response.json({ success: true, skipped: true, reason: 'holiday' });
+    }
+
+    const licenses = await base44.asServiceRole.entities.PeakLicense.filter({});
     const results = [];
     const lineItems = [];
 
