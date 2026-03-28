@@ -12,14 +12,32 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const limit = Math.min(body.limit || 200, 500);
 
-    // Fetch only incoming messages from last 30 days + all outgoing for matching
-    const messages = await base44.asServiceRole.entities.LineMessage.filter(
+    let messages = await base44.asServiceRole.entities.LineMessage.filter(
       {},
       '-created_date',
       limit
     );
 
-    return Response.json({ messages });
+    // SDK may return stringified JSON
+    if (typeof messages === 'string') {
+      try {
+        messages = JSON.parse(messages);
+      } catch (parseErr) {
+        // If standard parse fails, try to salvage by finding complete JSON objects
+        console.error('JSON parse failed, attempting recovery:', parseErr.message);
+        const items = [];
+        const regex = /\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g;
+        let match;
+        while ((match = regex.exec(messages)) !== null) {
+          try {
+            items.push(JSON.parse(match[0]));
+          } catch { /* skip malformed */ }
+        }
+        messages = items;
+      }
+    }
+
+    return Response.json({ messages: Array.isArray(messages) ? messages : [] });
   } catch (error) {
     console.error('List LINE messages error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
