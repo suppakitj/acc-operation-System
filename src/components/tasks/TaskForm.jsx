@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, ClipboardList } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import TaskTimeTracker from '../time-tracking/TaskTimeTracker';
+import DueDateChangeHistory from './DueDateChangeHistory';
 
 export default function TaskForm({ task, onSubmit, isLoading, permissions, currentUser }) {
   const canEditAssignee = permissions?.canEditAssignee !== false;
@@ -185,6 +186,9 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
           </div>
         </div>
       </div>
+
+      {/* Due Date Change History */}
+      {task?.id && <DueDateChangeHistory task={task} />}
 
       {/* Time Tracking — only for existing tasks */}
       {task?.id && currentUser && (

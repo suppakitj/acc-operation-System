@@ -1,0 +1,192 @@
+{
+  "name": "Task",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e07\u0e32\u0e19"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e07\u0e32\u0e19"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "\u0e23\u0e2b\u0e31\u0e2a\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32"
+    },
+    "service_type": {
+      "type": "string",
+      "enum": [
+        "accounting",
+        "payroll",
+        "tax_consulting",
+        "audit",
+        "peak_licensing"
+      ],
+      "description": "\u0e1b\u0e23\u0e30\u0e40\u0e20\u0e17\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e1c\u0e34\u0e14\u0e0a\u0e2d\u0e1a (email)"
+    },
+    "assigned_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e1c\u0e34\u0e14\u0e0a\u0e2d\u0e1a"
+    },
+    "department": {
+      "type": "string",
+      "enum": [
+        "management",
+        "accounting",
+        "consulting",
+        "audit",
+        "billing",
+        "it"
+      ],
+      "description": "\u0e41\u0e1c\u0e19\u0e01"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "review",
+        "completed",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u0e01\u0e33\u0e2b\u0e19\u0e14\u0e2a\u0e48\u0e07"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u0e27\u0e31\u0e19\u0e40\u0e23\u0e34\u0e48\u0e21\u0e07\u0e32\u0e19"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e40\u0e2a\u0e23\u0e47\u0e08"
+    },
+    "checklist": {
+      "type": "array",
+      "description": "\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "checked": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u0e07\u0e32\u0e19\u0e1b\u0e23\u0e30\u0e08\u0e33"
+    },
+    "recurring_type": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "quarterly",
+        "yearly"
+      ],
+      "description": "\u0e1b\u0e23\u0e30\u0e40\u0e20\u0e17\u0e07\u0e32\u0e19\u0e1b\u0e23\u0e30\u0e08\u0e33"
+    },
+    "template_id": {
+      "type": "string",
+      "description": "\u0e23\u0e2b\u0e31\u0e2a\u0e40\u0e17\u0e21\u0e40\u0e1e\u0e25\u0e15"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u0e44\u0e1f\u0e25\u0e4c\u0e41\u0e19\u0e1a"
+    },
+    "comments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "due_date_change_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u0e08\u0e33\u0e19\u0e27\u0e19\u0e04\u0e23\u0e31\u0e49\u0e07\u0e17\u0e35\u0e48\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19 due date"
+    },
+    "due_date_change_history": {
+      "type": "array",
+      "description": "\u0e1b\u0e23\u0e30\u0e27\u0e31\u0e15\u0e34\u0e01\u0e32\u0e23\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19 due date",
+      "items": {
+        "type": "object",
+        "properties": {
+          "changed_at": {
+            "type": "string",
+            "description": "\u0e27\u0e31\u0e19\u0e40\u0e27\u0e25\u0e32\u0e17\u0e35\u0e48\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19"
+          },
+          "changed_by": {
+            "type": "string",
+            "description": "email \u0e1c\u0e39\u0e49\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19"
+          },
+          "changed_by_name": {
+            "type": "string",
+            "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19"
+          },
+          "changed_by_role": {
+            "type": "string",
+            "description": "\u0e15\u0e33\u0e41\u0e2b\u0e19\u0e48\u0e07\u0e1c\u0e39\u0e49\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19"
+          },
+          "old_due_date": {
+            "type": "string",
+            "description": "due date \u0e40\u0e14\u0e34\u0e21"
+          },
+          "new_due_date": {
+            "type": "string",
+            "description": "due date \u0e43\u0e2b\u0e21\u0e48"
+          },
+          "reason": {
+            "type": "string",
+            "description": "\u0e40\u0e2b\u0e15\u0e38\u0e1c\u0e25"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "title",
+    "status"
+  ]
+}

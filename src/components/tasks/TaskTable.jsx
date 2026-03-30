@@ -88,6 +88,7 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
 
             <SortHeader field="assigned_name" colKey="owner" className="hidden lg:table-cell">OWNER</SortHeader>
             <SortHeader field="due_date" colKey="due" className="min-w-[90px]">DUE</SortHeader>
+            <SortHeader field="due_date_change_count" colKey="dueChanges" className="hidden lg:table-cell min-w-[50px]">เลื่อน</SortHeader>
             <th className="px-2 py-2 text-[10px] md:text-[11px] font-semibold text-muted-foreground uppercase hidden sm:table-cell relative"
               style={colWidths['priority'] ? { width: colWidths['priority'], minWidth: colWidths['priority'] } : undefined}>
               PRIORITY
@@ -109,7 +110,7 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
         </thead>
         <tbody>
           {tasks.length === 0 ? (
-            <tr><td colSpan={10} className="text-center py-12 text-sm text-muted-foreground">{t('no_data')}</td></tr>
+            <tr><td colSpan={11} className="text-center py-12 text-sm text-muted-foreground">{t('no_data')}</td></tr>
           ) : tasks.map(task => {
             const isOverdue = task.due_date && task.status !== 'completed' && task.status !== 'cancelled' && new Date(task.due_date) < todayStart;
             const daysLate = isOverdue ? differenceInDays(todayStart, new Date(task.due_date)) : 0;
@@ -146,6 +147,15 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
                     {task.due_date ? format(new Date(task.due_date), 'dd MMM yy') : '-'}
 
                   </p>
+                </td>
+                <td className="px-2 py-2.5 hidden lg:table-cell">
+                  {(task.due_date_change_count || 0) > 0 ? (
+                    <Badge variant="outline" className={`text-[10px] ${task.due_date_change_count >= 3 ? 'bg-red-50 text-red-700 border-red-300' : 'bg-amber-50 text-amber-700 border-amber-300'}`}>
+                      {task.due_date_change_count}x
+                    </Badge>
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground">-</span>
+                  )}
                 </td>
                 <td className="px-2 py-2.5 hidden sm:table-cell">
                   {task.priority && (
