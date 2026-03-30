@@ -19,6 +19,8 @@ import AtRiskEmployeesMonthly from '../components/dashboard/AtRiskEmployeesMonth
 import RecentActivity from '../components/dashboard/RecentActivity';
 import TaskDistributionPie from '../components/dashboard/TaskDistributionPie';
 import WorkloadByTeam from '../components/dashboard/WorkloadByTeam';
+import TaskStatusByDept from '../components/dashboard/TaskStatusByDept';
+import OverdueByPerson from '../components/dashboard/OverdueByPerson';
 
 const DEPT_LABELS = {
   management: 'Management',
@@ -147,25 +149,31 @@ export default function Dashboard() {
         <EmployeeProductivity tasks={filteredTasks} users={users} />
       </div>
 
-      {/* Row 2 — Tasks by Service + Workload by Team */}
+      {/* Row 2 — Task Status by Department (full width) */}
+      <TaskStatusByDept tasks={filteredTasks} />
+
+      {/* Row 3 — Tasks by Service + Workload by Team */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <TaskDistributionPie tasks={filteredTasks} />
         <WorkloadByTeam tasks={filteredTasks} />
       </div>
 
-      {/* Row 3 — Monthly: Top Performers + Top Overdue */}
+      {/* Row 4 — Overdue by Person + Monthly Top Overdue */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TopPerformersMonthly tasks={tasks} />
+        <OverdueByPerson tasks={filteredTasks} users={users} />
         <AtRiskEmployeesMonthly tasks={tasks} />
       </div>
 
-      {/* Row 4 — Yearly: Top Performers + Top Overdue */}
+      {/* Row 5 — Monthly + Yearly Top Performers */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TopPerformersMonthly tasks={tasks} />
         <TopPerformersYearly tasks={tasks} />
-        <AtRiskEmployees tasks={tasks} />
       </div>
 
-      {/* Row 5 — Recent Activity */}
+      {/* Row 6 — Yearly Top Overdue */}
+      <AtRiskEmployees tasks={tasks} />
+
+      {/* Row 7 — Recent Activity */}
       <div className="grid grid-cols-1 gap-4">
         <RecentActivity tasks={filteredTasks} />
       </div>
