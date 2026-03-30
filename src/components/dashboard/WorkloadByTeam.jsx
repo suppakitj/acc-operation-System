@@ -16,8 +16,9 @@ export default function WorkloadByTeam({ tasks }) {
     const map = {};
     tasks.filter(t => t.status !== 'cancelled').forEach(t => {
       const dept = t.department || 'other';
-      if (!map[dept]) map[dept] = { in_progress: 0, overdue: 0 };
-      if (t.status === 'in_progress' || t.status === 'pending' || t.status === 'review') map[dept].in_progress++;
+      if (!map[dept]) map[dept] = { pending: 0, in_progress: 0, overdue: 0 };
+      if (t.status === 'pending') map[dept].pending++;
+      else if (t.status === 'in_progress' || t.status === 'review') map[dept].in_progress++;
       if (t.due_date && t.status !== 'completed') {
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -25,8 +26,8 @@ export default function WorkloadByTeam({ tasks }) {
       }
     });
     return Object.entries(map)
-      .map(([key, val]) => ({ name: DEPT_LABELS[key] || key, in_progress: val.in_progress, overdue: val.overdue }))
-      .sort((a, b) => (b.in_progress + b.overdue) - (a.in_progress + a.overdue))
+      .map(([key, val]) => ({ name: DEPT_LABELS[key] || key, pending: val.pending, in_progress: val.in_progress, overdue: val.overdue }))
+      .sort((a, b) => (b.pending + b.in_progress + b.overdue) - (a.pending + a.in_progress + a.overdue))
       .slice(0, 6);
   }, [tasks]);
 
@@ -43,6 +44,7 @@ export default function WorkloadByTeam({ tasks }) {
             <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 11 }} />
             <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10, paddingTop: 4 }} />
+            <Bar dataKey="pending" name="Pending" fill="#f59e0b" stackId="a" />
             <Bar dataKey="in_progress" name="In Progress" fill="#22c55e" stackId="a" />
             <Bar dataKey="overdue" name="Overdue" fill="#ef4444" stackId="a" radius={[4, 4, 0, 0]} />
           </BarChart>
