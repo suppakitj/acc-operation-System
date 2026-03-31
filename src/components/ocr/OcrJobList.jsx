@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Download, ExternalLink, Loader2, Trash2, FileSpreadsheet, FileType } from 'lucide-react';
+import { RefreshCw, Download, ExternalLink, Loader2, Trash2, FileSpreadsheet, FileType, Zap, Bot, Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -15,6 +16,7 @@ const STATUS_CONFIG = {
 
 export default function OcrJobList({ jobs, onRefresh }) {
   const [pollingId, setPollingId] = useState(null);
+  const [viewResultJob, setViewResultJob] = useState(null);
 
   const handlePoll = async (jobId) => {
     setPollingId(jobId);
@@ -52,11 +54,16 @@ export default function OcrJobList({ jobs, onRefresh }) {
                 <Badge className={sc.className + ' text-[10px]'}>{sc.label}</Badge>
               </div>
               <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                {job.output_format === 'word' ? (
+                {job.ocr_engine === 'aigen' ? (
+                  <span className="flex items-center gap-0.5 text-orange-600"><Zap className="w-3 h-3" /> aiScript</span>
+                ) : (
+                  <span className="flex items-center gap-0.5 text-purple-600"><Bot className="w-3 h-3" /> Manus</span>
+                )}
+                {job.ocr_engine !== 'aigen' && (job.output_format === 'word' ? (
                   <span className="flex items-center gap-0.5 text-blue-600"><FileType className="w-3 h-3" /> Word</span>
                 ) : (
                   <span className="flex items-center gap-0.5 text-green-600"><FileSpreadsheet className="w-3 h-3" /> Excel</span>
-                )}
+                ))}
                 {job.customer_name && <span>{job.customer_name}</span>}
                 <span>{format(new Date(job.created_date), 'dd/MM/yyyy HH:mm')}</span>
                 {job.notes && <span>• {job.notes}</span>}
@@ -91,6 +98,11 @@ export default function OcrJobList({ jobs, onRefresh }) {
                   </a>
                 </Button>
               )}
+              {job.status === 'completed' && job.ocr_engine === 'aigen' && job.ocr_result && (
+                <Button variant="outline" size="sm" className="text-xs" onClick={() => setViewResultJob(job)}>
+                  <Eye className="w-3.5 h-3.5 mr-1" /> ดูผล
+                </Button>
+              )}
               {job.manus_task_url && (
                 <Button variant="ghost" size="icon" asChild className="h-8 w-8">
                   <a href={job.manus_task_url} target="_blank" rel="noopener noreferrer">
@@ -105,6 +117,19 @@ export default function OcrJobList({ jobs, onRefresh }) {
           </div>
         );
       })}
+      {/* aiScript Result Viewer */}
+      <Dialog open={!!viewResultJob} onOpenChange={(v) => { if (!v) setViewResultJob(null); }}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-orange-500" /> ผลลัพธ์ aiScript — {viewResultJob?.filename}
+            </DialogTitle>
+          </DialogHeader>
+          <pre className="text-xs bg-muted p-4 rounded-lg overflow-x-auto whitespace-pre-wrap max-h-[60vh] overflow-y-auto">
+            {viewResultJob?.ocr_result || 'ไม่มีข้อมูล'}
+          </pre>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
