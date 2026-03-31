@@ -6,23 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, FileText, Loader2, X, Search, FileSpreadsheet, FileType, Zap, Bot } from 'lucide-react';
+import { Upload, FileText, Loader2, X, Search, FileSpreadsheet, FileType } from 'lucide-react';
 import { toast } from 'sonner';
 import CustomerSearchSelect from './CustomerSearchSelect';
 
-const AIGEN_DOC_TYPES = [
-  { value: 'general_ocr', label: 'เอกสารทั่วไป (General OCR)' },
-  { value: 'general_invoice', label: 'ใบแจ้งหนี้ / ใบเสร็จ (Invoice)' },
-  { value: 'table_extraction', label: 'ตาราง (Table Extraction)' },
-  { value: 'bank_statement', label: 'Statement ธนาคาร' },
-  { value: 'payslip', label: 'สลิปเงินเดือน (Payslip)' },
-  { value: 'idcard', label: 'บัตรประชาชน (ID Card)' },
-];
-
 export default function OcrUploadForm({ onSubmitted }) {
   const [file, setFile] = useState(null);
-  const [ocrEngine, setOcrEngine] = useState('manus');
-  const [aigenDocType, setAigenDocType] = useState('general_ocr');
   const [outputFormat, setOutputFormat] = useState('excel');
   const [customPrompt, setCustomPrompt] = useState('');
   const [customerId, setCustomerId] = useState('');
@@ -52,8 +41,6 @@ export default function OcrUploadForm({ onSubmitted }) {
       filename: file.name,
       file_url,
       status: 'uploading',
-      ocr_engine: ocrEngine,
-      aigen_doc_type: ocrEngine === 'aigen' ? aigenDocType : '',
       output_format: outputFormat,
       custom_prompt: customPrompt || '',
       customer_id: customerId || '',
@@ -61,19 +48,16 @@ export default function OcrUploadForm({ onSubmitted }) {
       notes,
     });
 
-    // 3. Submit to OCR engine
-    const fnName = ocrEngine === 'aigen' ? 'submitOcrAigen' : 'submitOcr';
-    const res = await base44.functions.invoke(fnName, { ocr_job_id: job.id });
+    // 3. Submit to Manus OCR
+    const res = await base44.functions.invoke('submitOcr', { ocr_job_id: job.id });
 
     if (res.data?.success) {
-      toast.success(`ส่ง OCR (${ocrEngine === 'aigen' ? 'aiScript' : 'Manus'}) สำเร็จ — กำลังประมวลผล...`);
+      toast.success('ส่ง OCR สำเร็จ — กำลังประมวลผล...');
     } else {
       toast.error('เกิดข้อผิดพลาด: ' + (res.data?.error || 'Unknown error'));
     }
 
     setFile(null);
-    setOcrEngine('manus');
-    setAigenDocType('general_ocr');
     setOutputFormat('excel');
     setCustomPrompt('');
     setCustomerId('');
@@ -110,63 +94,24 @@ export default function OcrUploadForm({ onSubmitted }) {
         </div>
       </div>
 
-      {/* OCR Engine Selection */}
       <div className="space-y-1.5">
-        <Label>เครื่องมือ OCR</Label>
-        <Select value={ocrEngine} onValueChange={setOcrEngine}>
+        <Label>รูปแบบผลลัพธ์</Label>
+        <Select value={outputFormat} onValueChange={setOutputFormat}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="manus">
-              <span className="flex items-center gap-2"><Bot className="w-4 h-4 text-purple-600" /> Manus AI</span>
+            <SelectItem value="excel">
+              <span className="flex items-center gap-2"><FileSpreadsheet className="w-4 h-4 text-green-600" /> Excel (.xlsx)</span>
             </SelectItem>
-            <SelectItem value="aigen">
-              <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-orange-500" /> aiScript (AIGEN)</span>
+            <SelectItem value="word">
+              <span className="flex items-center gap-2"><FileType className="w-4 h-4 text-blue-600" /> Word (.docx)</span>
             </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* aiScript Doc Type */}
-      {ocrEngine === 'aigen' && (
-        <div className="space-y-1.5">
-          <Label>ประเภทเอกสาร (aiScript)</Label>
-          <Select value={aigenDocType} onValueChange={setAigenDocType}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {AIGEN_DOC_TYPES.map(dt => (
-                <SelectItem key={dt.value} value={dt.value}>{dt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Output format — only for Manus */}
-      {ocrEngine === 'manus' && (
-        <div className="space-y-1.5">
-          <Label>รูปแบบผลลัพธ์</Label>
-          <Select value={outputFormat} onValueChange={setOutputFormat}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="excel">
-                <span className="flex items-center gap-2"><FileSpreadsheet className="w-4 h-4 text-green-600" /> Excel (.xlsx)</span>
-              </SelectItem>
-              <SelectItem value="word">
-                <span className="flex items-center gap-2"><FileType className="w-4 h-4 text-blue-600" /> Word (.docx)</span>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Custom prompt — only for Manus */}
-      {ocrEngine === 'manus' && <div className="space-y-1.5">
+      <div className="space-y-1.5">
         <Label>คำสั่ง OCR <span className="text-muted-foreground font-normal">(ไม่บังคับ)</span></Label>
         <Textarea
           value={customPrompt}
@@ -175,7 +120,7 @@ export default function OcrUploadForm({ onSubmitted }) {
           className="h-20 text-sm"
         />
         <p className="text-[11px] text-muted-foreground">ถ้าไม่ระบุ ระบบจะดึงข้อมูลจากเอกสารอัตโนมัติ</p>
-      </div>}
+      </div>
 
       <CustomerSearchSelect
         customers={customers}
