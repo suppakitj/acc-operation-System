@@ -39,6 +39,7 @@ import CustomerProfile from './pages/CustomerProfile';
 import StaffCostReport from './pages/StaffCostReport';
 import KpiDashboard from './pages/KpiDashboard';
 import ForecastRisk from './pages/ForecastRisk';
+import IappOcrTest from './pages/IappOcrTest';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -97,6 +98,7 @@ const AuthenticatedApp = () => {
         <Route path="/StaffCostReport" element={<StaffCostReport />} />
         <Route path="/KpiDashboard" element={<KpiDashboard />} />
         <Route path="/ForecastRisk" element={<ForecastRisk />} />
+        <Route path="/IappOcrTest" element={<IappOcrTest />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
