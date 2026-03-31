@@ -134,6 +134,9 @@ export function useAccessControl(user) {
       // Customer Profile
       if (p('customer_profile') !== 'no') menus.push('customer_profile');
 
+      // Staff Cost Report
+      if (p('staff_cost_report') !== 'no') menus.push('staff_cost_report');
+
       return menus;
     };
 

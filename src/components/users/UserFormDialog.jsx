@@ -6,18 +6,22 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '../LanguageContext';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 
 const ROLES = ['admin', 'management', 'manager', 'super_supervisor', 'staff'];
 const DEPTS = ['management', 'accounting', 'consulting', 'audit', 'billing', 'it'];
 
 export default function UserFormDialog({ open, onOpenChange, user, onSave, isSaving }) {
   const { t } = useLanguage();
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const canSeeCost = currentUser?.role === 'admin' || currentUser?.role === 'management';
   const isEdit = !!user;
 
   const [form, setForm] = useState({
     username: '', nickname: '', initials: '', phone: '', position: '',
     role: 'staff', departments: [], department: '',
-    user_status: 'active',
+    user_status: 'active', hourly_cost: 0,
   });
 
   useEffect(() => {
@@ -32,9 +36,10 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
         departments: user.departments || (user.department ? [user.department] : []),
         department: user.department || '',
         user_status: user.user_status || 'active',
+        hourly_cost: user.hourly_cost || 0,
       });
     } else {
-      setForm({ username: '', nickname: '', initials: '', phone: '', position: '', role: 'staff', departments: [], department: '', user_status: 'active' });
+      setForm({ username: '', nickname: '', initials: '', phone: '', position: '', role: 'staff', departments: [], department: '', user_status: 'active', hourly_cost: 0 });
     }
   }, [user, open]);
 
@@ -128,6 +133,14 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
               ))}
             </div>
           </div>
+
+          {canSeeCost && isEdit && (
+            <div className="space-y-1.5">
+              <Label>ต้นทุนต่อชั่วโมง (฿/ชม.)</Label>
+              <Input type="number" value={form.hourly_cost || ''} onChange={e => update('hourly_cost', parseFloat(e.target.value) || 0)} placeholder="เช่น 250" />
+              <p className="text-[10px] text-muted-foreground">ใช้สำหรับคำนวณใน Staff Cost Report</p>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label>สถานะ</Label>

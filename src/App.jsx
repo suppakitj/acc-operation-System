@@ -36,6 +36,7 @@ import TaskGeneration from './pages/TaskGeneration';
 import TimeTracking from './pages/TimeTracking';
 import WorkloadBalancer from './pages/WorkloadBalancer';
 import CustomerProfile from './pages/CustomerProfile';
+import StaffCostReport from './pages/StaffCostReport';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -91,6 +92,7 @@ const AuthenticatedApp = () => {
         <Route path="/TimeTracking" element={<TimeTracking />} />
         <Route path="/WorkloadBalancer" element={<WorkloadBalancer />} />
         <Route path="/CustomerProfile" element={<CustomerProfile />} />
+        <Route path="/StaffCostReport" element={<StaffCostReport />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
