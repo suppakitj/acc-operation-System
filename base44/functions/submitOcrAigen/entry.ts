@@ -42,7 +42,15 @@ Deno.serve(async (req) => {
   }
 
   const fileBuffer = await fileRes.arrayBuffer();
-  const base64Image = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+  // Chunked base64 encoding to avoid stack overflow on large files
+  const bytes = new Uint8Array(fileBuffer);
+  let binary = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+  const base64Image = btoa(binary);
 
   // Determine endpoint
   const docType = job.aigen_doc_type || 'general_ocr';
