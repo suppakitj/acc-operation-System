@@ -96,7 +96,7 @@ export default function StaffCostReport() {
         const u = userMap[email] || {};
         map[email] = {
           email,
-          name: u.nickname || u.full_name || e.user_name || email,
+          name: u.initials || u.nickname || u.full_name || e.user_name || email,
           initials: u.initials || '',
           position: u.position || '',
           department: u.department || e.department || '',

@@ -84,7 +84,7 @@ export default function StaffCostFilters({ filters, setFilters, users = [] }) {
           <SelectContent>
             <SelectItem value="all">ทุกคน</SelectItem>
             {users.map(u => (
-              <SelectItem key={u.email} value={u.email}>{u.nickname || u.full_name || u.email}</SelectItem>
+              <SelectItem key={u.email} value={u.email}>{u.initials || u.nickname || u.full_name || u.email}</SelectItem>
             ))}
           </SelectContent>
         </Select>
