@@ -17,6 +17,7 @@ import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
 import BillingStatCards from '../components/billing/BillingStatCards';
 import BillingTable from '../components/billing/BillingTable';
+import BillingAgingReport from '../components/billing/BillingAgingReport';
 import TablePagination, { paginateData } from '../components/shared/TablePagination';
 import { toast } from 'sonner';
 
@@ -26,6 +27,7 @@ const TABS = [
   { key: 'unpaid', label: 'Unpaid' },
   { key: 'missing_docs', label: 'Missing Docs' },
   { key: 'completed', label: 'Completed' },
+  { key: 'aging', label: '📊 Aging Report' },
 ];
 
 const DEPT_OPTIONS = [
@@ -226,8 +228,11 @@ export default function Billing() {
         ))}
       </div>
 
+      {/* Aging Report Tab */}
+      {activeTab === 'aging' && <BillingAgingReport billings={billings} />}
+
       {/* Filters */}
-      <div className="space-y-2">
+      {activeTab !== 'aging' && <div className="space-y-2">
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1 max-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -294,10 +299,10 @@ export default function Billing() {
           </Button>
           <span className="text-[11px] text-muted-foreground self-center ml-auto">{filtered.length} records</span>
         </div>
-      </div>
+      </div>}
 
       {/* Table */}
-      {filtered.length === 0 ? (
+      {activeTab !== 'aging' && (filtered.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">{t('no_data')}</div>
       ) : (
         <>
@@ -310,7 +315,7 @@ export default function Billing() {
           />
           <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
         </>
-      )}
+      ))}
 
       {/* Create / Edit Form */}
       <Dialog open={showForm} onOpenChange={(v) => { setShowForm(v); if (!v) setEditingBill(null); }}>
