@@ -137,6 +137,9 @@ export function useAccessControl(user) {
       // Staff Cost Report
       if (p('staff_cost_report') !== 'no') menus.push('staff_cost_report');
 
+      // KPI Dashboard
+      if (p('kpi_dashboard') !== 'no') menus.push('kpi_dashboard');
+
       return menus;
     };
 

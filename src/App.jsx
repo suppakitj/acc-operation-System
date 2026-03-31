@@ -37,6 +37,7 @@ import TimeTracking from './pages/TimeTracking';
 import WorkloadBalancer from './pages/WorkloadBalancer';
 import CustomerProfile from './pages/CustomerProfile';
 import StaffCostReport from './pages/StaffCostReport';
+import KpiDashboard from './pages/KpiDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -93,6 +94,7 @@ const AuthenticatedApp = () => {
         <Route path="/WorkloadBalancer" element={<WorkloadBalancer />} />
         <Route path="/CustomerProfile" element={<CustomerProfile />} />
         <Route path="/StaffCostReport" element={<StaffCostReport />} />
+        <Route path="/KpiDashboard" element={<KpiDashboard />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
