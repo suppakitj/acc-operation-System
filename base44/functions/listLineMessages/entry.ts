@@ -10,7 +10,8 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const requestedLimit = Math.min(body.limit || 200, 500);
+    const requestedLimit = Math.min(body.limit || 500, 2000);
+    const requestedOffset = Math.max(body.offset || 0, 0);
 
     // Fetch in smaller batches to avoid JSON serialization issues
     // Large payloads with special characters (quotes, unicode) can cause truncation
@@ -28,7 +29,7 @@ Deno.serve(async (req) => {
           {},
           '-created_date',
           batchLimit,
-          offset
+          requestedOffset + offset
         );
       } catch (fetchErr) {
         console.error(`Batch fetch error at offset ${offset}:`, fetchErr.message);

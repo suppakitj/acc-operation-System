@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,8 @@ import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
 const MESSAGES_PER_PAGE = 20;
+const INITIAL_FETCH_LIMIT = 500;
+const LOAD_MORE_BATCH = 500;
 
 function formatChatDate(dateStr) {
   if (!dateStr) return '';
@@ -98,22 +100,57 @@ export default function LineChat() {
 
   const { data: users = [] } = useUserList();
 
+  const [allMessages, setAllMessages] = useState([]);
+  const [hasMoreOnServer, setHasMoreOnServer] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const parseMessages = (data) => {
+    let msgs = data?.messages;
+    if (typeof msgs === 'string') {
+      try { msgs = JSON.parse(msgs); } catch { msgs = []; }
+    }
+    if (!Array.isArray(msgs)) return [];
+    return msgs.filter(m => m && typeof m === 'object' && m.id);
+  };
+
   const { data: messages = [] } = useQuery({
     queryKey: ['lineMessages'],
     queryFn: async () => {
-      const res = await base44.functions.invoke('listLineMessages', {});
-      let msgs = res.data?.messages;
-      // Defensive: handle string, null, undefined, or non-array
-      if (typeof msgs === 'string') {
-        try { msgs = JSON.parse(msgs); } catch { msgs = []; }
-      }
-      if (!Array.isArray(msgs)) return [];
-      // Filter out any malformed entries (must have at least id and content/message_type)
-      return msgs.filter(m => m && typeof m === 'object' && m.id);
+      const res = await base44.functions.invoke('listLineMessages', { limit: INITIAL_FETCH_LIMIT });
+      const msgs = parseMessages(res.data);
+      setHasMoreOnServer(msgs.length >= INITIAL_FETCH_LIMIT);
+      setAllMessages(msgs);
+      return msgs;
     },
     refetchInterval: 15_000,
     staleTime: 12_000,
   });
+
+  const loadOlderFromServer = useCallback(async () => {
+    if (loadingMore || !hasMoreOnServer) return;
+    setLoadingMore(true);
+    try {
+      const res = await base44.functions.invoke('listLineMessages', {
+        limit: LOAD_MORE_BATCH,
+        offset: allMessages.length,
+      });
+      const older = parseMessages(res.data);
+      if (older.length === 0) {
+        setHasMoreOnServer(false);
+      } else {
+        setAllMessages(prev => {
+          const existingIds = new Set(prev.map(m => m.id));
+          const newMsgs = older.filter(m => !existingIds.has(m.id));
+          return [...prev, ...newMsgs];
+        });
+        if (older.length < LOAD_MORE_BATCH) setHasMoreOnServer(false);
+      }
+    } catch (e) {
+      console.error('Load older messages failed:', e);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [allMessages.length, loadingMore, hasMoreOnServer]);
 
   const fileInputRef = useRef(null);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -158,9 +195,19 @@ export default function LineChat() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lineMessages'] }),
   });
 
+  // Use allMessages (includes older loaded from server) merged with latest query
+  const combinedMessages = useMemo(() => {
+    const idSet = new Set();
+    const result = [];
+    // Latest messages first (from query), then older
+    for (const m of messages) { if (!idSet.has(m.id)) { idSet.add(m.id); result.push(m); } }
+    for (const m of allMessages) { if (!idSet.has(m.id)) { idSet.add(m.id); result.push(m); } }
+    return result;
+  }, [messages, allMessages]);
+
   // Group messages by user
   const userGroups = {};
-  messages.forEach(m => {
+  combinedMessages.forEach(m => {
     const key = m.line_user_id || m.customer_name || 'unknown';
     if (!userGroups[key]) userGroups[key] = { id: key, name: m.display_name || m.customer_name || '?', image: '', messages: [], unread: 0, lastDate: m.created_date, chatType: m.chat_type || 'user' };
     userGroups[key].messages.push(m);
@@ -199,9 +246,13 @@ export default function LineChat() {
   }, [selectedUserId]);
 
   const handleLoadOlder = useCallback(() => {
+    // If we've shown all local messages, try fetching more from server
+    if (visibleCount >= totalMessages && hasMoreOnServer) {
+      loadOlderFromServer();
+    }
     setVisibleCount(prev => prev + MESSAGES_PER_PAGE);
     setTimeout(() => { chatTopRef.current?.scrollIntoView({ behavior: 'instant' }); }, 50);
-  }, []);
+  }, [visibleCount, totalMessages, hasMoreOnServer, loadOlderFromServer]);
 
   useEffect(() => {
     if (selectedUserId && chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -448,12 +499,13 @@ export default function LineChat() {
               {/* Messages */}
               <ScrollArea className="flex-1">
                 <div className="px-4 py-3 space-y-1">
-                  {hasOlderMessages && (
+                  {(hasOlderMessages || hasMoreOnServer) && (
                     <div className="flex justify-center py-2">
                       <Button variant="ghost" size="sm" onClick={handleLoadOlder}
+                        disabled={loadingMore}
                         className="text-xs text-muted-foreground gap-1.5 hover:text-foreground rounded-full px-4 h-7 bg-muted/50">
-                        <ChevronUp className="w-3.5 h-3.5" />
-                        โหลดข้อความเก่า ({totalMessages - visibleCount})
+                        {loadingMore ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ChevronUp className="w-3.5 h-3.5" />}
+                        {loadingMore ? 'กำลังโหลด...' : hasOlderMessages ? `โหลดข้อความเก่า (${totalMessages - visibleCount})` : 'โหลดข้อความเก่าจากเซิร์ฟเวอร์'}
                       </Button>
                     </div>
                   )}
