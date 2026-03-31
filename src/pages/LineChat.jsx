@@ -32,7 +32,12 @@ function formatChatDate(dateStr) {
 }
 
 function getLastMessagePreview(messages) {
-  const last = messages[messages.length - 1];
+  if (!messages || messages.length === 0) return '';
+  // Find the most recent message by created_date
+  const last = messages.reduce((latest, m) => {
+    if (!latest) return m;
+    return (m.created_date || '') > (latest.created_date || '') ? m : latest;
+  }, null);
   if (!last) return '';
   if (last.direction === 'outgoing') {
     const prefix = 'คุณ: ';
@@ -206,15 +211,20 @@ export default function LineChat() {
   }, [messages, allMessages]);
 
   // Group messages by user
-  const userGroups = {};
-  combinedMessages.forEach(m => {
-    const key = m.line_user_id || m.customer_name || 'unknown';
-    if (!userGroups[key]) userGroups[key] = { id: key, name: m.display_name || m.customer_name || '?', image: '', messages: [], unread: 0, lastDate: m.created_date, chatType: m.chat_type || 'user' };
-    userGroups[key].messages.push(m);
-    if (!m.is_read && m.direction === 'incoming') userGroups[key].unread++;
-    if (parseUTCDate(m.created_date) > parseUTCDate(userGroups[key].lastDate)) userGroups[key].lastDate = m.created_date;
-    if (m.profile_image && !userGroups[key].image) userGroups[key].image = m.profile_image;
-  });
+  const userGroups = useMemo(() => {
+    const groups = {};
+    combinedMessages.forEach(m => {
+      const key = m.line_user_id || m.customer_name || 'unknown';
+      if (!groups[key]) groups[key] = { id: key, name: m.display_name || m.customer_name || '?', image: '', messages: [], unread: 0, lastDate: m.created_date, chatType: m.chat_type || 'user' };
+      groups[key].messages.push(m);
+      if (!m.is_read && m.direction === 'incoming') groups[key].unread++;
+      if ((m.created_date || '') > (groups[key].lastDate || '')) groups[key].lastDate = m.created_date;
+      if (m.profile_image && !groups[key].image) groups[key].image = m.profile_image;
+      // Use display_name from the most recent message
+      if ((m.created_date || '') >= (groups[key].lastDate || '') && m.display_name) groups[key].name = m.display_name;
+    });
+    return groups;
+  }, [combinedMessages]);
 
   const userList = Object.values(userGroups)
     .filter(u => !search || u.name.toLowerCase().includes(search.toLowerCase()))
