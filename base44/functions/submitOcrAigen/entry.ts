@@ -6,8 +6,8 @@ const DOC_TYPE_ENDPOINTS = {
   general_ocr: '/general-ocr/v2',
   general_invoice: '/general-invoice/v2',
   table_extraction: '/table-exraction/v1',
-  bank_statement: '/bank-statement/v2',
-  payslip: '/payslip/v1',
+  bank_statement: '/bank-statement/v3',
+  payslip: '/payslip/v2',
   idcard: '/idcard/v3',
 };
 
