@@ -96,12 +96,24 @@ Deno.serve(async (req) => {
     extractedText = JSON.stringify(result.data || result, null, 2);
   }
 
-  // Save result — truncate if too long for entity field
-  const truncated = extractedText.length > 50000 ? extractedText.substring(0, 50000) + '\n... (truncated)' : extractedText;
+  // If result is small enough, store directly; otherwise upload as file and store URL
+  const MAX_FIELD_SIZE = 15000;
+  let ocrResultValue = extractedText;
+
+  if (extractedText.length > MAX_FIELD_SIZE) {
+    console.log(`Result too large (${extractedText.length} chars), uploading as file...`);
+    // Upload as JSON file
+    const blob = new Blob([extractedText], { type: 'application/json' });
+    const file = new File([blob], `ocr_result_${ocr_job_id}.json`, { type: 'application/json' });
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    // Store a summary + file URL reference
+    const summary = extractedText.substring(0, 2000) + `\n\n... (full result: ${extractedText.length} chars)\n📎 Full result file: ${file_url}`;
+    ocrResultValue = summary;
+  }
 
   await base44.entities.OcrJob.update(ocr_job_id, {
     status: 'completed',
-    ocr_result: truncated,
+    ocr_result: ocrResultValue,
   });
 
   return Response.json({
