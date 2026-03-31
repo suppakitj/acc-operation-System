@@ -5,7 +5,7 @@ import {
   Bell, CreditCard, MessageCircle, Shield,
   Settings, ChevronLeft, ChevronRight, Key, ClipboardList,
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays,
-  ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, ScanLine, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target
+  ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, ScanLine, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target, Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -40,6 +40,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'line_files', label: 'LINE Files', icon: HardDrive, path: '/LineFiles' },
     { id: 'team_analytics', label: 'Team Analytics', icon: TrendingUp, path: '/TeamAnalytics' },
     { id: 'staff_cost_report', label: 'Staff Cost Report', icon: DollarSign, path: '/StaffCostReport' },
+    { id: 'forecast_risk', label: 'Forecast & Risk', icon: Activity, path: '/ForecastRisk' },
     { id: 'users', label: t('menu_users'), icon: Users, path: '/UserManagement' },
     { id: 'roles', label: t('menu_roles'), icon: Shield, path: '/RoleManagement' },
     { id: 'audit', label: t('menu_audit'), icon: History, path: '/AuditLog' },
@@ -53,7 +54,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
 
   // Menu groups
   const menuGroups = [
-    { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard', 'staff_dashboard', 'team_analytics', 'staff_cost_report'] },
+    { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard', 'staff_dashboard', 'team_analytics', 'staff_cost_report', 'forecast_risk'] },
     { key: 'work', label: 'งาน', icon: Folder, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'task_generation', 'time_tracking', 'workload', 'service_master', 'holiday_master'] },
     { key: 'clients', label: 'ลูกค้า', icon: Contact, ids: ['customers', 'customer_profile', 'peak', 'billing', 'referral'] },
     { key: 'comms', label: 'สื่อสาร', icon: MessageSquare, ids: ['notifications', 'line_chat', 'line_files'] },

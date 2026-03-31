@@ -140,6 +140,9 @@ export function useAccessControl(user) {
       // KPI Dashboard
       if (p('kpi_dashboard') !== 'no') menus.push('kpi_dashboard');
 
+      // Forecast & Risk
+      if (p('forecast_risk') !== 'no') menus.push('forecast_risk');
+
       return menus;
     };
 

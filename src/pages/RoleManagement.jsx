@@ -65,6 +65,7 @@ const PERMISSION_GROUPS = [
       { key: 'workload', label: 'Workload Balancer', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
       { key: 'staff_cost_report', label: 'Staff Cost Report', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
       { key: 'kpi_dashboard', label: 'KPI Dashboard', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
+      { key: 'forecast_risk', label: 'Forecast & Risk Management', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
       { key: 'reports', label: 'รายงาน (Reports)', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
     ],
   },
