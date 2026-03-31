@@ -202,15 +202,17 @@ function OcrResult({ data }) {
 
   if (!result) return <p className="text-sm text-muted-foreground">ไม่มีผลลัพธ์</p>;
 
-  // Receipt OCR
-  if (ocr_type === 'receipt' && result.processed) {
-    const p = result.processed;
+  // Receipt OCR - handle both direct response and docs array
+  const receiptData = result.processed || result.docs?.[0]?.processed;
+  if (ocr_type === 'receipt' && receiptData) {
+    const p = receiptData;
+    const processMs = result.process_ms || result.docs?.[0]?.process_ms;
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-green-500" />
           <span className="text-sm font-medium text-green-700">อ่านใบเสร็จสำเร็จ</span>
-          {result.process_ms && <Badge variant="outline" className="text-[9px]">{(result.process_ms / 1000).toFixed(1)}s (API)</Badge>}
+          {processMs && <Badge variant="outline" className="text-[9px]">{(processMs / 1000).toFixed(1)}s (API)</Badge>}
         </div>
 
         {/* Invoice info */}

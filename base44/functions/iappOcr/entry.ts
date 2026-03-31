@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-const IAPP_API_KEY = Deno.env.get('AIGEN_API_KEY');
+const IAPP_API_KEY = Deno.env.get('IAPP_API_KEY');
 
 Deno.serve(async (req) => {
   try {
