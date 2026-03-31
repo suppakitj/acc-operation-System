@@ -102,42 +102,90 @@ export default function AigenResultViewer({ open, onOpenChange, job }) {
   };
 
   const handleExportCsv = () => {
-    // Find table data
-    let tableData = null;
+    const excludeMeta = ['bboxes', 'bboxes_norm', 'row_conf', 'bbox_norm', 'char_pos_norm', 'confidence', 'status', 'request_id', 'error', 'response_id'];
+
+    // 1. Try table data (bank-statement, invoice, etc.) — merge all pages
+    let allTableRows = [];
     for (const page of dataArray) {
-      if (page?.table && Array.isArray(page.table)) { tableData = page.table; break; }
-    }
-    // For table-extraction, check result array
-    if (!tableData && result.result) {
-      const cells = result.result?.[0]?.[0]?.cells;
-      if (cells) {
-        const rows = {};
-        cells.forEach(c => {
-          if (!rows[c.row]) rows[c.row] = {};
-          rows[c.row][c.column] = c.text;
-        });
-        tableData = Object.values(rows);
+      if (page?.table && Array.isArray(page.table) && page.table.length > 0) {
+        allTableRows.push(...page.table);
       }
     }
-    if (!tableData || tableData.length === 0) {
-      toast.error('ไม่พบข้อมูลตารางสำหรับ export');
+
+    // 2. For table-extraction format
+    if (allTableRows.length === 0 && result.result) {
+      for (const pageResult of (result.result || [])) {
+        if (!Array.isArray(pageResult)) continue;
+        for (const table of pageResult) {
+          if (!table?.cells) continue;
+          const rows = {};
+          table.cells.forEach(c => {
+            if (!rows[c.row]) rows[c.row] = {};
+            rows[c.row][`Col ${c.column}`] = c.text;
+          });
+          allTableRows.push(...Object.values(rows));
+        }
+      }
+    }
+
+    if (allTableRows.length > 0) {
+      // Export table-style CSV
+      const allKeys = new Set();
+      allTableRows.forEach(row => Object.keys(row).forEach(k => {
+        if (!excludeMeta.includes(k)) allKeys.add(k);
+      }));
+      const cols = Array.from(allKeys);
+      const bom = '\uFEFF';
+      const header = cols.join(',');
+      const csvRows = allTableRows.map(row => cols.map(c => `"${flattenValue(row[c]).replace(/"/g, '""')}"`).join(','));
+      downloadCsv(bom + header + '\n' + csvRows.join('\n'), `${job.filename}_aigen_result.csv`);
       return;
     }
 
-    const allKeys = new Set();
-    tableData.forEach(row => Object.keys(row).forEach(k => {
-      if (!['bboxes', 'bboxes_norm', 'row_conf', 'bbox_norm'].includes(k)) allKeys.add(k);
-    }));
-    const cols = Array.from(allKeys);
-    const bom = '\uFEFF';
-    const header = cols.join(',');
-    const rows = tableData.map(row => cols.map(c => `"${flattenValue(row[c]).replace(/"/g, '""')}"`).join(','));
-    const csv = bom + header + '\n' + rows.join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    // 3. For general-ocr / text-based results — export key-value + text per page
+    const textPages = dataArray.filter(p => p?.text_page || p?.text);
+    if (textPages.length > 0) {
+      const bom = '\uFEFF';
+      const header = 'page,text';
+      const csvRows = textPages.map((p, i) => {
+        const pageNum = p._page || p.page || i + 1;
+        const text = (p.text_page || p.text || '').replace(/"/g, '""');
+        return `${pageNum},"${text}"`;
+      });
+      downloadCsv(bom + header + '\n' + csvRows.join('\n'), `${job.filename}_aigen_result.csv`);
+      return;
+    }
+
+    // 4. Fallback: export all key-value fields per page
+    if (dataArray.length > 0) {
+      const allKeys = new Set(['page']);
+      dataArray.forEach(page => {
+        Object.keys(page).forEach(k => {
+          if (!excludeMeta.includes(k) && !Array.isArray(page[k])) allKeys.add(k);
+        });
+      });
+      const cols = Array.from(allKeys);
+      const bom = '\uFEFF';
+      const header = cols.join(',');
+      const csvRows = dataArray.map((page, i) => {
+        return cols.map(c => {
+          if (c === 'page') return page._page || page.page || i + 1;
+          return `"${flattenValue(page[c]).replace(/"/g, '""')}"`;
+        }).join(',');
+      });
+      downloadCsv(bom + header + '\n' + csvRows.join('\n'), `${job.filename}_aigen_result.csv`);
+      return;
+    }
+
+    toast.error('ไม่พบข้อมูลสำหรับ export');
+  };
+
+  const downloadCsv = (csvContent, filename) => {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${job.filename}_aigen_result.csv`;
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Export CSV สำเร็จ');
