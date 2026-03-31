@@ -18,18 +18,22 @@ export default function OverdueTrendChart({ tasks }) {
         return isWithinInterval(d, { start, end });
       }).length;
 
+      const today = new Date();
+      const todayStr = format(today, 'yyyy-MM-dd');
       const overdueInMonth = tasks.filter(t => {
         if (!t.due_date || t.status === 'cancelled') return false;
         const dueDate = new Date(t.due_date);
         if (!isWithinInterval(dueDate, { start, end })) return false;
-        if (t.status !== 'completed') return true;
-        // Completed: only overdue if completed_date is strictly after due_date (compare date-only)
-        if (t.completed_date) {
-          const compStr = t.completed_date.slice(0, 10);
-          const dueStr = t.due_date.slice(0, 10);
-          return compStr > dueStr;
+        const dueStr = t.due_date.slice(0, 10);
+        if (t.status === 'completed') {
+          // Completed: overdue only if completed_date is strictly after due_date
+          if (t.completed_date) {
+            return t.completed_date.slice(0, 10) > dueStr;
+          }
+          return false;
         }
-        return false;
+        // Not completed: overdue only if due_date has already passed
+        return dueStr < todayStr;
       }).length;
 
       months.push({ name: format(m, 'MMM'), completed: completedInMonth, overdue: overdueInMonth });

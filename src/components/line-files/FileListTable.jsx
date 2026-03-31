@@ -24,6 +24,9 @@ function formatSize(bytes) {
 }
 
 export default function FileListTable({ files, onFolderClick, onDownload, downloadingId, onDownloadFolder, zippingFolderId, selectedIds = [], onSelectionChange, failedIds = new Set() }) {
+  const [sortKey, setSortKey] = useState('modifiedTime');
+  const [sortDir, setSortDir] = useState('desc');
+
   if (!files || files.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -32,9 +35,6 @@ export default function FileListTable({ files, onFolderClick, onDownload, downlo
       </div>
     );
   }
-
-  const [sortKey, setSortKey] = useState('modifiedTime');
-  const [sortDir, setSortDir] = useState('desc');
 
   const handleSort = (key) => {
     if (sortKey === key) {

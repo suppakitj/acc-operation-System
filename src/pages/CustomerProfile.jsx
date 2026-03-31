@@ -64,10 +64,6 @@ export default function CustomerProfile() {
     return allTimeEntries.filter(e => e.customer_id === selectedCustomerId && !e.is_running && e.duration_minutes);
   }, [allTimeEntries, selectedCustomerId]);
 
-  if (!canView) {
-    return <div className="text-center py-12 text-muted-foreground">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</div>;
-  }
-
   // Status summary for the overview table
   const customerOverview = useMemo(() => {
     return filteredCustomers.map(c => {
@@ -84,6 +80,10 @@ export default function CustomerProfile() {
       return { ...c, totalTasks: tasks.length, active, completed, overdue, totalMinutes: mins };
     }).sort((a, b) => b.totalTasks - a.totalTasks);
   }, [filteredCustomers, allTasks, allTimeEntries]);
+
+  if (!canView) {
+    return <div className="text-center py-12 text-muted-foreground">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</div>;
+  }
 
   const formatHours = (mins) => {
     if (!mins) return '-';

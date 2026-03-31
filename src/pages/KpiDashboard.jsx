@@ -102,17 +102,6 @@ export default function KpiDashboard() {
   const isMD = ['admin', 'management'].includes(role);
   const isManagerOrSupervisor = ['manager', 'super_supervisor'].includes(role);
 
-  // Access denied for staff
-  if (role && !isMD && !isManagerOrSupervisor) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <ShieldAlert className="w-12 h-12 text-muted-foreground mb-3" />
-        <h2 className="text-lg font-semibold">ไม่มีสิทธิ์เข้าถึงหน้านี้</h2>
-        <p className="text-sm text-muted-foreground mt-1">เฉพาะ Admin, Management, Manager และ Super Supervisor</p>
-      </div>
-    );
-  }
-
   // Locked dept for managers
   const userDepts = useMemo(() => {
     if (!currentUser) return [];
@@ -234,6 +223,17 @@ export default function KpiDashboard() {
   }, [scopedTasks]);
 
   const isLoading = loadingTasks || loadingTime;
+
+  // Access denied for staff
+  if (role && !isMD && !isManagerOrSupervisor) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <ShieldAlert className="w-12 h-12 text-muted-foreground mb-3" />
+        <h2 className="text-lg font-semibold">ไม่มีสิทธิ์เข้าถึงหน้านี้</h2>
+        <p className="text-sm text-muted-foreground mt-1">เฉพาะ Admin, Management, Manager และ Super Supervisor</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

@@ -41,6 +41,16 @@ export default function TeamAnalytics() {
     return tasks.filter(t => t.department === deptFilter);
   }, [tasks, deptFilter]);
 
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = new Set([currentYear]);
+    tasks.forEach(t => {
+      if (t.created_date) years.add(new Date(t.created_date).getFullYear());
+      if (t.due_date) years.add(new Date(t.due_date).getFullYear());
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [tasks]);
+
   if (!ac.canViewTeamAnalytics && currentUser) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -62,16 +72,6 @@ export default function TeamAnalytics() {
   }
 
   const selectedLabel = DEPT_OPTIONS.find(d => d.value === deptFilter)?.label;
-
-  const availableYears = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const years = new Set([currentYear]);
-    tasks.forEach(t => {
-      if (t.created_date) years.add(new Date(t.created_date).getFullYear());
-      if (t.due_date) years.add(new Date(t.due_date).getFullYear());
-    });
-    return Array.from(years).sort((a, b) => b - a);
-  }, [tasks]);
 
   return (
     <div className="space-y-5">

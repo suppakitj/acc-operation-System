@@ -40,17 +40,7 @@ export default function StaffCostReport() {
     selectedUser: 'all',
   });
 
-  // Access control
   const role = currentUser?.role;
-  if (role && !['admin', 'management', 'manager'].includes(role)) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <ShieldAlert className="w-12 h-12 text-muted-foreground mb-3" />
-        <h2 className="text-lg font-semibold">ไม่มีสิทธิ์เข้าถึงหน้านี้</h2>
-        <p className="text-sm text-muted-foreground mt-1">เฉพาะ Admin, Management และ Manager เท่านั้น</p>
-      </div>
-    );
-  }
 
   const dateRange = useMemo(() => getDateRange(filters.period, filters.dateFrom, filters.dateTo), [filters.period, filters.dateFrom, filters.dateTo]);
 
@@ -158,6 +148,17 @@ export default function StaffCostReport() {
     }
     return list;
   }, [users, managerDepts]);
+
+  // Access control
+  if (role && !['admin', 'management', 'manager'].includes(role)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <ShieldAlert className="w-12 h-12 text-muted-foreground mb-3" />
+        <h2 className="text-lg font-semibold">ไม่มีสิทธิ์เข้าถึงหน้านี้</h2>
+        <p className="text-sm text-muted-foreground mt-1">เฉพาะ Admin, Management และ Manager เท่านั้น</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
