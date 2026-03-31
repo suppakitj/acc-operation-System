@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Download, ExternalLink, Loader2, Trash2, FileSpreadsheet, FileType, Zap, Bot, Eye } from 'lucide-react';
+import { RefreshCw, Download, ExternalLink, Loader2, Trash2, FileSpreadsheet, FileType } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import AigenResultViewer from './AigenResultViewer';
 
 const STATUS_CONFIG = {
   uploading: { label: 'กำลังอัปโหลด', className: 'bg-blue-100 text-blue-700' },
@@ -16,7 +15,6 @@ const STATUS_CONFIG = {
 
 export default function OcrJobList({ jobs, onRefresh }) {
   const [pollingId, setPollingId] = useState(null);
-  const [viewingJob, setViewingJob] = useState(null);
 
   const handlePoll = async (jobId) => {
     setPollingId(jobId);
@@ -43,7 +41,6 @@ export default function OcrJobList({ jobs, onRefresh }) {
   }
 
   return (
-    <>
     <div className="space-y-2">
       {jobs.map(job => {
         const sc = STATUS_CONFIG[job.status] || STATUS_CONFIG.uploading;
@@ -54,21 +51,12 @@ export default function OcrJobList({ jobs, onRefresh }) {
                 <p className="text-sm font-medium truncate">{job.filename}</p>
                 <Badge className={sc.className + ' text-[10px]'}>{sc.label}</Badge>
               </div>
-              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
-                {(job.ocr_engine === 'aigen') ? (
-                  <Badge variant="outline" className="text-[9px] text-purple-600 border-purple-300 gap-0.5 py-0">
-                    <Zap className="w-2.5 h-2.5" /> AiGen {job.aigen_doc_type && `• ${job.aigen_doc_type}`}
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-[9px] text-blue-600 border-blue-300 gap-0.5 py-0">
-                    <Bot className="w-2.5 h-2.5" /> Manus
-                  </Badge>
-                )}
-                {job.ocr_engine !== 'aigen' && (job.output_format === 'word' ? (
+              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                {job.output_format === 'word' ? (
                   <span className="flex items-center gap-0.5 text-blue-600"><FileType className="w-3 h-3" /> Word</span>
                 ) : (
                   <span className="flex items-center gap-0.5 text-green-600"><FileSpreadsheet className="w-3 h-3" /> Excel</span>
-                ))}
+                )}
                 {job.customer_name && <span>{job.customer_name}</span>}
                 <span>{format(new Date(job.created_date), 'dd/MM/yyyy HH:mm')}</span>
                 {job.notes && <span>• {job.notes}</span>}
@@ -79,7 +67,7 @@ export default function OcrJobList({ jobs, onRefresh }) {
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
-              {job.status === 'processing' && job.ocr_engine !== 'aigen' && (
+              {job.status === 'processing' && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -96,19 +84,11 @@ export default function OcrJobList({ jobs, onRefresh }) {
                   <span className="ml-1">ตรวจสอบ</span>
                 </Button>
               )}
-              {job.status === 'processing' && job.ocr_engine === 'aigen' && (
-                <Loader2 className="w-4 h-4 animate-spin text-purple-500" />
-              )}
               {job.status === 'completed' && job.output_file_url && (
                 <Button variant="outline" size="sm" asChild className="text-xs">
                   <a href={job.output_file_url} target="_blank" rel="noopener noreferrer">
                     <Download className="w-3.5 h-3.5 mr-1" /> {job.output_format === 'word' ? 'Word' : 'Excel'}
                   </a>
-                </Button>
-              )}
-              {job.status === 'completed' && job.ocr_engine === 'aigen' && job.aigen_result && (
-                <Button variant="outline" size="sm" className="text-xs gap-1" onClick={() => setViewingJob(job)}>
-                  <Eye className="w-3.5 h-3.5" /> ดูผล
                 </Button>
               )}
               {job.manus_task_url && (
@@ -126,7 +106,5 @@ export default function OcrJobList({ jobs, onRefresh }) {
         );
       })}
     </div>
-    <AigenResultViewer open={!!viewingJob} onOpenChange={(open) => !open && setViewingJob(null)} job={viewingJob} />
-    </>
   );
 }

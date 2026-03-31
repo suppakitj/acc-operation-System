@@ -6,33 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, FileText, Loader2, X, Search, FileSpreadsheet, FileType, Zap, Bot } from 'lucide-react';
+import { Upload, FileText, Loader2, X, Search, FileSpreadsheet, FileType } from 'lucide-react';
 import { toast } from 'sonner';
 import CustomerSearchSelect from './CustomerSearchSelect';
 
-const AIGEN_DOC_TYPES = [
-  { value: 'general-ocr', label: 'General OCR (อ่านข้อความทั่วไป)' },
-  { value: 'table-extraction', label: 'Table Extraction (ดึงตาราง)' },
-  { value: 'bank-statement', label: 'Bank Statement (Statement ธนาคาร)' },
-  { value: 'book-bank', label: 'Book Bank (สมุดบัญชี)' },
-  { value: 'general-invoice', label: 'General Invoice (ใบแจ้งหนี้/ใบเสร็จ)' },
-  { value: 'payslip', label: 'Payslip (สลิปเงินเดือน)' },
-  { value: 'idcard', label: 'ID Card (บัตรประชาชน)' },
-  { value: 'passport', label: 'Passport (หนังสือเดินทาง)' },
-  { value: 'driver-licence', label: 'Driver Licence (ใบขับขี่)' },
-  { value: 'house-registration', label: 'House Registration (ทะเบียนบ้าน)' },
-  { value: 'business-registration', label: 'Business Registration (หนังสือจดทะเบียน)' },
-  { value: 'health-check-report', label: 'Health Check Report (ผลตรวจสุขภาพ)' },
-  { value: 'hospital-invoice', label: 'Hospital Invoice (ใบแจ้งหนี้โรงพยาบาล)' },
-  { value: 'shipping-label', label: 'Shipping Label (ใบปะหน้าพัสดุ)' },
-  { value: 'vehicle-insurance-policy', label: 'Vehicle Insurance (กรมธรรม์รถ)' },
-  { value: 'vehicle-registration-book', label: 'Vehicle Registration (เล่มทะเบียนรถ)' },
-];
-
 export default function OcrUploadForm({ onSubmitted }) {
   const [file, setFile] = useState(null);
-  const [ocrEngine, setOcrEngine] = useState('aigen');
-  const [aigenDocType, setAigenDocType] = useState('general-ocr');
   const [outputFormat, setOutputFormat] = useState('excel');
   const [customPrompt, setCustomPrompt] = useState('');
   const [customerId, setCustomerId] = useState('');
@@ -62,8 +41,6 @@ export default function OcrUploadForm({ onSubmitted }) {
       filename: file.name,
       file_url,
       status: 'uploading',
-      ocr_engine: ocrEngine,
-      aigen_doc_type: ocrEngine === 'aigen' ? aigenDocType : '',
       output_format: outputFormat,
       custom_prompt: customPrompt || '',
       customer_id: customerId || '',
@@ -71,9 +48,8 @@ export default function OcrUploadForm({ onSubmitted }) {
       notes,
     });
 
-    // 3. Submit to OCR engine
-    const fnName = ocrEngine === 'aigen' ? 'submitAigenOcr' : 'submitOcr';
-    const res = await base44.functions.invoke(fnName, { ocr_job_id: job.id });
+    // 3. Submit to Manus OCR
+    const res = await base44.functions.invoke('submitOcr', { ocr_job_id: job.id });
 
     if (res.data?.success) {
       toast.success('ส่ง OCR สำเร็จ — กำลังประมวลผล...');
@@ -82,8 +58,6 @@ export default function OcrUploadForm({ onSubmitted }) {
     }
 
     setFile(null);
-    setOcrEngine('aigen');
-    setAigenDocType('general-ocr');
     setOutputFormat('excel');
     setCustomPrompt('');
     setCustomerId('');
@@ -120,75 +94,33 @@ export default function OcrUploadForm({ onSubmitted }) {
         </div>
       </div>
 
-      {/* OCR Engine Selection */}
       <div className="space-y-1.5">
-        <Label>OCR Engine</Label>
-        <Select value={ocrEngine} onValueChange={setOcrEngine}>
+        <Label>รูปแบบผลลัพธ์</Label>
+        <Select value={outputFormat} onValueChange={setOutputFormat}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="aigen">
-              <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-purple-600" /> AiGen AIScript (เร็ว, หลายประเภท)</span>
+            <SelectItem value="excel">
+              <span className="flex items-center gap-2"><FileSpreadsheet className="w-4 h-4 text-green-600" /> Excel (.xlsx)</span>
             </SelectItem>
-            <SelectItem value="manus">
-              <span className="flex items-center gap-2"><Bot className="w-4 h-4 text-blue-600" /> Manus AI (แปลงเป็นไฟล์)</span>
+            <SelectItem value="word">
+              <span className="flex items-center gap-2"><FileType className="w-4 h-4 text-blue-600" /> Word (.docx)</span>
             </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* AiGen Document Type */}
-      {ocrEngine === 'aigen' && (
-        <div className="space-y-1.5">
-          <Label>ประเภทเอกสาร</Label>
-          <Select value={aigenDocType} onValueChange={setAigenDocType}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {AIGEN_DOC_TYPES.map(dt => (
-                <SelectItem key={dt.value} value={dt.value}>{dt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-[11px] text-muted-foreground">เลือกประเภทเอกสารเพื่อให้ OCR แม่นยำที่สุด</p>
-        </div>
-      )}
-
-      {/* Output Format — only for Manus */}
-      {ocrEngine === 'manus' && (
-        <div className="space-y-1.5">
-          <Label>รูปแบบผลลัพธ์</Label>
-          <Select value={outputFormat} onValueChange={setOutputFormat}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="excel">
-                <span className="flex items-center gap-2"><FileSpreadsheet className="w-4 h-4 text-green-600" /> Excel (.xlsx)</span>
-              </SelectItem>
-              <SelectItem value="word">
-                <span className="flex items-center gap-2"><FileType className="w-4 h-4 text-blue-600" /> Word (.docx)</span>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Custom Prompt — only for Manus */}
-      {ocrEngine === 'manus' && (
-        <div className="space-y-1.5">
-          <Label>คำสั่ง OCR <span className="text-muted-foreground font-normal">(ไม่บังคับ)</span></Label>
-          <Textarea
-            value={customPrompt}
-            onChange={e => setCustomPrompt(e.target.value)}
-            placeholder="เช่น แปลงข้อมูลในตารางเป็น Excel, สรุปเอกสารเป็น Word, ดึงข้อมูลใบเสร็จ ฯลฯ"
-            className="h-20 text-sm"
-          />
-          <p className="text-[11px] text-muted-foreground">ถ้าไม่ระบุ ระบบจะดึงข้อมูลจากเอกสารอัตโนมัติ</p>
-        </div>
-      )}
+      <div className="space-y-1.5">
+        <Label>คำสั่ง OCR <span className="text-muted-foreground font-normal">(ไม่บังคับ)</span></Label>
+        <Textarea
+          value={customPrompt}
+          onChange={e => setCustomPrompt(e.target.value)}
+          placeholder="เช่น แปลงข้อมูลในตารางเป็น Excel, สรุปเอกสารเป็น Word, ดึงข้อมูลใบเสร็จ ฯลฯ"
+          className="h-20 text-sm"
+        />
+        <p className="text-[11px] text-muted-foreground">ถ้าไม่ระบุ ระบบจะดึงข้อมูลจากเอกสารอัตโนมัติ</p>
+      </div>
 
       <CustomerSearchSelect
         customers={customers}
