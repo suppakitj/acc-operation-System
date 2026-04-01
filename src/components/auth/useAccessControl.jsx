@@ -143,6 +143,9 @@ export function useAccessControl(user) {
       // Forecast & Risk
       if (p('forecast_risk') !== 'no') menus.push('forecast_risk');
 
+      // Customer Health
+      if (p('customer_health') !== 'no') menus.push('customer_health');
+
       return menus;
     };
 

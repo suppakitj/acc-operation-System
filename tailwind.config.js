@@ -20,6 +20,8 @@ module.exports = {
     'text-blue-700', 'text-red-700', 'text-amber-700', 'text-emerald-700', 'text-purple-700',
     'bg-amber-100', 'text-amber-700', 'bg-slate-100', 'text-slate-600', 'bg-orange-100', 'text-orange-600',
     'bg-red-100', 'bg-emerald-50', 'bg-blue-50', 'bg-amber-50', 'bg-purple-50',
+    'bg-teal-50', 'bg-teal-100', 'text-teal-500', 'text-teal-700', 'border-teal-300',
+    'bg-orange-50', 'border-orange-300', 'border-green-300', 'border-yellow-300', 'border-red-300',
   ],
   theme: {
     extend: {
