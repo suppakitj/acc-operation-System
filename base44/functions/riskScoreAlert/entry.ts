@@ -183,12 +183,10 @@ Deno.serve(async (req) => {
     const configs = await base44.asServiceRole.entities.AppConfig.filter({});
     const getVal = (key) => configs.find(c => c.key === key)?.value || '';
     const lineToken = getVal('line_access_token');
-    const lineGroupId = getVal('line_group_id');
-    const lineUserId = getVal('line_user_id');
     const senderName = getVal('o365_sender_name') || getVal('smtp_sender_name') || 'ACC Consulting';
 
-    // --- LINE ---
-    const lineTarget = lineGroupId || lineUserId;
+    // --- LINE --- ส่งไปกลุ่ม Management
+    const lineTarget = getVal('line_group_dept_management');
     let lineSent = false;
     if (lineToken && lineTarget) {
       const msg = buildRiskAlertMessage(todayStr, highRiskTasks);
