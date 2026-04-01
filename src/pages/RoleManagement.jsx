@@ -54,6 +54,7 @@ const PERMISSION_GROUPS = [
       { key: 'peak', label: 'Licensing Peak Account', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
       { key: 'referral', label: 'ค่าแนะนำ (Referral)', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
       { key: 'customer_profile', label: 'Customer Profile Dashboard', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
+      { key: 'customer_health', label: 'Customer Health Score', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
     ],
   },
   {
