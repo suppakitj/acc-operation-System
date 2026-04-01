@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import TaskCalendarWeekView from '../components/task-calendar/TaskCalendarWeekView';
 import TaskCalendarDayView from '../components/task-calendar/TaskCalendarDayView';
+import TaskDetailPopup from '../components/task-calendar/TaskDetailPopup';
+import DayTaskListPopup from '../components/task-calendar/DayTaskListPopup';
 
 const PRIORITY_COLORS = {
   urgent: 'bg-red-100 border-red-400 text-red-700',
@@ -43,6 +45,9 @@ export default function TaskCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [view, setView] = useState('month'); // month, week, day
   const [filters, setFilters] = useState({ search: '', status: 'active', service: 'all' });
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [dayListDate, setDayListDate] = useState(null);
+  const [dayListTasks, setDayListTasks] = useState([]);
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
@@ -325,6 +330,7 @@ export default function TaskCalendar() {
                                       snapshot.isDragging && "shadow-lg ring-2 ring-primary/30"
                                     )}
                                     title={`${task.title}\n${task.customer_name || ''}\n${STATUS_LABELS[task.status] || task.status}`}
+                                    onClick={(e) => { e.stopPropagation(); setSelectedTask(task); }}
                                   >
                                     <span className="font-medium">{task.title}</span>
                                   </div>
@@ -332,7 +338,10 @@ export default function TaskCalendar() {
                               </Draggable>
                             ))}
                             {dayTasks.length > 4 && (
-                              <div className="text-[10px] text-muted-foreground text-center">
+                              <div
+                                className="text-[10px] text-primary font-medium text-center cursor-pointer hover:underline"
+                                onClick={() => { setDayListDate(dateKey); setDayListTasks(dayTasks); }}
+                              >
                                 +{dayTasks.length - 4} งาน
                               </div>
                             )}
@@ -354,6 +363,18 @@ export default function TaskCalendar() {
           )}
         </CardContent>
       </Card>
+
+      {/* Task Detail Popup */}
+      <TaskDetailPopup task={selectedTask} open={!!selectedTask} onOpenChange={(v) => { if (!v) setSelectedTask(null); }} />
+
+      {/* Day Task List Popup */}
+      <DayTaskListPopup
+        date={dayListDate}
+        tasks={dayListTasks}
+        open={!!dayListDate}
+        onOpenChange={(v) => { if (!v) setDayListDate(null); }}
+        onTaskClick={(task) => { setDayListDate(null); setSelectedTask(task); }}
+      />
 
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-4 text-xs">
