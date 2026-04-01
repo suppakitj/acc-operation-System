@@ -13,8 +13,11 @@ export default function OverdueTrendChart({ tasks }) {
       const end = endOfMonth(m);
 
       const completedInMonth = tasks.filter(t => {
-        if (!t.completed_date) return false;
-        const d = new Date(t.completed_date);
+        if (t.status !== 'completed') return false;
+        // Use completed_date, fallback to updated_date
+        const dateStr = t.completed_date || t.updated_date;
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
         return isWithinInterval(d, { start, end });
       }).length;
 
