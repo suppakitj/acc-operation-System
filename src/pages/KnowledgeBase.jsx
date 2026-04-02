@@ -3,14 +3,19 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { BookOpen, Plus, Search } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { BookOpen, Plus, Search, Clock, TrendingUp, ThumbsUp, Eye, ExternalLink } from 'lucide-react';
 import { useAccessControl } from '@/components/auth/useAccessControl';
-import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import moment from 'moment';
 
-import CategoryPills from '@/components/knowledge/CategoryPills';
-import ArticleCard from '@/components/knowledge/ArticleCard';
 import ArticleView from '@/components/knowledge/ArticleView';
-import PopularSidebar from '@/components/knowledge/PopularSidebar';
+import ArticleForm from '@/components/knowledge/ArticleForm';
+
+function getCategoryEmoji(slug) {
+  const map = { sop: '🗒️', tax_law: '📋', program_guide: '💻', faq: '❓', template: '📄' };
+  return map[slug] || '📝';
+}
 
 export default function KnowledgeBase() {
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
@@ -28,9 +33,12 @@ export default function KnowledgeBase() {
     staleTime: 5 * 60_000,
   });
 
-  const [search, setSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+  const [sortBy, setSortBy] = useState('latest');
   const [selectedArticle, setSelectedArticle] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const published = useMemo(() => articles.filter(a => a.status === 'published'), [articles]);
 
@@ -39,8 +47,8 @@ export default function KnowledgeBase() {
     if (activeCategory !== 'all') {
       result = result.filter(a => a.category_slug === activeCategory);
     }
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
       result = result.filter(a =>
         a.title?.toLowerCase().includes(q) ||
         a.summary?.toLowerCase().includes(q) ||
@@ -48,24 +56,43 @@ export default function KnowledgeBase() {
         (a.tags || []).some(t => t.toLowerCase().includes(q))
       );
     }
+    // Sort
+    if (sortBy === 'popular') {
+      result = [...result].sort((a, b) => (b.view_count || 0) - (a.view_count || 0));
+    } else if (sortBy === 'helpful') {
+      result = [...result].sort((a, b) => (b.helpful_count || 0) - (a.helpful_count || 0));
+    } else {
+      result = [...result].sort((a, b) => new Date(b.published_at || b.updated_date || 0) - new Date(a.published_at || a.updated_date || 0));
+    }
     return result;
-  }, [published, activeCategory, search]);
+  }, [published, activeCategory, searchQuery, sortBy]);
 
   const isManager = ['admin', 'management', 'manager', 'super_supervisor'].includes(ac.role);
-  const canEditArticle = (article) => isManager || article?.author_email === currentUser?.email;
+
+  const handleSave = async (data, articleId) => {
+    setSaving(true);
+    try {
+      if (articleId) {
+        await base44.entities.KnowledgeArticle.update(articleId, data);
+      } else {
+        await base44.entities.KnowledgeArticle.create(data);
+      }
+      setShowForm(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Article detail view
   if (selectedArticle) {
     return (
-      <div className="space-y-4">
-        <ArticleView
-          article={selectedArticle}
-          categories={categories}
-          onBack={() => setSelectedArticle(null)}
-          onEdit={() => {}}
-          canEdit={canEditArticle(selectedArticle)}
-        />
-      </div>
+      <ArticleView
+        article={selectedArticle}
+        categories={categories}
+        onBack={() => setSelectedArticle(null)}
+        onEdit={() => {}}
+        canEdit={isManager || selectedArticle?.author_email === currentUser?.email}
+      />
     );
   }
 
@@ -75,61 +102,202 @@ export default function KnowledgeBase() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-            <BookOpen className="w-5 h-5" /> Knowledge Base
+            📚 Knowledge Base
           </h1>
-          <p className="text-sm text-muted-foreground">ค้นหาขั้นตอน กฎหมาย คู่มือโปรแกรม และ FAQ</p>
+          <p className="text-sm text-muted-foreground">คลังความรู้องค์กร</p>
         </div>
-        <Link to="/KnowledgeManage">
-          <Button className="gap-2">
-            <Plus className="w-4 h-4" /> เพิ่มบทความ
-          </Button>
-        </Link>
+        <Button onClick={() => setShowForm(true)} className="gap-2">
+          <Plus className="w-4 h-4" /> เขียนบทความใหม่
+        </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <Input
-          placeholder="ค้นหาบทความ, คำสำคัญ, tags..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="pl-11 h-11 text-sm"
-        />
-      </div>
-
-      {/* Category pills */}
-      <CategoryPills categories={categories} active={activeCategory} onSelect={setActiveCategory} />
-
-      {/* Main content */}
-      <div className="flex gap-6">
-        {/* Sidebar — hidden on mobile */}
+      {/* Main layout: sidebar + content */}
+      <div className="flex gap-5">
+        {/* Sidebar categories — hidden on mobile */}
         <div className="hidden lg:block w-56 shrink-0">
-          <PopularSidebar articles={published} onSelect={setSelectedArticle} />
+          <div className="bg-card border rounded-xl p-3 sticky top-4">
+            <p className="text-xs font-semibold text-muted-foreground px-2 mb-2">หมวดหมู่</p>
+
+            <button
+              onClick={() => setActiveCategory('all')}
+              className={cn(
+                "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors mb-0.5",
+                activeCategory === 'all'
+                  ? "bg-primary text-primary-foreground font-medium"
+                  : "hover:bg-muted/60 text-foreground"
+              )}
+            >
+              <span className="flex items-center gap-2">
+                <span>📚</span> ทั้งหมด
+              </span>
+              <span className="text-xs opacity-70">{published.length}</span>
+            </button>
+
+            {categories.filter(c => c.status === 'active').map(cat => {
+              const count = published.filter(a => a.category_slug === cat.slug).length;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.slug)}
+                  className={cn(
+                    "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors mb-0.5",
+                    activeCategory === cat.slug
+                      ? "bg-primary text-primary-foreground font-medium"
+                      : "hover:bg-muted/60 text-foreground"
+                  )}
+                >
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span>{getCategoryEmoji(cat.slug)}</span>
+                    <span className="truncate">{cat.name}</span>
+                  </span>
+                  <span className="text-xs opacity-70 ml-1">{count}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Article grid */}
-        <div className="flex-1 min-w-0">
+        {/* Right content */}
+        <div className="flex-1 min-w-0 space-y-4">
+          {/* Mobile category select */}
+          <div className="lg:hidden flex flex-wrap gap-2">
+            <button
+              onClick={() => setActiveCategory('all')}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                activeCategory === 'all'
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted text-muted-foreground border-border"
+              )}
+            >
+              📚 ทั้งหมด ({published.length})
+            </button>
+            {categories.filter(c => c.status === 'active').map(cat => {
+              const count = published.filter(a => a.category_slug === cat.slug).length;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.slug)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                    activeCategory === cat.slug
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted text-muted-foreground border-border"
+                  )}
+                >
+                  {getCategoryEmoji(cat.slug)} {cat.name} ({count})
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Search bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="ค้นหาบทความ..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Sort tabs */}
+          <div className="flex items-center gap-2">
+            {[
+              { key: 'latest', label: 'ล่าสุด', icon: Clock },
+              { key: 'popular', label: 'ยอดนิยม', icon: TrendingUp },
+              { key: 'helpful', label: 'ถูกใจมากสุด', icon: ThumbsUp },
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setSortBy(tab.key)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors",
+                  sortBy === tab.key
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/50 hover:bg-muted text-muted-foreground"
+                )}
+              >
+                <tab.icon className="w-3.5 h-3.5" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Articles grid or empty state */}
           {filtered.length === 0 ? (
-            <div className="text-center py-16">
-              <BookOpen className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
-              <p className="text-sm text-muted-foreground">
-                {search || activeCategory !== 'all' ? 'ไม่พบบทความที่ตรงกับการค้นหา' : 'ยังไม่มีบทความ'}
-              </p>
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+              <BookOpen className="w-12 h-12 mb-3 opacity-20" />
+              <p className="text-sm">ไม่พบบทความ</p>
+              {searchQuery && <p className="text-xs mt-1">ลองค้นหาด้วยคำอื่น</p>}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filtered.map(article => (
-                <ArticleCard
+                <div
                   key={article.id}
-                  article={article}
-                  categories={categories}
-                  onClick={setSelectedArticle}
-                />
+                  onClick={() => setSelectedArticle(article)}
+                  className="bg-card border rounded-xl p-4 hover:shadow-md cursor-pointer transition-all group"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge variant="secondary" className="text-[10px]">
+                      {getCategoryEmoji(article.category_slug)} {article.category_name}
+                    </Badge>
+                    {article.content_type === 'template' && article.drive_url && (
+                      <a
+                        href={article.drive_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="text-green-600 hover:text-green-700"
+                        title="เปิด Google Drive"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
+
+                  <h3 className="font-semibold text-sm leading-snug mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+                    {article.title}
+                  </h3>
+
+                  {article.summary && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{article.summary}</p>
+                  )}
+
+                  {article.tags?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {article.tags.slice(0, 3).map(tag => (
+                        <span key={tag} className="text-[10px] bg-muted px-1.5 py-0.5 rounded">{tag}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-3 h-3" /> {article.view_count || 0} ครั้ง
+                    </span>
+                    <span>{article.published_at ? moment(article.published_at).format('D MMM YY') : ''}</span>
+                  </div>
+                </div>
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Article form dialog */}
+      <ArticleForm
+        open={showForm}
+        onOpenChange={setShowForm}
+        article={null}
+        categories={categories}
+        currentUser={currentUser}
+        isManager={isManager}
+        onSave={handleSave}
+        saving={saving}
+      />
     </div>
   );
 }
