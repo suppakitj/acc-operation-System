@@ -97,10 +97,12 @@ export default function ArticleForm({ open, onOpenChange, article, categories, c
         // Step 1: Upload to Base44 storage first
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
         // Step 2: Send URL + filename to backend to copy to Google Drive
+        const cat = categories.find(c => c.id === form.category_id);
         const res = await base44.functions.invoke('uploadKbFile', {
           file_url,
           file_name: file.name,
           file_size: file.size,
+          category_name: cat?.name || '',
         });
         if (res.data?.success) {
           setForm(f => ({
