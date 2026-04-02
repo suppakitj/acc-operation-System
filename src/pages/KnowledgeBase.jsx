@@ -29,8 +29,7 @@ export default function KnowledgeBase() {
 
   const { data: articles = [] } = useQuery({
     queryKey: ['knowledgeArticles'],
-    queryFn: () => base44.entities.KnowledgeArticle.list('-published_at', 500),
-    staleTime: 5 * 60_000,
+    queryFn: () => base44.entities.KnowledgeArticle.list('-updated_date', 500),
   });
 
   const [searchQuery, setSearchQuery] = useState('');
