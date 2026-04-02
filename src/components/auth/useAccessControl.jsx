@@ -146,6 +146,9 @@ export function useAccessControl(user) {
       // Customer Health
       if (p('customer_health') !== 'no') menus.push('customer_health');
 
+      // Credential Vault
+      if (p('credential_vault') !== 'no') menus.push('credential_vault');
+
       return menus;
     };
 

@@ -6,7 +6,7 @@ import {
   Settings, ChevronLeft, ChevronRight, Key, ClipboardList,
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays,
   ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, ScanLine, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target, Activity,
-  HeartPulse
+  HeartPulse, KeyRound
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -36,6 +36,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'billing', label: t('menu_billing'), icon: CreditCard, path: '/Billing' },
     { id: 'customer_profile', label: 'Customer Profile', icon: Contact, path: '/CustomerProfile' },
     { id: 'customer_health', label: 'Customer Health', icon: HeartPulse, path: '/CustomerHealthScore' },
+    { id: 'credential_vault', label: 'Credential Vault', icon: KeyRound, path: '/CustomerCredentials' },
     { id: 'referral', label: 'ค่าแนะนำ', icon: Handshake, path: '/ReferralCommission' },
 
     { id: 'line_chat', label: t('menu_line_chat'), icon: MessageCircle, path: '/LineChat' },
@@ -58,7 +59,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const menuGroups = [
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard', 'staff_dashboard', 'team_analytics', 'staff_cost_report', 'forecast_risk'] },
     { key: 'work', label: 'งาน', icon: Folder, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'task_generation', 'time_tracking', 'workload', 'service_master', 'holiday_master'] },
-    { key: 'clients', label: 'ลูกค้า', icon: Contact, ids: ['customers', 'customer_health', 'customer_profile', 'peak', 'billing', 'referral'] },
+    { key: 'clients', label: 'ลูกค้า', icon: Contact, ids: ['customers', 'customer_health', 'customer_profile', 'credential_vault', 'peak', 'billing', 'referral'] },
     { key: 'comms', label: 'สื่อสาร', icon: MessageSquare, ids: ['notifications', 'line_chat', 'line_files'] },
     { key: 'tools', label: 'เครื่องมือ', icon: ScanLine, ids: ['ocr'] },
     { key: 'system', label: 'ระบบ', icon: Cog, ids: ['users', 'roles', 'audit', 'backup', 'settings'] },
