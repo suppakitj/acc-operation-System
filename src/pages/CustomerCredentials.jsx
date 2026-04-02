@@ -12,6 +12,7 @@ import CredentialForm from '@/components/credentials/CredentialForm';
 import CredentialTable from '@/components/credentials/CredentialTable';
 import OtpDecryptDialog from '@/components/credentials/OtpDecryptDialog';
 import ChangeHistoryDialog from '@/components/credentials/ChangeHistoryDialog';
+import OtpDeleteDialog from '@/components/credentials/OtpDeleteDialog';
 import TablePagination, { paginateData } from '@/components/shared/TablePagination';
 
 export default function CustomerCredentials() {
@@ -48,6 +49,7 @@ export default function CustomerCredentials() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [historyCred, setHistoryCred] = useState(null);
+  const [deleteCred, setDeleteCred] = useState(null);
 
   const filtered = useMemo(() => {
     let result = credentials;
@@ -95,11 +97,8 @@ export default function CustomerCredentials() {
     }
   };
 
-  const handleDelete = async (cred) => {
-    if (!confirm(`ลบ credential ของ ${cred.customer_name} (${cred.service_type}) ?`)) return;
-    await base44.functions.invoke('credentialManager', { action: 'delete', credential_id: cred.id });
-    queryClient.invalidateQueries({ queryKey: ['customerCredentials'] });
-    toast.success('ลบเรียบร้อย');
+  const handleDelete = (cred) => {
+    setDeleteCred(cred);
   };
 
   const handleEdit = (cred) => {
@@ -180,6 +179,16 @@ export default function CustomerCredentials() {
           open={!!viewCred}
           onOpenChange={(val) => { if (!val) setViewCred(null); }}
           credential={viewCred}
+        />
+      )}
+
+      {/* OTP Delete Dialog */}
+      {deleteCred && (
+        <OtpDeleteDialog
+          open={!!deleteCred}
+          onOpenChange={(val) => { if (!val) setDeleteCred(null); }}
+          credential={deleteCred}
+          onDeleted={() => queryClient.invalidateQueries({ queryKey: ['customerCredentials'] })}
         />
       )}
 
