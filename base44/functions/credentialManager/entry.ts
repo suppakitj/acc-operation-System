@@ -1,12 +1,20 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-const ENCRYPTION_KEY = Deno.env.get("CREDENTIAL_ENCRYPTION_KEY");
+// Read encryption key from AppConfig entity
+async function getEncryptionKey(base44) {
+  const configs = await base44.asServiceRole.entities.AppConfig.filter({});
+  const key = configs.find(c => c.key === 'credential_encryption_key')?.value || '';
+  if (!key || key.length < 16) {
+    throw new Error('CREDENTIAL_ENCRYPTION_KEY ยังไม่ได้ตั้งค่า — กรุณาไปที่ AppSettings → เชื่อมต่อ → Credential Vault');
+  }
+  return key;
+}
 
 // AES-GCM encryption helpers using Web Crypto API
-async function getKey() {
+async function getKey(encryptionKey) {
   const enc = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
-    "raw", enc.encode(ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32)),
+    "raw", enc.encode(encryptionKey.padEnd(32, '0').slice(0, 32)),
     { name: "PBKDF2" }, false, ["deriveKey"]
   );
   return crypto.subtle.deriveKey(
@@ -16,8 +24,8 @@ async function getKey() {
   );
 }
 
-async function encrypt(text) {
-  const key = await getKey();
+async function encrypt(text, encryptionKey) {
+  const key = await getKey(encryptionKey);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const enc = new TextEncoder();
   const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(text));
@@ -27,8 +35,8 @@ async function encrypt(text) {
   return btoa(String.fromCharCode(...combined));
 }
 
-async function decrypt(base64) {
-  const key = await getKey();
+async function decrypt(base64, encryptionKey) {
+  const key = await getKey(encryptionKey);
   const combined = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
   const iv = combined.slice(0, 12);
   const data = combined.slice(12);
@@ -72,6 +80,18 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Get encryption key from AppConfig — return graceful error if not set
+  let encryptionKey;
+  try {
+    encryptionKey = await getEncryptionKey(base44);
+  } catch (e) {
+    return Response.json({
+      error: e.message,
+      setup_required: true,
+      success: false,
+    }, { status: 503 });
+  }
+
   const body = await req.json();
   const { action } = body;
 
@@ -79,8 +99,8 @@ Deno.serve(async (req) => {
   if (action === 'save') {
     const { customer_id, customer_name, service_id, service_code, service_name, username, password, url, notes, credential_id } = body;
 
-    const encryptedPassword = await encrypt(password);
-    const encryptedUsername = await encrypt(username);
+    const encryptedPassword = await encrypt(password, encryptionKey);
+    const encryptedUsername = await encrypt(username, encryptionKey);
 
     const data = {
       customer_id,
@@ -103,8 +123,8 @@ Deno.serve(async (req) => {
       const fieldsChanged = [];
 
       if (old) {
-        const oldUsername = await decrypt(old.username);
-        const oldPassword = await decrypt(old.password_encrypted);
+        const oldUsername = await decrypt(old.username, encryptionKey);
+        const oldPassword = await decrypt(old.password_encrypted, encryptionKey);
         if (oldUsername !== username) fieldsChanged.push('username');
         if (oldPassword !== password) fieldsChanged.push('password');
         if ((old.url || '') !== (url || '')) fieldsChanged.push('url');
@@ -187,8 +207,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'ไม่พบ credential' }, { status: 404 });
     }
 
-    const decryptedUsername = await decrypt(cred.username);
-    const decryptedPassword = await decrypt(cred.password_encrypted);
+    const decryptedUsername = await decrypt(cred.username, encryptionKey);
+    const decryptedPassword = await decrypt(cred.password_encrypted, encryptionKey);
 
     return Response.json({ success: true, username: decryptedUsername, password: decryptedPassword });
   }

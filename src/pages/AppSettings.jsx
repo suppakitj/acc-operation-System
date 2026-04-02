@@ -16,6 +16,7 @@ import EmailSettings from '../components/settings/EmailSettings';
 import O365EmailSettings from '../components/settings/O365EmailSettings';
 import GoogleDriveSettings from '../components/settings/GoogleDriveSettings';
 import ManusSettings from '../components/settings/ManusSettings';
+import CredentialVaultSettings from '../components/settings/CredentialVaultSettings';
 import SessionTimeoutSettings from '../components/settings/SessionTimeoutSettings';
 import ProfileSettings from '../components/settings/ProfileSettings';
 import AppearanceSettings from '../components/settings/AppearanceSettings';
@@ -72,6 +73,7 @@ export default function AppSettings() {
             <LineOASettings />
             <GoogleDriveSettings />
             <ManusSettings />
+            <CredentialVaultSettings />
           </TabsContent>
         )}
       </Tabs>

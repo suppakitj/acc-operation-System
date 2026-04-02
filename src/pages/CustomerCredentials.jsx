@@ -65,18 +65,33 @@ export default function CustomerCredentials() {
 
   const handleSave = async (form) => {
     setSaving(true);
-    const res = await base44.functions.invoke('credentialManager', {
-      action: 'save',
-      ...form,
-    });
-    setSaving(false);
-    if (res.data.success) {
-      toast.success(form.credential_id ? 'อัปเดตเรียบร้อย' : 'เพิ่ม Credential เรียบร้อย');
-      queryClient.invalidateQueries({ queryKey: ['customerCredentials'] });
-      setShowForm(false);
-      setEditingCred(null);
-    } else {
-      toast.error(res.data.error || 'เกิดข้อผิดพลาด');
+    try {
+      const res = await base44.functions.invoke('credentialManager', {
+        action: 'save',
+        ...form,
+      });
+      if (res.data.setup_required) {
+        toast.error('ยังไม่ได้ตั้งค่า Encryption Key — ไปที่ Settings → เชื่อมต่อ → Credential Vault');
+        setSaving(false);
+        return;
+      }
+      if (res.data.success) {
+        toast.success(form.credential_id ? 'อัปเดตเรียบร้อย' : 'เพิ่ม Credential เรียบร้อย');
+        queryClient.invalidateQueries({ queryKey: ['customerCredentials'] });
+        setShowForm(false);
+        setEditingCred(null);
+      } else {
+        toast.error(res.data.error || 'เกิดข้อผิดพลาด');
+      }
+    } catch (err) {
+      const data = err?.response?.data;
+      if (data?.setup_required) {
+        toast.error('ยังไม่ได้ตั้งค่า Encryption Key — ไปที่ Settings → เชื่อมต่อ → Credential Vault');
+      } else {
+        toast.error(data?.error || 'เกิดข้อผิดพลาด');
+      }
+    } finally {
+      setSaving(false);
     }
   };
 

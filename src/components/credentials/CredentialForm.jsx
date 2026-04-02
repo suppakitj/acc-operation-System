@@ -51,14 +51,21 @@ export default function CredentialForm({ open, onOpenChange, credential, custome
         action: 'send_otp',
         credential_id: credential.id,
       });
-      if (res.data.success) {
+      if (res.data.setup_required) {
+        toast.error('ยังไม่ได้ตั้งค่า Encryption Key — ไปที่ Settings → เชื่อมต่อ → Credential Vault');
+      } else if (res.data.success) {
         toast.success('ส่ง OTP ไปยัง email ของคุณแล้ว');
         setEditStep('otp_verify');
       } else {
         toast.error(res.data.error || 'เกิดข้อผิดพลาด');
       }
     } catch (err) {
-      toast.error(err?.response?.data?.error || 'เกิดข้อผิดพลาดในการส่ง OTP');
+      const data = err?.response?.data;
+      if (data?.setup_required) {
+        toast.error('ยังไม่ได้ตั้งค่า Encryption Key — ไปที่ Settings → เชื่อมต่อ → Credential Vault');
+      } else {
+        toast.error(data?.error || 'เกิดข้อผิดพลาดในการส่ง OTP');
+      }
     } finally {
       setOtpLoading(false);
     }
@@ -72,7 +79,9 @@ export default function CredentialForm({ open, onOpenChange, credential, custome
         credential_id: credential.id,
         otp,
       });
-      if (res.data.success) {
+      if (res.data.setup_required) {
+        toast.error('ยังไม่ได้ตั้งค่า Encryption Key — ไปที่ Settings → เชื่อมต่อ → Credential Vault');
+      } else if (res.data.success) {
         setForm(f => ({
           ...f,
           username: res.data.username,
@@ -84,7 +93,12 @@ export default function CredentialForm({ open, onOpenChange, credential, custome
         toast.error(res.data.error || 'OTP ไม่ถูกต้อง');
       }
     } catch (err) {
-      toast.error(err?.response?.data?.error || 'OTP ไม่ถูกต้องหรือหมดอายุ');
+      const data = err?.response?.data;
+      if (data?.setup_required) {
+        toast.error('ยังไม่ได้ตั้งค่า Encryption Key — ไปที่ Settings → เชื่อมต่อ → Credential Vault');
+      } else {
+        toast.error(data?.error || 'OTP ไม่ถูกต้องหรือหมดอายุ');
+      }
     } finally {
       setOtpLoading(false);
     }
