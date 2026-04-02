@@ -3,27 +3,31 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Pencil, Trash2, ExternalLink, History } from 'lucide-react';
 import moment from 'moment';
+import { useSortableTable } from '@/hooks/useSortableTable';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 export default function CredentialTable({ data, onView, onEdit, onDelete, onViewHistory }) {
+  const { sorted, sortKey, sortDir, handleSort } = useSortableTable(data, 'customer_name', 'asc');
+
   return (
     <div className="bg-card rounded-lg border overflow-x-auto">
       <table className="w-full text-left">
         <thead>
           <tr className="border-b bg-muted/20">
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground">ลูกค้า</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground">บริการ</th>
+            <SortableHeader label="ลูกค้า" field="customer_name" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+            <SortableHeader label="บริการ" field="service_name" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
             <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground hidden md:table-cell">Username</th>
             <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground hidden md:table-cell">Password</th>
             <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground hidden lg:table-cell">URL</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground hidden xl:table-cell">แก้ไขล่าสุด</th>
+            <SortableHeader label="แก้ไขล่าสุด" field="updated_date" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="hidden xl:table-cell" />
             <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground w-32"></th>
           </tr>
         </thead>
         <tbody>
-          {data.length === 0 && (
+          {sorted.length === 0 && (
             <tr><td colSpan={7} className="text-center py-8 text-sm text-muted-foreground">ไม่มีข้อมูล Credential</td></tr>
           )}
-          {data.map(row => (
+          {sorted.map(row => (
             <tr key={row.id} className="border-b last:border-b-0 hover:bg-muted/10">
               <td className="px-3 py-2.5">
                 <p className="text-xs font-medium">{row.customer_name}</p>

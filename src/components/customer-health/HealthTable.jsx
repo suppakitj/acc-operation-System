@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GRADE_CONFIG } from '@/lib/customerHealth';
+import { useSortableTable } from '@/hooks/useSortableTable';
+import SortableHeader from '@/components/shared/SortableHeader';
+import { useMemo } from 'react';
 
 const GRADE_BADGE = {
   A: 'bg-green-100 text-green-700',
@@ -25,23 +28,36 @@ function formatCurrency(n) {
 }
 
 export default function HealthTable({ data, onViewDetail }) {
+  // Flatten health data for sorting
+  const flatData = useMemo(() => data.map(row => ({
+    ...row,
+    _score: row.health?.score ?? -1,
+    _grade: row.health?.grade || 'Z',
+    _onTimeRate: row.health?.onTimeRate ?? -1,
+    _avgDueDateChanges: row.health?.avgDueDateChanges ?? -1,
+    _avgHoursPerTask: row.health?.avgHoursPerTask ?? -1,
+    _totalTasks: row.health?.totalTasks ?? 0,
+  })), [data]);
+
+  const { sorted, sortKey, sortDir, handleSort } = useSortableTable(flatData, '_score', 'desc');
+
   return (
     <div className="bg-card rounded-lg border overflow-x-auto">
       <table className="w-full text-left">
         <thead>
           <tr className="border-b bg-muted/20">
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">ลูกค้า</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Health Score</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">On-Time</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Avg เลื่อน Due</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Avg ชม./งาน</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">รายได้/เดือน</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">งาน</th>
+            <SortableHeader label="ลูกค้า" field="company_name" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider" />
+            <SortableHeader label="Health Score" field="_score" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider" />
+            <SortableHeader label="On-Time" field="_onTimeRate" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider hidden md:table-cell" />
+            <SortableHeader label="Avg เลื่อน Due" field="_avgDueDateChanges" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider hidden md:table-cell" />
+            <SortableHeader label="Avg ชม./งาน" field="_avgHoursPerTask" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider hidden lg:table-cell" />
+            <SortableHeader label="รายได้/เดือน" field="monthly_fee" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider hidden lg:table-cell" />
+            <SortableHeader label="งาน" field="_totalTasks" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider hidden sm:table-cell" />
             <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-10"></th>
           </tr>
         </thead>
         <tbody>
-          {data.map(row => {
+          {sorted.map(row => {
             const h = row.health;
             const hasData = h && h.score !== null;
             const grade = hasData ? h.grade : null;

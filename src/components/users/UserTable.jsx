@@ -5,6 +5,8 @@ import { Switch } from '@/components/ui/switch';
 import { Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '../LanguageContext';
+import { useSortableTable } from '@/hooks/useSortableTable';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 const ROLE_COLORS = {
   admin: 'bg-red-100 text-red-700',
@@ -25,29 +27,30 @@ const DEPT_COLORS = {
 
 export default function UserTable({ users, onEdit, onToggleStatus }) {
   const { t } = useLanguage();
+  const { sorted, sortKey, sortDir, handleSort } = useSortableTable(users, 'full_name', 'asc');
 
   return (
     <div className="overflow-x-auto border rounded-lg bg-card">
       <table className="w-full text-left">
         <thead className="border-b bg-muted/30">
           <tr>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase">รหัส</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase">ชื่อ-นามสกุล</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase hidden md:table-cell">Email</th>
+            <SortableHeader label="รหัส" field="employee_id" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase" />
+            <SortableHeader label="ชื่อ-นามสกุล" field="full_name" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase" />
+            <SortableHeader label="Email" field="email" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase hidden md:table-cell" />
             <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase hidden lg:table-cell">เบอร์โทร</th>
             <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase">แผนก</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase hidden sm:table-cell">ตำแหน่ง</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase hidden sm:table-cell">Role</th>
+            <SortableHeader label="ตำแหน่ง" field="position" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase hidden sm:table-cell" />
+            <SortableHeader label="Role" field="role" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase hidden sm:table-cell" />
             <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase">สถานะ</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase hidden xl:table-cell">สร้างเมื่อ</th>
-            <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase hidden xl:table-cell">แก้ไขล่าสุด</th>
+            <SortableHeader label="สร้างเมื่อ" field="created_date" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase hidden xl:table-cell" />
+            <SortableHeader label="แก้ไขล่าสุด" field="updated_date" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase hidden xl:table-cell" />
             <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase w-10"></th>
           </tr>
         </thead>
         <tbody>
-          {users.length === 0 ? (
+          {sorted.length === 0 ? (
             <tr><td colSpan={11} className="text-center py-12 text-sm text-muted-foreground">{t('no_data')}</td></tr>
-          ) : users.map(user => (
+          ) : sorted.map(user => (
             <tr key={user.id} className="border-b last:border-b-0 hover:bg-muted/20 transition-colors">
               <td className="px-3 py-2.5">
                 <span className="text-xs font-mono font-medium text-primary">{user.employee_id || '-'}</span>

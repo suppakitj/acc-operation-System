@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { MoreVertical } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format, parseISO, differenceInDays } from 'date-fns';
+import { useSortableTable } from '@/hooks/useSortableTable';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 const DEPT_COLORS = {
   accounting: 'bg-blue-50 text-blue-600', audit: 'bg-purple-50 text-purple-600',
@@ -27,29 +29,30 @@ const STATUS_LABEL = {
 
 export default function BillingTable({ billings, onToggleReceipt, onToggleWht, onToggleReferral, onEdit, onRowClick }) {
   const today = new Date();
+  const { sorted, sortKey, sortDir, handleSort } = useSortableTable(billings, 'customer_name', 'asc');
 
   return (
     <div className="bg-card rounded-lg border overflow-x-auto">
       <table className="w-full text-left">
         <thead>
           <tr className="border-b bg-muted/20">
-            <th className="px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Client</th>
-            <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Dept</th>
-            <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Period</th>
-            <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Invoice #</th>
-            <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Inv Date</th>
-            <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Exp Pay</th>
-            <th className="px-3 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Amount</th>
-            <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+            <SortableHeader label="Client" field="customer_name" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider" />
+            <SortableHeader label="Dept" field="department" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider hidden md:table-cell" />
+            <SortableHeader label="Period" field="period_month" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider hidden md:table-cell" />
+            <SortableHeader label="Invoice #" field="invoice_number" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider hidden lg:table-cell" />
+            <SortableHeader label="Inv Date" field="billing_date" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider hidden lg:table-cell" />
+            <SortableHeader label="Exp Pay" field="due_date" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider hidden md:table-cell" />
+            <SortableHeader label="Amount" field="amount" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider" />
+            <SortableHeader label="Status" field="status" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider" />
             <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell text-center">Receipt</th>
             <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell text-center">WHT</th>
             <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell text-center">Ref</th>
-            <th className="px-2 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider hidden xl:table-cell">Owner</th>
+            <SortableHeader label="Owner" field="owner" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="uppercase tracking-wider hidden xl:table-cell" />
             <th className="px-2 py-3 w-8"></th>
           </tr>
         </thead>
         <tbody>
-          {billings.map(b => {
+          {sorted.map(b => {
             const isOverdue = b.due_date && differenceInDays(today, parseISO(b.due_date)) > 0 && b.status !== 'paid' && b.status !== 'cancelled';
             const daysOverdue = b.due_date ? differenceInDays(today, parseISO(b.due_date)) : 0;
             const dueStyle = isOverdue ? 'text-red-600 font-semibold' : '';
@@ -57,7 +60,7 @@ export default function BillingTable({ billings, onToggleReceipt, onToggleWht, o
 
             return (
               <tr key={b.id} className={`border-b last:border-b-0 hover:bg-muted/10 transition-colors ${rowBg}`}>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3">
                   <span className="text-sm font-medium text-foreground truncate block max-w-[180px]">{b.customer_name}</span>
                 </td>
                 <td className="px-2 py-3 hidden md:table-cell">
