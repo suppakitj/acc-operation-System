@@ -3,16 +3,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Pencil, Trash2, ExternalLink } from 'lucide-react';
 
-const SERVICE_LABELS = {
-  peak_account: { label: 'Peak Account', color: 'bg-purple-100 text-purple-700' },
-  dbd: { label: 'DBD', color: 'bg-blue-100 text-blue-700' },
-  efiling: { label: 'e-Filing', color: 'bg-green-100 text-green-700' },
-  email: { label: 'Email', color: 'bg-orange-100 text-orange-700' },
-  social_security: { label: 'ประกันสังคม', color: 'bg-teal-100 text-teal-700' },
-  vat: { label: 'VAT', color: 'bg-red-100 text-red-700' },
-  other: { label: 'อื่นๆ', color: 'bg-gray-100 text-gray-700' },
-};
-
 export default function CredentialTable({ data, onView, onEdit, onDelete }) {
   return (
     <div className="bg-card rounded-lg border overflow-x-auto">
@@ -32,15 +22,14 @@ export default function CredentialTable({ data, onView, onEdit, onDelete }) {
             <tr><td colSpan={6} className="text-center py-8 text-sm text-muted-foreground">ไม่มีข้อมูล Credential</td></tr>
           )}
           {data.map(row => {
-            const svc = SERVICE_LABELS[row.service_type] || SERVICE_LABELS.other;
             return (
               <tr key={row.id} className="border-b last:border-b-0 hover:bg-muted/10">
                 <td className="px-3 py-2.5">
                   <p className="text-xs font-medium">{row.customer_name}</p>
                 </td>
                 <td className="px-3 py-2.5">
-                  <Badge className={`text-[10px] border-0 ${svc.color}`}>
-                    {row.service_type === 'other' && row.service_label ? row.service_label : svc.label}
+                  <Badge className="text-[10px] border-0 bg-blue-100 text-blue-700">
+                    {row.service_name || row.service_code || '—'}
                   </Badge>
                 </td>
                 <td className="px-3 py-2.5 hidden md:table-cell">

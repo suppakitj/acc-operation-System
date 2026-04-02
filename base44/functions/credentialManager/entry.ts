@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
 
   // === SAVE CREDENTIAL (encrypt before saving) ===
   if (action === 'save') {
-    const { customer_id, customer_name, service_type, service_label, username, password, url, notes, credential_id } = body;
+    const { customer_id, customer_name, service_id, service_code, service_name, username, password, url, notes, credential_id } = body;
 
     const encryptedPassword = await encrypt(password);
     const encryptedUsername = await encrypt(username);
@@ -63,8 +63,9 @@ Deno.serve(async (req) => {
     const data = {
       customer_id,
       customer_name,
-      service_type,
-      service_label: service_label || '',
+      service_id: service_id || '',
+      service_code: service_code || '',
+      service_name: service_name || '',
       username: encryptedUsername,
       password_encrypted: encryptedPassword,
       url: url || '',

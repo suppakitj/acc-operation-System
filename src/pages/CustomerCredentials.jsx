@@ -13,17 +13,6 @@ import CredentialTable from '@/components/credentials/CredentialTable';
 import OtpDecryptDialog from '@/components/credentials/OtpDecryptDialog';
 import TablePagination, { paginateData } from '@/components/shared/TablePagination';
 
-const SERVICE_OPTIONS = [
-  { value: 'all', label: 'ทุกบริการ' },
-  { value: 'peak_account', label: 'Peak Account' },
-  { value: 'dbd', label: 'DBD' },
-  { value: 'efiling', label: 'e-Filing' },
-  { value: 'email', label: 'Email' },
-  { value: 'social_security', label: 'ประกันสังคม' },
-  { value: 'vat', label: 'VAT' },
-  { value: 'other', label: 'อื่นๆ' },
-];
-
 export default function CustomerCredentials() {
   const queryClient = useQueryClient();
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
@@ -38,6 +27,16 @@ export default function CustomerCredentials() {
     queryKey: ['customers'],
     queryFn: () => base44.entities.Customer.list(),
   });
+
+  const { data: services = [] } = useQuery({
+    queryKey: ['externalServices'],
+    queryFn: () => base44.entities.ExternalService.list(),
+  });
+
+  const serviceOptions = useMemo(() => [
+    { value: 'all', label: 'ทุกบริการ' },
+    ...services.filter(s => s.status === 'active').map(s => ({ value: s.id, label: s.name_th })),
+  ], [services]);
 
   const [search, setSearch] = useState('');
   const [serviceFilter, setServiceFilter] = useState('all');
@@ -55,7 +54,7 @@ export default function CustomerCredentials() {
       result = result.filter(r => r.customer_name?.toLowerCase().includes(s) || r.service_label?.toLowerCase().includes(s));
     }
     if (serviceFilter !== 'all') {
-      result = result.filter(r => r.service_type === serviceFilter);
+      result = result.filter(r => r.service_id === serviceFilter);
     }
     return result;
   }, [credentials, search, serviceFilter]);
@@ -123,9 +122,9 @@ export default function CustomerCredentials() {
           <Input placeholder="ค้นหาลูกค้า..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="pl-9" />
         </div>
         <Select value={serviceFilter} onValueChange={v => { setServiceFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            {SERVICE_OPTIONS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+            {serviceOptions.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -152,6 +151,7 @@ export default function CustomerCredentials() {
         onOpenChange={setShowForm}
         credential={editingCred}
         customers={customers}
+        services={services}
         onSave={handleSave}
         saving={saving}
       />

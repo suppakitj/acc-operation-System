@@ -8,19 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Save, Loader2 } from 'lucide-react';
 
-const SERVICE_TYPES = [
-  { value: 'peak_account', label: 'Peak Account' },
-  { value: 'dbd', label: 'DBD (กรมพัฒนาธุรกิจการค้า)' },
-  { value: 'efiling', label: 'e-Filing (กรมสรรพากร)' },
-  { value: 'email', label: 'Email' },
-  { value: 'social_security', label: 'ประกันสังคม' },
-  { value: 'vat', label: 'VAT / ภาษีมูลค่าเพิ่ม' },
-  { value: 'other', label: 'อื่นๆ' },
-];
-
-export default function CredentialForm({ open, onOpenChange, credential, customers, onSave, saving }) {
+export default function CredentialForm({ open, onOpenChange, credential, customers, services, onSave, saving }) {
   const [form, setForm] = useState({
-    customer_id: '', customer_name: '', service_type: '', service_label: '',
+    customer_id: '', customer_name: '', service_id: '', service_code: '', service_name: '',
     username: '', password: '', url: '', notes: '',
   });
 
@@ -29,22 +19,35 @@ export default function CredentialForm({ open, onOpenChange, credential, custome
       setForm({
         customer_id: credential.customer_id || '',
         customer_name: credential.customer_name || '',
-        service_type: credential.service_type || '',
-        service_label: credential.service_label || '',
-        username: '', password: '', // will be filled fresh
+        service_id: credential.service_id || '',
+        service_code: credential.service_code || '',
+        service_name: credential.service_name || '',
+        username: '', password: '',
         url: credential.url || '',
         notes: credential.notes || '',
       });
     } else {
-      setForm({ customer_id: '', customer_name: '', service_type: '', service_label: '', username: '', password: '', url: '', notes: '' });
+      setForm({ customer_id: '', customer_name: '', service_id: '', service_code: '', service_name: '', username: '', password: '', url: '', notes: '' });
     }
   }, [credential, open]);
 
   const customerOptions = (customers || []).map(c => ({ value: c.id, label: c.company_name }));
+  const serviceOptions = (services || []).filter(s => s.status === 'active').map(s => ({ value: s.id, label: s.name_th }));
 
   const handleCustomerChange = (val) => {
     const cust = customers.find(c => c.id === val);
     setForm(f => ({ ...f, customer_id: val, customer_name: cust?.company_name || '' }));
+  };
+
+  const handleServiceChange = (val) => {
+    const svc = services.find(s => s.id === val);
+    setForm(f => ({
+      ...f,
+      service_id: val,
+      service_code: svc?.code || '',
+      service_name: svc?.name_th || '',
+      url: svc?.url || f.url,
+    }));
   };
 
   const handleSubmit = (e) => {
@@ -68,22 +71,14 @@ export default function CredentialForm({ open, onOpenChange, credential, custome
               placeholder="เลือกลูกค้า"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">ประเภทบริการ *</Label>
-              <Select value={form.service_type} onValueChange={v => setForm(f => ({ ...f, service_type: v }))}>
-                <SelectTrigger><SelectValue placeholder="เลือก" /></SelectTrigger>
-                <SelectContent>
-                  {SERVICE_TYPES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            {form.service_type === 'other' && (
-              <div>
-                <Label className="text-xs">ชื่อบริการ</Label>
-                <Input value={form.service_label} onChange={e => setForm(f => ({ ...f, service_label: e.target.value }))} placeholder="ระบุชื่อบริการ" />
-              </div>
-            )}
+          <div>
+            <Label className="text-xs">ประเภทบริการ *</Label>
+            <SearchableSelect
+              options={serviceOptions}
+              value={form.service_id}
+              onChange={handleServiceChange}
+              placeholder="เลือกบริการ"
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -105,7 +100,7 @@ export default function CredentialForm({ open, onOpenChange, credential, custome
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>ยกเลิก</Button>
-            <Button type="submit" disabled={saving || !form.customer_id || !form.service_type || !form.username || !form.password}>
+            <Button type="submit" disabled={saving || !form.customer_id || !form.service_id || !form.username || !form.password}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               บันทึก
             </Button>
