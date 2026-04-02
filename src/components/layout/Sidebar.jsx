@@ -145,7 +145,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
                     onClick={() => toggleGroup(group.key)}
                     className={cn(
                       "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] font-semibold uppercase tracking-wider transition-colors",
-                      hasActive ? "text-sidebar-primary" : "text-sidebar-foreground/45 hover:text-sidebar-foreground/70"
+                      hasActive ? "text-sidebar-primary" : "text-sidebar-foreground/70 hover:text-sidebar-foreground/90"
                     )}
                   >
                     <GroupIcon className="w-3.5 h-3.5 shrink-0" />
@@ -175,7 +175,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
                           (!collapsed || mobileOpen) ? "px-3 py-2 ml-2" : "px-3 py-2.5",
                           isActive
                             ? "bg-sidebar-primary/15 text-sidebar-primary"
-                            : "text-sidebar-foreground/65 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
                         )}
                         title={collapsed && !mobileOpen ? item.label : undefined}
                       >
@@ -195,7 +195,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
       <div className="p-2 border-t border-sidebar-border shrink-0 hidden lg:block">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground/50 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground transition-all text-xs"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground transition-all text-xs"
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4" /><span>{t('collapse_menu')}</span></>}
         </button>
