@@ -6,13 +6,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Save, Send, Loader2, X } from 'lucide-react';
+import { Save, Send, Loader2, X, Upload, FileText, Trash2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 export default function ArticleForm({ open, onOpenChange, article, categories, currentUser, isManager, onSave, saving }) {
   const [form, setForm] = useState({
     title: '', category_id: '', content_type: '', summary: '',
     content: '', tags: [], drive_url: '', drive_file_name: '', tagInput: '',
+    attachments: [],
   });
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -27,9 +31,10 @@ export default function ArticleForm({ open, onOpenChange, article, categories, c
         drive_url: article.drive_url || '',
         drive_file_name: article.drive_file_name || '',
         tagInput: '',
+        attachments: article.attachments || [],
       });
     } else {
-      setForm({ title: '', category_id: '', content_type: '', summary: '', content: '', tags: [], drive_url: '', drive_file_name: '', tagInput: '' });
+      setForm({ title: '', category_id: '', content_type: '', summary: '', content: '', tags: [], drive_url: '', drive_file_name: '', tagInput: '', attachments: [] });
     }
   }, [article, open]);
 
@@ -63,6 +68,7 @@ export default function ArticleForm({ open, onOpenChange, article, categories, c
       tags: form.tags,
       drive_url: form.drive_url,
       drive_file_name: form.drive_file_name,
+      attachments: form.attachments,
       status,
       author_email: article?.author_email || currentUser?.email,
       author_name: article?.author_name || currentUser?.full_name,
@@ -81,6 +87,49 @@ export default function ArticleForm({ open, onOpenChange, article, categories, c
   };
 
   const isTemplate = form.content_type === 'template';
+
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setUploading(true);
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await base44.functions.invoke('uploadKbFile', formData);
+        if (res.data?.success) {
+          setForm(f => ({
+            ...f,
+            attachments: [...f.attachments, {
+              name: res.data.name,
+              drive_url: res.data.drive_url,
+              drive_file_id: res.data.drive_file_id,
+              size: res.data.size,
+            }],
+          }));
+          toast.success(`อัปโหลด "${res.data.name}" สำเร็จ`);
+        } else {
+          toast.error(res.data?.error || 'อัปโหลดไม่สำเร็จ');
+        }
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || 'เกิดข้อผิดพลาดในการอัปโหลด');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const removeAttachment = (index) => {
+    setForm(f => ({ ...f, attachments: f.attachments.filter((_, i) => i !== index) }));
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -165,6 +214,37 @@ export default function ArticleForm({ open, onOpenChange, article, categories, c
               </div>
             </>
           )}
+
+          {/* File attachments */}
+          <div>
+            <Label className="text-xs">แนบไฟล์</Label>
+            <div className="mt-1">
+              <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed cursor-pointer hover:bg-muted/50 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4 text-muted-foreground" />}
+                <span className="text-sm text-muted-foreground">{uploading ? 'กำลังอัปโหลด...' : 'เลือกไฟล์'}</span>
+                <input type="file" className="hidden" multiple onChange={handleFileUpload} disabled={uploading} />
+              </label>
+              <p className="text-[10px] text-muted-foreground mt-1">ไฟล์จะถูกอัปโหลดไป Google Drive อัตโนมัติ</p>
+            </div>
+            {form.attachments.length > 0 && (
+              <div className="space-y-1.5 mt-2">
+                {form.attachments.map((att, i) => (
+                  <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border">
+                    <FileText className="w-4 h-4 text-blue-500 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <a href={att.drive_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-primary hover:underline truncate block">
+                        {att.name}
+                      </a>
+                      {att.size > 0 && <p className="text-[10px] text-muted-foreground">{formatFileSize(att.size)}</p>}
+                    </div>
+                    <button onClick={() => removeAttachment(i)} className="text-red-400 hover:text-red-600 shrink-0">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>ยกเลิก</Button>
