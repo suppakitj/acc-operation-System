@@ -56,6 +56,7 @@ const PERMISSION_GROUPS = [
       { key: 'customer_profile', label: 'Customer Profile Dashboard', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
       { key: 'customer_health', label: 'Customer Health Score', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
       { key: 'credential_vault', label: 'Credential Vault (Username/Password)', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
+      { key: 'external_service', label: 'External Service Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
     ],
   },
   {

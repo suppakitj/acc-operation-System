@@ -38,6 +38,7 @@ const DEFAULT_MATRIX = {
   forecast_risk:    { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
   customer_health:  { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
   credential_vault: { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  external_service: { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
 };
 
 const PermissionMatrixContext = createContext(DEFAULT_MATRIX);

@@ -149,6 +149,9 @@ export function useAccessControl(user) {
       // Credential Vault
       if (p('credential_vault') !== 'no') menus.push('credential_vault');
 
+      // External Service Master
+      if (p('external_service') !== 'no') menus.push('external_service');
+
       return menus;
     };
 

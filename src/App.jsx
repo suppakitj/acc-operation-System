@@ -41,6 +41,7 @@ import KpiDashboard from './pages/KpiDashboard';
 import ForecastRisk from './pages/ForecastRisk';
 import CustomerHealthScore from './pages/CustomerHealthScore';
 import CustomerCredentials from './pages/CustomerCredentials';
+import ExternalServiceMaster from './pages/ExternalServiceMaster';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -101,6 +102,7 @@ const AuthenticatedApp = () => {
         <Route path="/ForecastRisk" element={<ForecastRisk />} />
         <Route path="/CustomerHealthScore" element={<CustomerHealthScore />} />
         <Route path="/CustomerCredentials" element={<CustomerCredentials />} />
+        <Route path="/ExternalServiceMaster" element={<ExternalServiceMaster />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

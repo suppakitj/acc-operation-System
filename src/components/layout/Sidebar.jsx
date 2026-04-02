@@ -6,7 +6,7 @@ import {
   Settings, ChevronLeft, ChevronRight, Key, ClipboardList,
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays,
   ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, ScanLine, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target, Activity,
-  HeartPulse, KeyRound
+  HeartPulse, KeyRound, Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -37,6 +37,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'customer_profile', label: 'Customer Profile', icon: Contact, path: '/CustomerProfile' },
     { id: 'customer_health', label: 'Customer Health', icon: HeartPulse, path: '/CustomerHealthScore' },
     { id: 'credential_vault', label: 'Credential Vault', icon: KeyRound, path: '/CustomerCredentials' },
+    { id: 'external_service', label: 'External Service', icon: Globe, path: '/ExternalServiceMaster' },
     { id: 'referral', label: 'ค่าแนะนำ', icon: Handshake, path: '/ReferralCommission' },
 
     { id: 'line_chat', label: t('menu_line_chat'), icon: MessageCircle, path: '/LineChat' },
@@ -62,7 +63,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { key: 'clients', label: 'ลูกค้า', icon: Contact, ids: ['customers', 'customer_health', 'customer_profile', 'credential_vault', 'peak', 'billing', 'referral'] },
     { key: 'comms', label: 'สื่อสาร', icon: MessageSquare, ids: ['notifications', 'line_chat', 'line_files'] },
     { key: 'tools', label: 'เครื่องมือ', icon: ScanLine, ids: ['ocr'] },
-    { key: 'system', label: 'ระบบ', icon: Cog, ids: ['users', 'roles', 'audit', 'backup', 'settings'] },
+    { key: 'system', label: 'ระบบ', icon: Cog, ids: ['users', 'roles', 'audit', 'backup', 'external_service', 'settings'] },
   ];
 
   // Build visible groups
