@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import CredentialForm from '@/components/credentials/CredentialForm';
 import CredentialTable from '@/components/credentials/CredentialTable';
 import OtpDecryptDialog from '@/components/credentials/OtpDecryptDialog';
+import ChangeHistoryDialog from '@/components/credentials/ChangeHistoryDialog';
 import TablePagination, { paginateData } from '@/components/shared/TablePagination';
 
 export default function CustomerCredentials() {
@@ -46,6 +47,7 @@ export default function CustomerCredentials() {
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [historyCred, setHistoryCred] = useState(null);
 
   const filtered = useMemo(() => {
     let result = credentials;
@@ -135,6 +137,7 @@ export default function CustomerCredentials() {
         onView={setViewCred}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onViewHistory={setHistoryCred}
       />
 
       <TablePagination
@@ -162,6 +165,15 @@ export default function CustomerCredentials() {
           open={!!viewCred}
           onOpenChange={(val) => { if (!val) setViewCred(null); }}
           credential={viewCred}
+        />
+      )}
+
+      {/* Change History Dialog */}
+      {historyCred && (
+        <ChangeHistoryDialog
+          open={!!historyCred}
+          onOpenChange={(val) => { if (!val) setHistoryCred(null); }}
+          credential={historyCred}
         />
       )}
     </div>

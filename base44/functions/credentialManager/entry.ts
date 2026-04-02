@@ -70,12 +70,50 @@ Deno.serve(async (req) => {
       password_encrypted: encryptedPassword,
       url: url || '',
       notes: notes || '',
+      last_modified_by: user.email,
+      last_modified_by_name: user.full_name || user.email,
     };
 
     if (credential_id) {
+      // Detect which fields changed
+      const existing = await base44.entities.CustomerCredential.filter({ id: credential_id });
+      const old = existing?.[0];
+      const fieldsChanged = [];
+
+      if (old) {
+        // Decrypt old values to compare
+        const oldUsername = await decrypt(old.username);
+        const oldPassword = await decrypt(old.password_encrypted);
+        if (oldUsername !== username) fieldsChanged.push('username');
+        if (oldPassword !== password) fieldsChanged.push('password');
+        if ((old.url || '') !== (url || '')) fieldsChanged.push('url');
+        if ((old.notes || '') !== (notes || '')) fieldsChanged.push('notes');
+        if ((old.service_id || '') !== (service_id || '')) fieldsChanged.push('service');
+        if ((old.customer_id || '') !== (customer_id || '')) fieldsChanged.push('customer');
+      }
+
+      // Append to change history
+      const history = old?.change_history || [];
+      if (fieldsChanged.length > 0) {
+        history.push({
+          changed_at: new Date().toISOString(),
+          changed_by: user.email,
+          changed_by_name: user.full_name || user.email,
+          fields_changed: fieldsChanged,
+        });
+      }
+      data.change_history = history;
+
       await base44.entities.CustomerCredential.update(credential_id, data);
-      return Response.json({ success: true, message: 'updated' });
+      return Response.json({ success: true, message: 'updated', fields_changed: fieldsChanged });
     } else {
+      // New credential — record initial creation
+      data.change_history = [{
+        changed_at: new Date().toISOString(),
+        changed_by: user.email,
+        changed_by_name: user.full_name || user.email,
+        fields_changed: ['created'],
+      }];
       const created = await base44.entities.CustomerCredential.create(data);
       return Response.json({ success: true, id: created.id });
     }
@@ -85,11 +123,13 @@ Deno.serve(async (req) => {
   if (action === 'send_otp') {
     const { credential_id } = body;
     const otp = generateOTP();
-    otpStore.set(`${user.email}_${credential_id}`, { otp, expires: Date.now() + 5 * 60 * 1000 });
+    // Use credential_id "edit" for edit-mode OTPs
+    const storeKey = `${user.email}_${credential_id}`;
+    otpStore.set(storeKey, { otp, expires: Date.now() + 5 * 60 * 1000 });
 
     await base44.integrations.Core.SendEmail({
       to: user.email,
-      subject: 'OTP สำหรับดู Password - ACC Consulting',
+      subject: 'OTP สำหรับดู/แก้ไข Credential - ACC Consulting',
       body: `
         <div style="font-family: sans-serif; padding: 20px;">
           <h2>รหัส OTP ของคุณ</h2>
