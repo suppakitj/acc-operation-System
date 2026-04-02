@@ -39,6 +39,7 @@ const TABS = [
   { key: 'expiring', label: 'Expiring ≤30d' },
   { key: 'expired', label: 'Expired' },
   { key: 'renewed', label: 'Renewed' },
+  { key: 'cancelled', label: 'Cancelled' },
   { key: 'all', label: 'All Records' },
 ];
 
@@ -96,7 +97,6 @@ export default function PeakAccount() {
 
   // Compute days left for each license
   const enriched = useMemo(() => licenses
-    .filter(l => l.license_status !== 'cancelled')
     .map(l => {
       const daysLeft = l.expiry_date ? differenceInDays(parseISO(l.expiry_date), today) : null;
       return { ...l, daysLeft };
@@ -120,11 +120,12 @@ export default function PeakAccount() {
   // Tab filtering
   const tabFiltered = useMemo(() => {
     return enriched.filter(l => {
-      if (activeTab === 'active') return l.license_status === 'active' || l.license_status === 'renewed';
-      if (activeTab === 'expiring') return l.daysLeft !== null && l.daysLeft >= 0 && l.daysLeft <= 30;
-      if (activeTab === 'expired') return l.license_status === 'expired' || (l.daysLeft !== null && l.daysLeft < 0);
+      if (activeTab === 'active') return (l.license_status === 'active' || l.license_status === 'renewed') && l.license_status !== 'cancelled';
+      if (activeTab === 'expiring') return l.license_status !== 'cancelled' && l.daysLeft !== null && l.daysLeft >= 0 && l.daysLeft <= 30;
+      if (activeTab === 'expired') return l.license_status !== 'cancelled' && (l.license_status === 'expired' || (l.daysLeft !== null && l.daysLeft < 0));
       if (activeTab === 'renewed') return l.license_status === 'renewed';
-      return true;
+      if (activeTab === 'cancelled') return l.license_status === 'cancelled';
+      return true; // 'all' shows everything including cancelled
     });
   }, [enriched, activeTab]);
 
