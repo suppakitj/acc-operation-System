@@ -125,7 +125,7 @@ export default function PeakAccount() {
       if (activeTab === 'expired') return l.license_status !== 'cancelled' && (l.license_status === 'expired' || (l.daysLeft !== null && l.daysLeft < 0));
       if (activeTab === 'renewed') return l.license_status === 'renewed';
       if (activeTab === 'cancelled') return l.license_status === 'cancelled';
-      return true; // 'all' shows everything including cancelled
+      return l.license_status !== 'cancelled'; // 'all' shows everything except cancelled
     });
   }, [enriched, activeTab]);
 
