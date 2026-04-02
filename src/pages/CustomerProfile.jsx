@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Search, ClipboardList, Clock, BarChart3 } from 'lucide-react';
+import { Building2, Search, ClipboardList, Clock, BarChart3, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useAccessControl } from '@/components/auth/useAccessControl';
 import { usePermissionMatrix, getPerm } from '@/hooks/usePermissionMatrix';
 import CustomerProfileStats from '@/components/customer-profile/CustomerProfileStats';
@@ -21,6 +21,8 @@ export default function CustomerProfile() {
 
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState('totalTasks');
+  const [sortDir, setSortDir] = useState('desc');
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
@@ -78,8 +80,38 @@ export default function CustomerProfile() {
         .filter(e => e.customer_id === c.id && !e.is_running && e.duration_minutes)
         .reduce((sum, e) => sum + (e.duration_minutes || 0), 0);
       return { ...c, totalTasks: tasks.length, active, completed, overdue, totalMinutes: mins };
-    }).sort((a, b) => b.totalTasks - a.totalTasks);
+    });
   }, [filteredCustomers, allTasks, allTimeEntries]);
+
+  const sortedOverview = useMemo(() => {
+    const sorted = [...customerOverview];
+    sorted.sort((a, b) => {
+      let aVal, bVal;
+      if (sortKey === 'company_name') {
+        aVal = a.company_name?.toLowerCase() || '';
+        bVal = b.company_name?.toLowerCase() || '';
+        return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      aVal = a[sortKey] || 0;
+      bVal = b[sortKey] || 0;
+      return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+    return sorted;
+  }, [customerOverview, sortKey, sortDir]);
+
+  const handleSort = (key) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('desc');
+    }
+  };
+
+  const SortIcon = ({ col }) => {
+    if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 opacity-30" />;
+    return sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />;
+  };
 
   if (!canView) {
     return <div className="text-center py-12 text-muted-foreground">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</div>;
@@ -118,23 +150,35 @@ export default function CustomerProfile() {
       {!selectedCustomerId && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">ภาพรวมลูกค้าทั้งหมด ({customerOverview.length} ราย)</CardTitle>
+            <CardTitle className="text-sm">ภาพรวมลูกค้าทั้งหมด ({sortedOverview.length} ราย)</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="border-b bg-muted/30">
                   <tr>
-                    <th className="px-4 py-2.5 text-[11px] font-semibold text-muted-foreground">ลูกค้า</th>
-                    <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground text-center">งานทั้งหมด</th>
-                    <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground text-center hidden sm:table-cell">กำลังทำ</th>
-                    <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground text-center hidden sm:table-cell">เสร็จ</th>
-                    <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground text-center">เกินกำหนด</th>
-                    <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground text-center hidden md:table-cell">เวลารวม</th>
+                    <th className="px-4 py-2.5 text-[11px] font-semibold text-muted-foreground cursor-pointer hover:text-foreground select-none" onClick={() => handleSort('company_name')}>
+                      <span className="inline-flex items-center gap-1">ลูกค้า <SortIcon col="company_name" /></span>
+                    </th>
+                    <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground text-center cursor-pointer hover:text-foreground select-none" onClick={() => handleSort('totalTasks')}>
+                      <span className="inline-flex items-center gap-1 justify-center">งานทั้งหมด <SortIcon col="totalTasks" /></span>
+                    </th>
+                    <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground text-center hidden sm:table-cell cursor-pointer hover:text-foreground select-none" onClick={() => handleSort('active')}>
+                      <span className="inline-flex items-center gap-1 justify-center">กำลังทำ <SortIcon col="active" /></span>
+                    </th>
+                    <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground text-center hidden sm:table-cell cursor-pointer hover:text-foreground select-none" onClick={() => handleSort('completed')}>
+                      <span className="inline-flex items-center gap-1 justify-center">เสร็จ <SortIcon col="completed" /></span>
+                    </th>
+                    <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground text-center cursor-pointer hover:text-foreground select-none" onClick={() => handleSort('overdue')}>
+                      <span className="inline-flex items-center gap-1 justify-center">เกินกำหนด <SortIcon col="overdue" /></span>
+                    </th>
+                    <th className="px-3 py-2.5 text-[11px] font-semibold text-muted-foreground text-center hidden md:table-cell cursor-pointer hover:text-foreground select-none" onClick={() => handleSort('totalMinutes')}>
+                      <span className="inline-flex items-center gap-1 justify-center">เวลารวม <SortIcon col="totalMinutes" /></span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {customerOverview.map(c => (
+                  {sortedOverview.map(c => (
                     <tr
                       key={c.id}
                       className="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
@@ -157,7 +201,7 @@ export default function CustomerProfile() {
                       <td className="px-3 py-2.5 text-center text-xs text-muted-foreground hidden md:table-cell">{formatHours(c.totalMinutes)}</td>
                     </tr>
                   ))}
-                  {customerOverview.length === 0 && (
+                  {sortedOverview.length === 0 && (
                     <tr><td colSpan={6} className="text-center py-8 text-sm text-muted-foreground">ไม่พบลูกค้า</td></tr>
                   )}
                 </tbody>
