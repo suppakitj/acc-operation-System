@@ -199,20 +199,10 @@ export default function ArticleForm({ open, onOpenChange, article, categories, c
           )}
 
           {isTemplate && (
-            <>
-              <div>
-                <Label className="text-xs">Google Drive URL *</Label>
-                <Input value={form.drive_url} onChange={e => setForm(f => ({ ...f, drive_url: e.target.value }))} placeholder="https://drive.google.com/..." />
-              </div>
-              <div>
-                <Label className="text-xs">ชื่อไฟล์</Label>
-                <Input value={form.drive_file_name} onChange={e => setForm(f => ({ ...f, drive_file_name: e.target.value }))} placeholder="เช่น แบบฟอร์ม ภ.พ.30.xlsx" />
-              </div>
-              <div>
-                <Label className="text-xs">หมายเหตุ / วิธีใช้</Label>
-                <Textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} rows={4} placeholder="รายละเอียดเพิ่มเติม" />
-              </div>
-            </>
+            <div>
+              <Label className="text-xs">หมายเหตุ / วิธีใช้</Label>
+              <Textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} rows={4} placeholder="รายละเอียดเพิ่มเติม" />
+            </div>
           )}
 
           {/* File attachments */}
