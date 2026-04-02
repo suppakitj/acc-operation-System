@@ -42,6 +42,8 @@ import ForecastRisk from './pages/ForecastRisk';
 import CustomerHealthScore from './pages/CustomerHealthScore';
 import CustomerCredentials from './pages/CustomerCredentials';
 import ExternalServiceMaster from './pages/ExternalServiceMaster';
+import KnowledgeBase from './pages/KnowledgeBase';
+import KnowledgeManage from './pages/KnowledgeManage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -103,6 +105,8 @@ const AuthenticatedApp = () => {
         <Route path="/CustomerHealthScore" element={<CustomerHealthScore />} />
         <Route path="/CustomerCredentials" element={<CustomerCredentials />} />
         <Route path="/ExternalServiceMaster" element={<ExternalServiceMaster />} />
+        <Route path="/KnowledgeBase" element={<KnowledgeBase />} />
+        <Route path="/KnowledgeManage" element={<KnowledgeManage />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

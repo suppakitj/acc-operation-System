@@ -152,6 +152,10 @@ export function useAccessControl(user) {
       // External Service Master
       if (p('external_service') !== 'no') menus.push('external_service');
 
+      // Knowledge Base
+      if (p('knowledge_base') !== 'no') menus.push('knowledge_base');
+      if (p('knowledge_manage') !== 'no') menus.push('knowledge_manage');
+
       return menus;
     };
 

@@ -1,0 +1,41 @@
+{
+  "name": "KnowledgeCategory",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e2b\u0e21\u0e27\u0e14\u0e2b\u0e21\u0e39\u0e48"
+    },
+    "slug": {
+      "type": "string",
+      "description": "unique key \u0e40\u0e0a\u0e48\u0e19 sop, tax_law"
+    },
+    "icon": {
+      "type": "string",
+      "description": "lucide icon name \u0e40\u0e0a\u0e48\u0e19 FileText, Scale"
+    },
+    "color": {
+      "type": "string",
+      "description": "\u0e2a\u0e35 badge \u0e40\u0e0a\u0e48\u0e19 blue, green, amber"
+    },
+    "description": {
+      "type": "string"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "name",
+    "slug"
+  ]
+}

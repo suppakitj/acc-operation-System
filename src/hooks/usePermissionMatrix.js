@@ -39,6 +39,8 @@ const DEFAULT_MATRIX = {
   customer_health:  { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
   credential_vault: { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
   external_service: { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  knowledge_base:   { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  knowledge_manage: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
 };
 
 const PermissionMatrixContext = createContext(DEFAULT_MATRIX);

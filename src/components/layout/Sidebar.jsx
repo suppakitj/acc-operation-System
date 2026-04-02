@@ -6,7 +6,7 @@ import {
   Settings, ChevronLeft, ChevronRight, Key, ClipboardList,
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays,
   ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, ScanLine, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target, Activity,
-  HeartPulse, KeyRound, Globe
+  HeartPulse, KeyRound, Globe, BookOpen, BookMarked
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -29,6 +29,8 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'templates', label: t('menu_templates'), icon: ClipboardList, path: '/TaskTemplates' },
     { id: 'task_generation', label: 'สร้างงานอัตโนมัติ', icon: Zap, path: '/TaskGeneration' },
     { id: 'time_tracking', label: 'Time Tracking', icon: Timer, path: '/TimeTracking' },
+    { id: 'knowledge_base', label: 'Knowledge Base', icon: BookOpen, path: '/KnowledgeBase' },
+    { id: 'knowledge_manage', label: 'จัดการ KB', icon: BookMarked, path: '/KnowledgeManage' },
     // ─── ลูกค้า ───
     { id: 'customers', label: t('menu_customers'), icon: Building2, path: '/Customers' },
     { id: 'customer_profile', label: 'Customer Profile', icon: Contact, path: '/CustomerProfile' },
@@ -65,7 +67,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   // Menu groups — จัดหมวดให้ชัดเจน
   const menuGroups = [
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
-    { key: 'work', label: 'งาน & ตารางงาน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'task_generation', 'time_tracking'] },
+    { key: 'work', label: 'งาน & ตารางงาน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'task_generation', 'time_tracking', 'knowledge_base', 'knowledge_manage'] },
     { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault'] },
     { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },
     { key: 'reports', label: 'ทีม & รายงาน', icon: BarChart3, ids: ['staff_dashboard', 'team_analytics', 'workload', 'staff_cost_report', 'forecast_risk'] },

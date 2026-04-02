@@ -78,6 +78,8 @@ const PERMISSION_GROUPS = [
       { key: 'service_master', label: 'จัดการ Service Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
       { key: 'holiday_master', label: 'จัดการ Holiday Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
       { key: 'ocr', label: 'OCR (แปลงเอกสาร)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+      { key: 'knowledge_base', label: 'Knowledge Base (อ่าน/ค้นหา)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+      { key: 'knowledge_manage', label: 'จัดการ Knowledge Base', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
     ],
   },
 ];

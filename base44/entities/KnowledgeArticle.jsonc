@@ -1,0 +1,111 @@
+{
+  "name": "KnowledgeArticle",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1a\u0e17\u0e04\u0e27\u0e32\u0e21"
+    },
+    "category_id": {
+      "type": "string",
+      "description": "ref KnowledgeCategory"
+    },
+    "category_name": {
+      "type": "string"
+    },
+    "category_slug": {
+      "type": "string"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "sop",
+        "tax_law",
+        "program_guide",
+        "faq",
+        "template"
+      ],
+      "description": "\u0e1b\u0e23\u0e30\u0e40\u0e20\u0e17\u0e40\u0e19\u0e37\u0e49\u0e2d\u0e2b\u0e32"
+    },
+    "content": {
+      "type": "string",
+      "description": "\u0e40\u0e19\u0e37\u0e49\u0e2d\u0e2b\u0e32 (Markdown)"
+    },
+    "summary": {
+      "type": "string",
+      "description": "\u0e2a\u0e23\u0e38\u0e1b\u0e2a\u0e31\u0e49\u0e19 1-2 \u0e1b\u0e23\u0e30\u0e42\u0e22\u0e04 \u0e41\u0e2a\u0e14\u0e07\u0e43\u0e19 card"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "tags \u0e40\u0e0a\u0e48\u0e19 ['\u0e20.\u0e1e.30', 'VAT', 'Peak']"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "pending_review",
+        "published",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "drive_url": {
+      "type": "string",
+      "description": "Google Drive link (\u0e2a\u0e33\u0e2b\u0e23\u0e31\u0e1a template)"
+    },
+    "drive_file_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e44\u0e1f\u0e25\u0e4c\u0e43\u0e19 Drive"
+    },
+    "view_count": {
+      "type": "number",
+      "default": 0
+    },
+    "helpful_count": {
+      "type": "number",
+      "default": 0
+    },
+    "not_helpful_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_reviewed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "last_reviewed_by": {
+      "type": "string"
+    },
+    "last_reviewed_by_name": {
+      "type": "string"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "email \u0e1c\u0e39\u0e49\u0e40\u0e02\u0e35\u0e22\u0e19"
+    },
+    "author_name": {
+      "type": "string"
+    },
+    "published_by": {
+      "type": "string"
+    },
+    "published_by_name": {
+      "type": "string"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reject_reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "category_id",
+    "content_type"
+  ]
+}
