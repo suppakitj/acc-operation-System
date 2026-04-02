@@ -36,11 +36,33 @@ async function decrypt(base64) {
   return new TextDecoder().decode(decrypted);
 }
 
-// Simple OTP store (in-memory, expires in 5 min)
-const otpStore = new Map();
-
 function generateOTP() {
   return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+// --- OTP persistence via AppConfig entity (survives across serverless invocations) ---
+async function saveOtp(base44, storeKey, otp) {
+  const configKey = `otp_${storeKey}`;
+  const value = JSON.stringify({ otp, expires: Date.now() + 5 * 60 * 1000 });
+  const existing = await base44.asServiceRole.entities.AppConfig.filter({ key: configKey });
+  if (existing.length > 0) {
+    await base44.asServiceRole.entities.AppConfig.update(existing[0].id, { value });
+  } else {
+    await base44.asServiceRole.entities.AppConfig.create({ key: configKey, value, description: 'OTP temp' });
+  }
+}
+
+async function getOtp(base44, storeKey) {
+  const configKey = `otp_${storeKey}`;
+  const existing = await base44.asServiceRole.entities.AppConfig.filter({ key: configKey });
+  if (existing.length === 0) return null;
+  const record = existing[0];
+  const parsed = JSON.parse(record.value);
+  return { ...parsed, recordId: record.id };
+}
+
+async function deleteOtp(base44, recordId) {
+  await base44.asServiceRole.entities.AppConfig.delete(recordId);
 }
 
 Deno.serve(async (req) => {
@@ -81,7 +103,6 @@ Deno.serve(async (req) => {
       const fieldsChanged = [];
 
       if (old) {
-        // Decrypt old values to compare
         const oldUsername = await decrypt(old.username);
         const oldPassword = await decrypt(old.password_encrypted);
         if (oldUsername !== username) fieldsChanged.push('username');
@@ -92,7 +113,6 @@ Deno.serve(async (req) => {
         if ((old.customer_id || '') !== (customer_id || '')) fieldsChanged.push('customer');
       }
 
-      // Append to change history
       const history = old?.change_history || [];
       if (fieldsChanged.length > 0) {
         history.push({
@@ -107,7 +127,6 @@ Deno.serve(async (req) => {
       await base44.entities.CustomerCredential.update(credential_id, data);
       return Response.json({ success: true, message: 'updated', fields_changed: fieldsChanged });
     } else {
-      // New credential — record initial creation
       data.change_history = [{
         changed_at: new Date().toISOString(),
         changed_by: user.email,
@@ -123,9 +142,8 @@ Deno.serve(async (req) => {
   if (action === 'send_otp') {
     const { credential_id } = body;
     const otp = generateOTP();
-    // Use credential_id "edit" for edit-mode OTPs
     const storeKey = `${user.email}_${credential_id}`;
-    otpStore.set(storeKey, { otp, expires: Date.now() + 5 * 60 * 1000 });
+    await saveOtp(base44, storeKey, otp);
 
     await base44.integrations.Core.SendEmail({
       to: user.email,
@@ -147,20 +165,20 @@ Deno.serve(async (req) => {
   if (action === 'decrypt') {
     const { credential_id, otp } = body;
     const storeKey = `${user.email}_${credential_id}`;
-    const stored = otpStore.get(storeKey);
+    const stored = await getOtp(base44, storeKey);
 
     if (!stored) {
       return Response.json({ error: 'กรุณาขอ OTP ก่อน' }, { status: 400 });
     }
     if (Date.now() > stored.expires) {
-      otpStore.delete(storeKey);
+      await deleteOtp(base44, stored.recordId);
       return Response.json({ error: 'OTP หมดอายุแล้ว กรุณาขอใหม่' }, { status: 400 });
     }
     if (stored.otp !== otp) {
       return Response.json({ error: 'OTP ไม่ถูกต้อง' }, { status: 400 });
     }
 
-    otpStore.delete(storeKey);
+    await deleteOtp(base44, stored.recordId);
 
     // Fetch credential and decrypt
     const creds = await base44.entities.CustomerCredential.filter({ id: credential_id });
