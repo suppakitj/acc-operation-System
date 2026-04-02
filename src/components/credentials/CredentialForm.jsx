@@ -46,37 +46,47 @@ export default function CredentialForm({ open, onOpenChange, credential, custome
 
   const handleRequestOtp = async () => {
     setOtpLoading(true);
-    const res = await base44.functions.invoke('credentialManager', {
-      action: 'send_otp',
-      credential_id: credential.id,
-    });
-    setOtpLoading(false);
-    if (res.data.success) {
-      toast.success('ส่ง OTP ไปยัง email ของคุณแล้ว');
-      setEditStep('otp_verify');
-    } else {
-      toast.error(res.data.error || 'เกิดข้อผิดพลาด');
+    try {
+      const res = await base44.functions.invoke('credentialManager', {
+        action: 'send_otp',
+        credential_id: credential.id,
+      });
+      if (res.data.success) {
+        toast.success('ส่ง OTP ไปยัง email ของคุณแล้ว');
+        setEditStep('otp_verify');
+      } else {
+        toast.error(res.data.error || 'เกิดข้อผิดพลาด');
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || 'เกิดข้อผิดพลาดในการส่ง OTP');
+    } finally {
+      setOtpLoading(false);
     }
   };
 
   const handleVerifyOtp = async () => {
     setOtpLoading(true);
-    const res = await base44.functions.invoke('credentialManager', {
-      action: 'decrypt',
-      credential_id: credential.id,
-      otp,
-    });
-    setOtpLoading(false);
-    if (res.data.success) {
-      setForm(f => ({
-        ...f,
-        username: res.data.username,
-        password: res.data.password,
-      }));
-      setEditStep('form');
-      toast.success('ยืนยัน OTP สำเร็จ — แสดงข้อมูลเดิมแล้ว');
-    } else {
-      toast.error(res.data.error || 'OTP ไม่ถูกต้อง');
+    try {
+      const res = await base44.functions.invoke('credentialManager', {
+        action: 'decrypt',
+        credential_id: credential.id,
+        otp,
+      });
+      if (res.data.success) {
+        setForm(f => ({
+          ...f,
+          username: res.data.username,
+          password: res.data.password,
+        }));
+        setEditStep('form');
+        toast.success('ยืนยัน OTP สำเร็จ — แสดงข้อมูลเดิมแล้ว');
+      } else {
+        toast.error(res.data.error || 'OTP ไม่ถูกต้อง');
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || 'OTP ไม่ถูกต้องหรือหมดอายุ');
+    } finally {
+      setOtpLoading(false);
     }
   };
 

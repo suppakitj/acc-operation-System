@@ -16,32 +16,42 @@ export default function OtpDecryptDialog({ open, onOpenChange, credential }) {
 
   const handleRequestOtp = async () => {
     setLoading(true);
-    const res = await base44.functions.invoke('credentialManager', {
-      action: 'send_otp',
-      credential_id: credential.id,
-    });
-    setLoading(false);
-    if (res.data.success) {
-      toast.success('ส่ง OTP ไปยัง email ของคุณแล้ว');
-      setStep('verify');
-    } else {
-      toast.error(res.data.error || 'เกิดข้อผิดพลาด');
+    try {
+      const res = await base44.functions.invoke('credentialManager', {
+        action: 'send_otp',
+        credential_id: credential.id,
+      });
+      if (res.data.success) {
+        toast.success('ส่ง OTP ไปยัง email ของคุณแล้ว');
+        setStep('verify');
+      } else {
+        toast.error(res.data.error || 'เกิดข้อผิดพลาด');
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || 'เกิดข้อผิดพลาดในการส่ง OTP');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleVerify = async () => {
     setLoading(true);
-    const res = await base44.functions.invoke('credentialManager', {
-      action: 'decrypt',
-      credential_id: credential.id,
-      otp,
-    });
-    setLoading(false);
-    if (res.data.success) {
-      setDecrypted({ username: res.data.username, password: res.data.password });
-      setStep('result');
-    } else {
-      toast.error(res.data.error || 'OTP ไม่ถูกต้อง');
+    try {
+      const res = await base44.functions.invoke('credentialManager', {
+        action: 'decrypt',
+        credential_id: credential.id,
+        otp,
+      });
+      if (res.data.success) {
+        setDecrypted({ username: res.data.username, password: res.data.password });
+        setStep('result');
+      } else {
+        toast.error(res.data.error || 'OTP ไม่ถูกต้อง');
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || 'OTP ไม่ถูกต้องหรือหมดอายุ');
+    } finally {
+      setLoading(false);
     }
   };
 
