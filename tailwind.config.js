@@ -3,7 +3,7 @@ module.exports = {
   darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   safelist: [
-    'theme-emerald', 'theme-purple', 'theme-rose',
+    'theme-emerald', 'theme-purple', 'theme-rose', 'theme-ocean', 'theme-amber', 'theme-indigo', 'theme-slate', 'theme-pink',
     'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700',
     'bg-yellow-100', 'text-yellow-700', 'bg-blue-100', 'text-blue-700',
     'bg-purple-100', 'text-purple-700', 'bg-orange-100', 'text-orange-700',

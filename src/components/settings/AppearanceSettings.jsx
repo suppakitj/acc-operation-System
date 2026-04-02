@@ -13,6 +13,11 @@ const THEMES = [
   { id: 'emerald', label: 'Emerald Green', color: 'bg-[#2d8a6e]' },
   { id: 'purple', label: 'Royal Purple', color: 'bg-[#6d28d9]' },
   { id: 'rose', label: 'Rose Red', color: 'bg-[#e11d48]' },
+  { id: 'ocean', label: 'Ocean Teal', color: 'bg-[#0d9488]' },
+  { id: 'amber', label: 'Warm Amber', color: 'bg-[#d97706]' },
+  { id: 'indigo', label: 'Indigo', color: 'bg-[#4f46e5]' },
+  { id: 'slate', label: 'Slate Gray', color: 'bg-[#475569]' },
+  { id: 'pink', label: 'Soft Pink', color: 'bg-[#db2777]' },
   { id: 'dark', label: 'Dark Mode', color: 'bg-[#1a1a2e]' },
 ];
 
@@ -25,7 +30,7 @@ export default function AppearanceSettings({ user }) {
   const handleSave = async () => {
     setSaving(true);
     await base44.auth.updateMe({ theme: selectedTheme });
-    document.documentElement.classList.remove('theme-emerald', 'theme-purple', 'theme-rose', 'dark');
+    document.documentElement.classList.remove('theme-emerald', 'theme-purple', 'theme-rose', 'theme-ocean', 'theme-amber', 'theme-indigo', 'theme-slate', 'theme-pink', 'dark');
     if (selectedTheme === 'dark') document.documentElement.classList.add('dark');
     else if (selectedTheme !== 'default') document.documentElement.classList.add(`theme-${selectedTheme}`);
     queryClient.invalidateQueries({ queryKey: ['currentUser'] });
@@ -64,7 +69,7 @@ export default function AppearanceSettings({ user }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {THEMES.map(theme => (
               <button key={theme.id} onClick={() => setSelectedTheme(theme.id)}
                 className={cn("flex items-center gap-3 p-4 rounded-lg border-2 transition-all", selectedTheme === theme.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/30")}>

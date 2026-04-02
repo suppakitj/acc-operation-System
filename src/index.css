@@ -117,6 +117,51 @@
     --sidebar-accent: 350 55% 30%;
     --sidebar-border: 350 45% 35%;
   }
+
+  .theme-ocean :root, .theme-ocean {
+    --primary: 168 80% 32%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 168 80% 32%;
+    --sidebar-background: 168 70% 14%;
+    --sidebar-accent: 168 60% 22%;
+    --sidebar-border: 168 50% 26%;
+  }
+
+  .theme-amber :root, .theme-amber {
+    --primary: 38 92% 45%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 38 92% 45%;
+    --sidebar-background: 28 70% 18%;
+    --sidebar-accent: 28 60% 26%;
+    --sidebar-border: 28 50% 30%;
+  }
+
+  .theme-indigo :root, .theme-indigo {
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 239 84% 67%;
+    --sidebar-background: 239 60% 20%;
+    --sidebar-accent: 239 50% 28%;
+    --sidebar-border: 239 40% 32%;
+  }
+
+  .theme-slate :root, .theme-slate {
+    --primary: 215 20% 35%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 215 20% 35%;
+    --sidebar-background: 215 25% 15%;
+    --sidebar-accent: 215 20% 22%;
+    --sidebar-border: 215 15% 28%;
+  }
+
+  .theme-pink :root, .theme-pink {
+    --primary: 330 80% 50%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 330 80% 50%;
+    --sidebar-background: 330 60% 20%;
+    --sidebar-accent: 330 50% 28%;
+    --sidebar-border: 330 40% 32%;
+  }
 }
 
 @layer base {

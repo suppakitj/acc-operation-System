@@ -45,7 +45,7 @@ export default function AppLayout() {
 
   useEffect(() => {
     if (user?.theme) {
-      document.documentElement.classList.remove('theme-emerald', 'theme-purple', 'theme-rose', 'dark');
+      document.documentElement.classList.remove('theme-emerald', 'theme-purple', 'theme-rose', 'theme-ocean', 'theme-amber', 'theme-indigo', 'theme-slate', 'theme-pink', 'dark');
       if (user.theme === 'dark') {
         document.documentElement.classList.add('dark');
       } else if (user.theme !== 'default') {
