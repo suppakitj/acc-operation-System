@@ -19,36 +19,42 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const ac = useAccessControl(user);
 
   const menuItems = [
+    // ─── ภาพรวม ───
     { id: 'dashboard', label: t('menu_dashboard'), icon: LayoutDashboard, path: '/Dashboard' },
     { id: 'kpi_dashboard', label: 'KPI Dashboard', icon: Target, path: '/KpiDashboard' },
-    { id: 'staff_dashboard', label: 'Staff Dashboard', icon: UsersRound, path: '/StaffDashboard' },
+    // ─── งาน & ตารางงาน ───
     { id: 'tasks', label: t('menu_tasks'), icon: CheckSquare, path: '/Tasks' },
     { id: 'task_calendar', label: 'Task Calendar', icon: CalendarDays, path: '/TaskCalendar' },
     { id: 'schedule', label: t('menu_schedule'), icon: Calendar, path: '/Schedule' },
-    { id: 'customers', label: t('menu_customers'), icon: Building2, path: '/Customers' },
     { id: 'templates', label: t('menu_templates'), icon: ClipboardList, path: '/TaskTemplates' },
     { id: 'task_generation', label: 'สร้างงานอัตโนมัติ', icon: Zap, path: '/TaskGeneration' },
     { id: 'time_tracking', label: 'Time Tracking', icon: Timer, path: '/TimeTracking' },
-    { id: 'workload', label: 'Workload Balancer', icon: Scale, path: '/WorkloadBalancer' },
-    { id: 'service_master', label: 'Service Master', icon: Briefcase, path: '/ServiceMaster' },
-    { id: 'holiday_master', label: 'Holiday Master', icon: CalendarHeart, path: '/HolidayMaster' },
-    { id: 'peak', label: t('menu_peak'), icon: Key, path: '/PeakAccount' },
-    { id: 'billing', label: t('menu_billing'), icon: CreditCard, path: '/Billing' },
+    // ─── ลูกค้า ───
+    { id: 'customers', label: t('menu_customers'), icon: Building2, path: '/Customers' },
     { id: 'customer_profile', label: 'Customer Profile', icon: Contact, path: '/CustomerProfile' },
     { id: 'customer_health', label: 'Customer Health', icon: HeartPulse, path: '/CustomerHealthScore' },
     { id: 'credential_vault', label: 'Credential Vault', icon: KeyRound, path: '/CustomerCredentials' },
-    { id: 'external_service', label: 'External Service', icon: Globe, path: '/ExternalServiceMaster' },
+    // ─── การเงิน ───
+    { id: 'billing', label: t('menu_billing'), icon: CreditCard, path: '/Billing' },
+    { id: 'peak', label: t('menu_peak'), icon: Key, path: '/PeakAccount' },
     { id: 'referral', label: 'ค่าแนะนำ', icon: Handshake, path: '/ReferralCommission' },
-
-    { id: 'line_chat', label: t('menu_line_chat'), icon: MessageCircle, path: '/LineChat' },
-    { id: 'line_files', label: 'LINE Files', icon: HardDrive, path: '/LineFiles' },
+    // ─── ทีม & รายงาน ───
+    { id: 'staff_dashboard', label: 'Staff Dashboard', icon: UsersRound, path: '/StaffDashboard' },
     { id: 'team_analytics', label: 'Team Analytics', icon: TrendingUp, path: '/TeamAnalytics' },
+    { id: 'workload', label: 'Workload Balancer', icon: Scale, path: '/WorkloadBalancer' },
     { id: 'staff_cost_report', label: 'Staff Cost Report', icon: DollarSign, path: '/StaffCostReport' },
     { id: 'forecast_risk', label: 'Forecast & Risk', icon: Activity, path: '/ForecastRisk' },
+    // ─── LINE ───
+    { id: 'line_chat', label: t('menu_line_chat'), icon: MessageCircle, path: '/LineChat' },
+    { id: 'line_files', label: 'LINE Files', icon: HardDrive, path: '/LineFiles' },
+    // ─── ตั้งค่า & ระบบ ───
+    { id: 'service_master', label: 'Service Master', icon: Briefcase, path: '/ServiceMaster' },
+    { id: 'external_service', label: 'External Service', icon: Globe, path: '/ExternalServiceMaster' },
+    { id: 'holiday_master', label: 'Holiday Master', icon: CalendarHeart, path: '/HolidayMaster' },
+    { id: 'ocr', label: 'OCR', icon: ScanLine, path: '/OcrProcessing' },
     { id: 'users', label: t('menu_users'), icon: Users, path: '/UserManagement' },
     { id: 'roles', label: t('menu_roles'), icon: Shield, path: '/RoleManagement' },
     { id: 'audit', label: t('menu_audit'), icon: History, path: '/AuditLog' },
-    { id: 'ocr', label: 'OCR', icon: ScanLine, path: '/OcrProcessing' },
     { id: 'backup', label: 'Backup DB', icon: Database, path: '/DatabaseBackup' },
     { id: 'settings', label: t('menu_settings'), icon: Settings, path: '/AppSettings' },
   ];
@@ -56,14 +62,15 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const allowedIds = ac.getVisibleMenuIds();
   const visibleMenuItems = menuItems.filter(item => allowedIds.includes(item.id));
 
-  // Menu groups
+  // Menu groups — จัดหมวดให้ชัดเจน
   const menuGroups = [
-    { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard', 'staff_dashboard', 'team_analytics', 'staff_cost_report', 'forecast_risk'] },
-    { key: 'work', label: 'งาน', icon: Folder, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'task_generation', 'time_tracking', 'workload', 'service_master', 'holiday_master'] },
-    { key: 'clients', label: 'ลูกค้า', icon: Contact, ids: ['customers', 'customer_health', 'customer_profile', 'credential_vault', 'peak', 'billing', 'referral'] },
-    { key: 'comms', label: 'สื่อสาร', icon: MessageSquare, ids: ['notifications', 'line_chat', 'line_files'] },
-    { key: 'tools', label: 'เครื่องมือ', icon: ScanLine, ids: ['ocr'] },
-    { key: 'system', label: 'ระบบ', icon: Cog, ids: ['users', 'roles', 'audit', 'backup', 'external_service', 'settings'] },
+    { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
+    { key: 'work', label: 'งาน & ตารางงาน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'task_generation', 'time_tracking'] },
+    { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault'] },
+    { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },
+    { key: 'reports', label: 'ทีม & รายงาน', icon: BarChart3, ids: ['staff_dashboard', 'team_analytics', 'workload', 'staff_cost_report', 'forecast_risk'] },
+    { key: 'comms', label: 'LINE', icon: MessageCircle, ids: ['line_chat', 'line_files'] },
+    { key: 'system', label: 'ตั้งค่า & ระบบ', icon: Cog, ids: ['service_master', 'external_service', 'holiday_master', 'ocr', 'users', 'roles', 'audit', 'backup', 'settings'] },
   ];
 
   // Build visible groups
