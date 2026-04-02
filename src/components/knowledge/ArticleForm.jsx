@@ -94,9 +94,14 @@ export default function ArticleForm({ open, onOpenChange, article, categories, c
     setUploading(true);
     try {
       for (const file of files) {
-        const formData = new FormData();
-        formData.append('file', file);
-        const res = await base44.functions.invoke('uploadKbFile', formData);
+        // Step 1: Upload to Base44 storage first
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        // Step 2: Send URL + filename to backend to copy to Google Drive
+        const res = await base44.functions.invoke('uploadKbFile', {
+          file_url,
+          file_name: file.name,
+          file_size: file.size,
+        });
         if (res.data?.success) {
           setForm(f => ({
             ...f,
@@ -104,10 +109,10 @@ export default function ArticleForm({ open, onOpenChange, article, categories, c
               name: res.data.name,
               drive_url: res.data.drive_url,
               drive_file_id: res.data.drive_file_id,
-              size: res.data.size,
+              size: res.data.size || file.size,
             }],
           }));
-          toast.success(`อัปโหลด "${res.data.name}" สำเร็จ`);
+          toast.success(`อัปโหลด "${file.name}" สำเร็จ`);
         } else {
           toast.error(res.data?.error || 'อัปโหลดไม่สำเร็จ');
         }

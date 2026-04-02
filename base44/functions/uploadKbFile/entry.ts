@@ -8,11 +8,18 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const formData = await req.formData();
-    const file = formData.get('file');
-    if (!file) {
-      return Response.json({ error: 'No file provided' }, { status: 400 });
+    const { file_url, file_name, file_size } = await req.json();
+    if (!file_url || !file_name) {
+      return Response.json({ error: 'Missing file_url or file_name' }, { status: 400 });
     }
+
+    // Download the file from Base44 storage
+    const fileRes = await fetch(file_url);
+    if (!fileRes.ok) {
+      return Response.json({ error: 'Failed to download file from storage' }, { status: 500 });
+    }
+    const fileBytes = new Uint8Array(await fileRes.arrayBuffer());
+    const contentType = fileRes.headers.get('content-type') || 'application/octet-stream';
 
     // Get Google Drive access token
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('googledrive');
@@ -23,15 +30,13 @@ Deno.serve(async (req) => {
 
     // Build multipart upload
     const metadata = {
-      name: file.name,
+      name: file_name,
       ...(folderId ? { parents: [folderId] } : {}),
     };
 
     const boundary = '---kb_upload_boundary';
-    const fileBytes = new Uint8Array(await file.arrayBuffer());
-
     const metaPart = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`;
-    const filePart = `--${boundary}\r\nContent-Type: ${file.type || 'application/octet-stream'}\r\n\r\n`;
+    const filePart = `--${boundary}\r\nContent-Type: ${contentType}\r\n\r\n`;
     const endPart = `\r\n--${boundary}--`;
 
     const encoder = new TextEncoder();
@@ -70,7 +75,7 @@ Deno.serve(async (req) => {
       name: driveFile.name,
       drive_file_id: driveFile.id,
       drive_url: driveFile.webViewLink || `https://drive.google.com/file/d/${driveFile.id}/view`,
-      size: parseInt(driveFile.size || '0'),
+      size: parseInt(driveFile.size || '0') || file_size || 0,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
