@@ -205,7 +205,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     <>
       {/* Desktop sidebar */}
       <aside className={cn(
-        "fixed left-0 top-0 h-full bg-sidebar text-sidebar-foreground z-40 transition-all duration-300 hidden lg:flex flex-col border-r border-sidebar-border",
+        "fixed left-0 top-0 h-full bg-sidebar text-sidebar-foreground z-40 transition-all duration-300 hidden lg:flex flex-col border-r border-sidebar-border font-sarabun",
         collapsed ? "w-[68px]" : "w-64"
       )}>
         {sidebarContent}
@@ -218,7 +218,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
 
       {/* Mobile sidebar */}
       <aside className={cn(
-        "fixed left-0 top-0 h-full w-72 bg-sidebar text-sidebar-foreground z-50 lg:hidden transition-transform duration-300 border-r border-sidebar-border",
+        "fixed left-0 top-0 h-full w-72 bg-sidebar text-sidebar-foreground z-50 lg:hidden transition-transform duration-300 border-r border-sidebar-border font-sarabun",
         mobileOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         {sidebarContent}

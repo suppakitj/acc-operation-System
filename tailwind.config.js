@@ -27,6 +27,7 @@ module.exports = {
     extend: {
       fontFamily: {
         inter: ['var(--font-inter)'],
+        sarabun: ['var(--font-sarabun)'],
       },
       borderRadius: {
         lg: 'var(--radius)',
