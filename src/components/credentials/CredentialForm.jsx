@@ -67,7 +67,7 @@ export default function CredentialForm({ open, onOpenChange, credential, custome
             <SearchableSelect
               options={customerOptions}
               value={form.customer_id}
-              onChange={handleCustomerChange}
+              onValueChange={handleCustomerChange}
               placeholder="เลือกลูกค้า"
             />
           </div>
@@ -76,7 +76,7 @@ export default function CredentialForm({ open, onOpenChange, credential, custome
             <SearchableSelect
               options={serviceOptions}
               value={form.service_id}
-              onChange={handleServiceChange}
+              onValueChange={handleServiceChange}
               placeholder="เลือกบริการ"
             />
           </div>
