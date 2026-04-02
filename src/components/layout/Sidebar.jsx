@@ -25,6 +25,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     // ─── งาน & ตารางงาน ───
     { id: 'tasks', label: t('menu_tasks'), icon: CheckSquare, path: '/Tasks' },
     { id: 'task_calendar', label: 'Task Calendar', icon: CalendarDays, path: '/TaskCalendar' },
+    { id: 'ocr', label: 'OCR', icon: ScanLine, path: '/OcrProcessing' },
     { id: 'schedule', label: t('menu_schedule'), icon: Calendar, path: '/Schedule' },
     { id: 'templates', label: t('menu_templates'), icon: ClipboardList, path: '/TaskTemplates' },
     { id: 'task_generation', label: 'สร้างงานอัตโนมัติ', icon: Zap, path: '/TaskGeneration' },
@@ -53,7 +54,6 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'service_master', label: 'Service Master', icon: Briefcase, path: '/ServiceMaster' },
     { id: 'external_service', label: 'External Service', icon: Globe, path: '/ExternalServiceMaster' },
     { id: 'holiday_master', label: 'Holiday Master', icon: CalendarHeart, path: '/HolidayMaster' },
-    { id: 'ocr', label: 'OCR', icon: ScanLine, path: '/OcrProcessing' },
     { id: 'users', label: t('menu_users'), icon: Users, path: '/UserManagement' },
     { id: 'roles', label: t('menu_roles'), icon: Shield, path: '/RoleManagement' },
     { id: 'audit', label: t('menu_audit'), icon: History, path: '/AuditLog' },
@@ -67,7 +67,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   // Menu groups — จัดหมวดให้ชัดเจน
   const menuGroups = [
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
-    { key: 'work', label: 'งาน & ตารางงาน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'task_generation', 'time_tracking', 'knowledge_base', 'knowledge_manage', 'ocr'] },
+    { key: 'work', label: 'งาน & ตารางงาน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'ocr', 'schedule', 'templates', 'task_generation', 'time_tracking', 'knowledge_base', 'knowledge_manage'] },
     { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault'] },
     { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },
     { key: 'reports', label: 'ทีม & รายงาน', icon: BarChart3, ids: ['staff_dashboard', 'team_analytics', 'workload', 'staff_cost_report', 'forecast_risk'] },
