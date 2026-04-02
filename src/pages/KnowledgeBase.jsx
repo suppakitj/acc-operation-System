@@ -116,46 +116,52 @@ export default function KnowledgeBase() {
       {/* Main layout: sidebar + content */}
       <div className="flex gap-5">
         {/* Sidebar categories — hidden on mobile */}
-        <div className="hidden lg:block w-56 shrink-0">
-          <div className="bg-card border rounded-xl p-3 sticky top-4">
-            <p className="text-xs font-semibold text-muted-foreground px-2 mb-2">หมวดหมู่</p>
+        <div className="hidden lg:block w-64 shrink-0">
+          <div className="bg-card border rounded-xl p-4 sticky top-4">
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">หมวดหมู่</p>
 
-            <button
-              onClick={() => setActiveCategory('all')}
-              className={cn(
-                "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors mb-0.5",
-                activeCategory === 'all'
-                  ? "bg-primary text-primary-foreground font-medium"
-                  : "hover:bg-muted/60 text-foreground"
-              )}
-            >
-              <span className="flex items-center gap-2">
-                <span>📚</span> ทั้งหมด
-              </span>
-              <span className="text-xs opacity-70">{published.length}</span>
-            </button>
+            <div className="space-y-1">
+              <button
+                onClick={() => setActiveCategory('all')}
+                className={cn(
+                  "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all",
+                  activeCategory === 'all'
+                    ? "bg-primary text-primary-foreground font-medium shadow-sm"
+                    : "hover:bg-muted/60 text-foreground"
+                )}
+              >
+                <span className="text-base leading-none">📚</span>
+                <span className="flex-1 text-left">ทั้งหมด</span>
+                <span className={cn(
+                  "text-[10px] font-semibold min-w-[22px] h-[22px] flex items-center justify-center rounded-full",
+                  activeCategory === 'all' ? "bg-white/20" : "bg-muted text-muted-foreground"
+                )}>{published.length}</span>
+              </button>
 
-            {categories.filter(c => c.status === 'active').map(cat => {
-              const count = published.filter(a => a.category_slug === cat.slug).length;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.slug)}
-                  className={cn(
-                    "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors mb-0.5",
-                    activeCategory === cat.slug
-                      ? "bg-primary text-primary-foreground font-medium"
-                      : "hover:bg-muted/60 text-foreground"
-                  )}
-                >
-                  <span className="flex items-center gap-2 min-w-0">
-                    <span>{getCategoryEmoji(cat.slug)}</span>
-                    <span className="truncate">{cat.name}</span>
-                  </span>
-                  <span className="text-xs opacity-70 ml-1">{count}</span>
-                </button>
-              );
-            })}
+              {categories.filter(c => c.status === 'active').map(cat => {
+                const count = published.filter(a => a.category_slug === cat.slug).length;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.slug)}
+                    title={cat.name}
+                    className={cn(
+                      "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all",
+                      activeCategory === cat.slug
+                        ? "bg-primary text-primary-foreground font-medium shadow-sm"
+                        : "hover:bg-muted/60 text-foreground"
+                    )}
+                  >
+                    <span className="text-base leading-none shrink-0">{getCategoryEmoji(cat.slug)}</span>
+                    <span className="flex-1 text-left leading-snug line-clamp-2">{cat.name}</span>
+                    <span className={cn(
+                      "text-[10px] font-semibold min-w-[22px] h-[22px] flex items-center justify-center rounded-full shrink-0",
+                      activeCategory === cat.slug ? "bg-white/20" : "bg-muted text-muted-foreground"
+                    )}>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
