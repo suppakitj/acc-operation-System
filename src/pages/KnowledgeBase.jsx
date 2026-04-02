@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,6 +68,7 @@ export default function KnowledgeBase() {
   }, [published, activeCategory, searchQuery, sortBy]);
 
   const isManager = ['admin', 'management', 'manager', 'super_supervisor'].includes(ac.role);
+  const queryClient = useQueryClient();
 
   const handleSave = async (data, articleId) => {
     setSaving(true);
@@ -77,6 +78,8 @@ export default function KnowledgeBase() {
       } else {
         await base44.entities.KnowledgeArticle.create(data);
       }
+      queryClient.invalidateQueries({ queryKey: ['knowledgeArticles'] });
+      queryClient.invalidateQueries({ queryKey: ['knowledgeArticlesAll'] });
       setShowForm(false);
     } finally {
       setSaving(false);
