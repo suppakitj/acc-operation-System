@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Eye, ThumbsUp, ThumbsDown, ExternalLink, Pencil } from 'lucide-react';
+import { ArrowLeft, Eye, ThumbsUp, ThumbsDown, ExternalLink, Pencil, Paperclip, FileText, Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import moment from 'moment';
 import { base44 } from '@/api/base44Client';
@@ -92,6 +92,39 @@ export default function ArticleView({ article, categories, onBack, onEdit, canEd
           {article.content || ''}
         </ReactMarkdown>
       </div>
+
+      {/* Attachments */}
+      {article.attachments?.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
+            <Paperclip className="w-4 h-4" /> ไฟล์แนบ ({article.attachments.length})
+          </h3>
+          <div className="space-y-2">
+            {article.attachments.map((file, idx) => (
+              <a
+                key={idx}
+                href={file.drive_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/60 transition-colors group"
+              >
+                <FileText className="w-5 h-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{file.name}</p>
+                  {file.size > 0 && (
+                    <p className="text-[10px] text-muted-foreground">
+                      {file.size > 1048576
+                        ? `${(file.size / 1048576).toFixed(1)} MB`
+                        : `${(file.size / 1024).toFixed(0)} KB`}
+                    </p>
+                  )}
+                </div>
+                <Download className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       {article.content_type === 'template' && article.drive_url && (
         <a
