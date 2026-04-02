@@ -50,6 +50,7 @@ Deno.serve(async (req) => {
     const events = payload.events || [];
 
     for (const event of events) {
+     try {
       // Auto-capture Group ID in AppConfig
       if (event.source?.type === 'group' && event.source?.groupId) {
         const existingGroupConfig = configs.find(c => c.key === 'line_group_id');
@@ -219,26 +220,31 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Update display_name and profile_image on older messages (batch — max 10 at a time)
+        // Update display_name and profile_image on older messages (batch — max 5 at a time)
+        // Run in background — do NOT await to avoid blocking subsequent events
         if (chatDisplayName || chatImage) {
-          try {
-            const oldMsgs = await base44.asServiceRole.entities.LineMessage.filter(
-              { line_user_id: chatKey },
-              '-created_date',
-              20
-            );
-            const toUpdate = oldMsgs.filter(old =>
-              old.display_name !== chatDisplayName || old.profile_image !== chatImage
-            ).slice(0, 10); // Cap at 10 per webhook to avoid CPU spike
-            await Promise.all(toUpdate.map(old =>
-              base44.asServiceRole.entities.LineMessage.update(old.id, {
-                display_name: chatDisplayName,
-                profile_image: chatImage,
-              })
-            ));
-          } catch (e) {
-            console.warn('Failed to update old messages display info:', e.message);
-          }
+          (async () => {
+            try {
+              const oldMsgs = await base44.asServiceRole.entities.LineMessage.filter(
+                { line_user_id: chatKey },
+                '-created_date',
+                15
+              );
+              const toUpdate = oldMsgs.filter(old =>
+                old.display_name !== chatDisplayName || old.profile_image !== chatImage
+              ).slice(0, 5);
+              for (const old of toUpdate) {
+                try {
+                  await base44.asServiceRole.entities.LineMessage.update(old.id, {
+                    display_name: chatDisplayName,
+                    profile_image: chatImage,
+                  });
+                } catch {}
+              }
+            } catch (e) {
+              console.warn('Failed to update old messages display info:', e.message);
+            }
+          })();
         }
 
         // Auto-save files to Google Drive (images and documents only, skip video/audio)
@@ -276,6 +282,10 @@ Deno.serve(async (req) => {
           }
         }
       }
+     } catch (eventErr) {
+       console.error(`Error processing event (${event.type}):`, eventErr.message);
+       // Continue processing remaining events
+     }
     }
 
     return Response.json({ status: 'ok' });
