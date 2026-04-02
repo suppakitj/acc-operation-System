@@ -67,12 +67,12 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   // Menu groups — จัดหมวดให้ชัดเจน
   const menuGroups = [
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
-    { key: 'work', label: 'งาน & ตารางงาน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'task_generation', 'time_tracking', 'knowledge_base', 'knowledge_manage'] },
+    { key: 'work', label: 'งาน & ตารางงาน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'templates', 'task_generation', 'time_tracking', 'knowledge_base', 'knowledge_manage', 'ocr'] },
     { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault'] },
     { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },
     { key: 'reports', label: 'ทีม & รายงาน', icon: BarChart3, ids: ['staff_dashboard', 'team_analytics', 'workload', 'staff_cost_report', 'forecast_risk'] },
     { key: 'comms', label: 'LINE', icon: MessageCircle, ids: ['line_chat', 'line_files'] },
-    { key: 'system', label: 'ตั้งค่า & ระบบ', icon: Cog, ids: ['service_master', 'external_service', 'holiday_master', 'ocr', 'users', 'roles', 'audit', 'backup', 'settings'] },
+    { key: 'system', label: 'ตั้งค่า & ระบบ', icon: Cog, ids: ['service_master', 'external_service', 'holiday_master', 'users', 'roles', 'audit', 'backup', 'settings'] },
   ];
 
   // Build visible groups
