@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Settings, CheckCircle, Clock, AlertTriangle, AlertOctagon, RefreshCw, MoreVertical } from 'lucide-react';
+import { Plus, Search, Settings, CheckCircle, Clock, AlertTriangle, AlertOctagon, RefreshCw, MoreVertical, Users } from 'lucide-react';
 import { format, differenceInDays, parseISO, addDays, startOfMonth, endOfMonth } from 'date-fns';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
@@ -115,6 +115,7 @@ export default function PeakAccount() {
       const d = parseISO(l.updated_date);
       return d >= thisMonthStart && d <= thisMonthEnd;
     }).length,
+    affiliate: enriched.filter(l => l.is_affiliate && (l.license_status === 'active' || l.license_status === 'renewed')).length,
   }), [enriched]);
 
   // Tab filtering
@@ -206,13 +207,14 @@ export default function PeakAccount() {
       </div>
 
       {/* Stat Cards - matching reference image */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
         <StatCard label="ACTIVE (>30D)" value={stats.activeGt30} icon={<CheckCircle className="w-4 h-4" />} borderColor="border-green-400" iconColor="text-green-500" />
+        <StatCard label="AFFILIATE" value={stats.affiliate} icon={<Users className="w-4 h-4" />} borderColor="border-emerald-400" iconColor="text-emerald-500" />
         <StatCard label="EXPIRING 30D" value={stats.expiring30} icon={<Clock className="w-4 h-4" />} borderColor="border-red-400" iconColor="text-red-500" />
         <StatCard label="EXPIRING 15D" value={stats.expiring15} icon={<Clock className="w-4 h-4" />} borderColor="border-gray-200" iconColor="text-blue-500" />
         <StatCard label="EXPIRING 7D" value={stats.expiring7} icon={<AlertTriangle className="w-4 h-4" />} borderColor="border-gray-200" iconColor="text-yellow-500" />
         <StatCard label="EXPIRED" value={stats.expired} icon={<AlertOctagon className="w-4 h-4" />} borderColor="border-gray-200" iconColor="text-red-500" />
-        <StatCard label="RENEWED THIS M..." value={stats.renewedThisMonth} icon={<RefreshCw className="w-4 h-4" />} borderColor="border-gray-200" iconColor="text-gray-500" />
+        <StatCard label="RENEWED THIS M." value={stats.renewedThisMonth} icon={<RefreshCw className="w-4 h-4" />} borderColor="border-gray-200" iconColor="text-gray-500" />
       </div>
 
       {/* Tabs */}
