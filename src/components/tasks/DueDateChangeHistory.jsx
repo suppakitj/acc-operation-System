@@ -85,6 +85,9 @@ export default function DueDateChangeHistory({ task }) {
                     {' → '}
                     <span className="font-medium text-green-700">{formatDate(entry.new_due_date)}</span>
                   </p>
+                  {entry.reason && (
+                    <p className="text-[10px] text-blue-600 mt-0.5">📝 {entry.reason}</p>
+                  )}
                   <p className="text-[10px] text-muted-foreground/70 mt-0.5">{formatDateTime(entry.changed_at)}</p>
                 </div>
               </div>

@@ -129,12 +129,13 @@ export default function TaskCalendar() {
     return map;
   }, [filteredTasks]);
 
-  const handleDragEnd = (result) => {
+  const handleDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId) return;
 
     const newDueDate = destination.droppableId;
+    const oldDueDate = source.droppableId;
     const task = tasks.find(t => t.id === draggableId);
     if (!task) return;
 
@@ -143,7 +144,28 @@ export default function TaskCalendar() {
       old.map(t => t.id === draggableId ? { ...t, due_date: newDueDate } : t)
     );
 
-    updateTaskMutation.mutate({ id: draggableId, data: { due_date: newDueDate } });
+    // Build history entry before updating so automation dedup can work
+    const currentUser = await base44.auth.me();
+    const currentHistory = Array.isArray(task.due_date_change_history) ? task.due_date_change_history : [];
+    const currentCount = task.due_date_change_count || 0;
+    const entry = {
+      changed_at: new Date().toISOString(),
+      changed_by: currentUser?.email || 'unknown',
+      changed_by_name: currentUser?.full_name || 'unknown',
+      changed_by_role: currentUser?.role || '',
+      old_due_date: oldDueDate,
+      new_due_date: newDueDate,
+      reason: 'ลากเปลี่ยนจาก Task Calendar',
+    };
+
+    updateTaskMutation.mutate({
+      id: draggableId,
+      data: {
+        due_date: newDueDate,
+        due_date_change_count: currentCount + 1,
+        due_date_change_history: [...currentHistory, entry],
+      },
+    });
   };
 
   const navigate = (dir) => {

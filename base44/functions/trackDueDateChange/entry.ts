@@ -26,6 +26,21 @@ Deno.serve(async (req) => {
 
     const taskId = event.entity_id;
 
+    // Dedup: check if the last history entry already records this exact change
+    const existingHistory = Array.isArray(data.due_date_change_history) ? data.due_date_change_history : [];
+    if (existingHistory.length > 0) {
+      const last = existingHistory[existingHistory.length - 1];
+      if (last.old_due_date === oldDue && last.new_due_date === newDue) {
+        // Check if the last entry was recorded within the last 10 seconds — likely a duplicate trigger
+        const lastTime = new Date(last.changed_at).getTime();
+        const now = Date.now();
+        if (now - lastTime < 10000) {
+          console.log(`Skipping duplicate trigger for task ${taskId}: ${oldDue} → ${newDue}`);
+          return Response.json({ status: 'skipped', reason: 'duplicate trigger' });
+        }
+      }
+    }
+
     // Determine who made the change using updated_by (created_by of the update action)
     // Since entity automations don't have user context directly,
     // we look at the data's updated metadata
@@ -46,9 +61,21 @@ Deno.serve(async (req) => {
 
     // Get current history
     const currentHistory = Array.isArray(data.due_date_change_history) ? data.due_date_change_history : [];
+    const oldHistory = Array.isArray(old_data.due_date_change_history) ? old_data.due_date_change_history : [];
     const currentCount = data.due_date_change_count || 0;
 
-    // Build new history entry
+    // If the frontend already appended a history entry (e.g. Task Calendar drag),
+    // the new data will have more entries than old data with matching old/new due dates.
+    // In that case, skip writing another entry to avoid duplicates.
+    if (currentHistory.length > oldHistory.length) {
+      const lastEntry = currentHistory[currentHistory.length - 1];
+      if (lastEntry && lastEntry.old_due_date === oldDue && lastEntry.new_due_date === newDue) {
+        console.log(`History already recorded by frontend for task ${taskId}: ${oldDue} → ${newDue} (count: ${currentCount})`);
+        return Response.json({ status: 'skipped', reason: 'already recorded by frontend' });
+      }
+    }
+
+    // Build new history entry (for changes made from Task form or other places)
     const now = new Date();
     const bangkokTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
     const entry = {
