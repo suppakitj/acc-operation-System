@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { History, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
+import { useUserList } from '@/hooks/useUserList';
 
 function formatDate(dateStr) {
   if (!dateStr) return '-';
@@ -25,9 +26,20 @@ const ROLE_LABELS = {
 
 export default function DueDateChangeHistory({ task }) {
   const [expanded, setExpanded] = useState(false);
+  const { data: users = [] } = useUserList();
 
   const history = task?.due_date_change_history || [];
   const count = task?.due_date_change_count || 0;
+
+  const getDisplayName = (entry) => {
+    if (entry.changed_by_name && entry.changed_by_name !== 'unknown') return entry.changed_by_name;
+    if (entry.changed_by) {
+      const user = users.find(u => u.email === entry.changed_by);
+      if (user?.full_name) return user.full_name;
+      return entry.changed_by;
+    }
+    return 'ไม่ทราบ';
+  };
 
   if (count === 0) return null;
 
@@ -68,7 +80,7 @@ export default function DueDateChangeHistory({ task }) {
                 <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-medium text-foreground">{entry.changed_by_name || entry.changed_by}</span>
+                    <span className="font-medium text-foreground">{getDisplayName(entry)}</span>
                     {entry.changed_by_role && (
                       <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5">
                         {ROLE_LABELS[entry.changed_by_role] || entry.changed_by_role}
