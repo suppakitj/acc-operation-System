@@ -67,6 +67,22 @@ export default function Tasks() {
       autoTimeTrack(editingTask, data.status, currentUser);
     }
 
+    // Track due date change history when editing
+    if (editingTask && data.due_date && editingTask.due_date && data.due_date !== editingTask.due_date) {
+      const currentHistory = Array.isArray(editingTask.due_date_change_history) ? editingTask.due_date_change_history : [];
+      const currentCount = editingTask.due_date_change_count || 0;
+      data.due_date_change_count = currentCount + 1;
+      data.due_date_change_history = [...currentHistory, {
+        changed_at: new Date().toISOString(),
+        changed_by: currentUser?.email || 'unknown',
+        changed_by_name: currentUser?.full_name || 'unknown',
+        changed_by_role: currentUser?.role || '',
+        old_due_date: editingTask.due_date,
+        new_due_date: data.due_date,
+        reason: 'แก้ไขจากหน้า Task Control Center',
+      }];
+    }
+
     if (editingTask) updateMutation.mutate({ id: editingTask.id, data });
     else createMutation.mutate(data);
   };
