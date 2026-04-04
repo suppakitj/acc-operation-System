@@ -64,15 +64,12 @@ Deno.serve(async (req) => {
     const oldHistory = Array.isArray(old_data.due_date_change_history) ? old_data.due_date_change_history : [];
     const currentCount = data.due_date_change_count || 0;
 
-    // If the frontend already appended a history entry (e.g. Task Calendar drag),
-    // the new data will have more entries than old data with matching old/new due dates.
+    // If the frontend already appended a history entry (e.g. Task Calendar drag or Task form),
+    // the new data will have more entries than old data.
     // In that case, skip writing another entry to avoid duplicates.
     if (currentHistory.length > oldHistory.length) {
-      const lastEntry = currentHistory[currentHistory.length - 1];
-      if (lastEntry && lastEntry.old_due_date === oldDue && lastEntry.new_due_date === newDue) {
-        console.log(`History already recorded by frontend for task ${taskId}: ${oldDue} → ${newDue} (count: ${currentCount})`);
-        return Response.json({ status: 'skipped', reason: 'already recorded by frontend' });
-      }
+      console.log(`History already recorded by frontend for task ${taskId}: ${oldDue} → ${newDue} (count: ${currentCount})`);
+      return Response.json({ status: 'skipped', reason: 'already recorded by frontend' });
     }
 
     // Build new history entry (for changes made from Task form or other places)
