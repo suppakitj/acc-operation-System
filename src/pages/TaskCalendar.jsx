@@ -42,6 +42,11 @@ const SERVICE_LABELS = {
 
 export default function TaskCalendar() {
   const queryClient = useQueryClient();
+  const { data: currentUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+    staleTime: 5 * 60_000,
+  });
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [view, setView] = useState('month'); // month, week, day
   const [filters, setFilters] = useState({ search: '', status: 'active', service: 'all' });
@@ -129,7 +134,7 @@ export default function TaskCalendar() {
     return map;
   }, [filteredTasks]);
 
-  const handleDragEnd = async (result) => {
+  const handleDragEnd = (result) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId) return;
@@ -144,8 +149,7 @@ export default function TaskCalendar() {
       old.map(t => t.id === draggableId ? { ...t, due_date: newDueDate } : t)
     );
 
-    // Build history entry before updating so automation dedup can work
-    const currentUser = await base44.auth.me();
+    // Build history entry with current user info (pre-loaded via query)
     const currentHistory = Array.isArray(task.due_date_change_history) ? task.due_date_change_history : [];
     const currentCount = task.due_date_change_count || 0;
     const entry = {
