@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Megaphone, Pin, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Megaphone, Pin, Star, Plus } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import moment from 'moment';
+import AnnouncementForm from './AnnouncementForm';
 
 const TYPE_BADGE = {
   info: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -23,6 +25,8 @@ const CATEGORY_LABEL = {
 
 export default function CompanyFeed({ currentUser }) {
   const { t } = useLanguage();
+  const [showForm, setShowForm] = useState(false);
+  const canManage = ['admin', 'management'].includes(currentUser?.role);
 
   const { data: announcements = [] } = useQuery({
     queryKey: ['announcements'],
@@ -57,9 +61,16 @@ export default function CompanyFeed({ currentUser }) {
     <div className="space-y-4">
       {/* Announcements */}
       <div className="space-y-3">
-        <p className="text-sm font-semibold flex items-center gap-1.5">
-          <Megaphone className="w-4 h-4" /> {t('my_day_feed')}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold flex items-center gap-1.5">
+            <Megaphone className="w-4 h-4" /> {t('my_day_feed')}
+          </p>
+          {canManage && (
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setShowForm(true)}>
+              <Plus className="w-3 h-3" /> สร้างข่าว
+            </Button>
+          )}
+        </div>
 
         {sorted.length === 0 ? (
           <Card className="shadow-sm border">
@@ -122,6 +133,7 @@ export default function CompanyFeed({ currentUser }) {
           </div>
         </div>
       )}
+      {canManage && <AnnouncementForm open={showForm} onOpenChange={setShowForm} currentUser={currentUser} />}
     </div>
   );
 }
