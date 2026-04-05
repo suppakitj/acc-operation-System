@@ -44,6 +44,7 @@ import CustomerCredentials from './pages/CustomerCredentials';
 import ExternalServiceMaster from './pages/ExternalServiceMaster';
 import KnowledgeBase from './pages/KnowledgeBase';
 import KnowledgeManage from './pages/KnowledgeManage';
+import MyDay from './pages/MyDay';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -70,8 +71,9 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/Dashboard" replace />} />
+      <Route path="/" element={<Navigate to="/MyDay" replace />} />
       <Route element={<AppLayout />}>
+        <Route path="/MyDay" element={<MyDay />} />
         <Route path="/Dashboard" element={<Dashboard />} />
         <Route path="/Tasks" element={<Tasks />} />
         <Route path="/Schedule" element={<Schedule />} />

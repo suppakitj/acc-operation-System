@@ -1,0 +1,53 @@
+{
+  "name": "ShoutOut",
+  "type": "object",
+  "properties": {
+    "from_email": {
+      "type": "string",
+      "description": "email \u0e1c\u0e39\u0e49\u0e0a\u0e21\u0e40\u0e0a\u0e22"
+    },
+    "from_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e0a\u0e21\u0e40\u0e0a\u0e22"
+    },
+    "to_email": {
+      "type": "string",
+      "description": "email \u0e1c\u0e39\u0e49\u0e16\u0e39\u0e01\u0e0a\u0e21\u0e40\u0e0a\u0e22"
+    },
+    "to_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e16\u0e39\u0e01\u0e0a\u0e21\u0e40\u0e0a\u0e22"
+    },
+    "message": {
+      "type": "string",
+      "description": "\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e0a\u0e21\u0e40\u0e0a\u0e22"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "teamwork",
+        "quality",
+        "speed",
+        "creative",
+        "helpful",
+        "leadership"
+      ],
+      "default": "helpful",
+      "description": "\u0e2b\u0e21\u0e27\u0e14\u0e2b\u0e21\u0e39\u0e48\u0e04\u0e27\u0e32\u0e21\u0e14\u0e35"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "ref Task \u0e17\u0e35\u0e48\u0e40\u0e01\u0e35\u0e48\u0e22\u0e27\u0e02\u0e49\u0e2d\u0e07 (\u0e16\u0e49\u0e32\u0e21\u0e35)"
+    },
+    "task_title": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "from_email",
+    "from_name",
+    "to_email",
+    "to_name",
+    "message"
+  ]
+}

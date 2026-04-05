@@ -6,7 +6,7 @@ import {
   Settings, ChevronLeft, ChevronRight, Key, ClipboardList,
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays,
   ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, ScanLine, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target, Activity,
-  HeartPulse, KeyRound, Globe, BookOpen, BookMarked
+  HeartPulse, KeyRound, Globe, BookOpen, BookMarked, Home
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -19,6 +19,8 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const ac = useAccessControl(user);
 
   const menuItems = [
+    // ─── ส่วนตัว ───
+    { id: 'my_day', label: t('menu_my_day'), icon: Home, path: '/MyDay' },
     // ─── ภาพรวม ───
     { id: 'dashboard', label: t('menu_dashboard'), icon: LayoutDashboard, path: '/Dashboard' },
     { id: 'kpi_dashboard', label: 'KPI Dashboard', icon: Target, path: '/KpiDashboard' },
@@ -66,6 +68,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
 
   // Menu groups — จัดหมวดให้ชัดเจน
   const menuGroups = [
+    { key: 'personal', label: 'ส่วนตัว', icon: Home, ids: ['my_day'] },
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
     { key: 'work', label: 'งาน & ตารางงาน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'ocr', 'schedule', 'templates', 'task_generation', 'time_tracking', 'knowledge_base', 'knowledge_manage'] },
     { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault'] },
@@ -87,7 +90,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const [expandedGroups, setExpandedGroups] = useState(() => {
     const saved = localStorage.getItem('sidebar_groups');
     if (saved) return JSON.parse(saved);
-    return { overview: true, work: true, clients: true, comms: true, tools: true, system: false };
+    return { personal: true, overview: true, work: true, clients: true, comms: true, tools: true, system: false };
   });
 
   useEffect(() => {
