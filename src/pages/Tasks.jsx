@@ -68,17 +68,20 @@ export default function Tasks() {
     }
 
     // Track due date change history when editing
-    if (editingTask && data.due_date && editingTask.due_date && data.due_date !== editingTask.due_date) {
+    // Normalize dates to YYYY-MM-DD for comparison (API may return with time suffix)
+    const oldDueNorm = editingTask?.due_date?.split('T')[0] || '';
+    const newDueNorm = data.due_date?.split('T')[0] || '';
+    if (editingTask && newDueNorm && oldDueNorm && newDueNorm !== oldDueNorm) {
       const currentHistory = Array.isArray(editingTask.due_date_change_history) ? editingTask.due_date_change_history : [];
       const currentCount = editingTask.due_date_change_count || 0;
       data.due_date_change_count = currentCount + 1;
       data.due_date_change_history = [...currentHistory, {
         changed_at: new Date().toISOString(),
         changed_by: currentUser?.email || 'unknown',
-        changed_by_name: currentUser?.full_name || 'unknown',
+        changed_by_name: currentUser?.full_name || currentUser?.email || 'unknown',
         changed_by_role: currentUser?.role || '',
-        old_due_date: editingTask.due_date,
-        new_due_date: data.due_date,
+        old_due_date: oldDueNorm,
+        new_due_date: newDueNorm,
         reason: 'แก้ไขจากหน้า Task Control Center',
       }];
     }

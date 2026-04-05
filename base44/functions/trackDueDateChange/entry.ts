@@ -41,22 +41,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Determine who made the change using updated_by (created_by of the update action)
-    // Since entity automations don't have user context directly,
-    // we look at the data's updated metadata
-    const changedBy = data.updated_by || data.created_by || 'system';
+    // Determine who made the change
+    // Entity automations receive 'updated_by' from the platform (the user who triggered the update)
+    // Fall back to created_by only if updated_by is not available
+    const changedBy = data.updated_by || 'system';
 
     // Look up the user to get their name and role
     let changedByName = changedBy;
     let changedByRole = '';
-    try {
-      const users = await base44.asServiceRole.entities.User.filter({ email: changedBy }, '-created_date', 1);
-      if (users.length > 0) {
-        changedByName = users[0].full_name || changedBy;
-        changedByRole = users[0].role || '';
+    if (changedBy && changedBy !== 'system') {
+      try {
+        const users = await base44.asServiceRole.entities.User.filter({ email: changedBy }, '-created_date', 1);
+        if (users.length > 0) {
+          changedByName = users[0].full_name || changedBy;
+          changedByRole = users[0].role || '';
+        }
+      } catch (e) {
+        console.warn('Could not look up user:', e.message);
       }
-    } catch (e) {
-      console.warn('Could not look up user:', e.message);
     }
 
     // Get current history
