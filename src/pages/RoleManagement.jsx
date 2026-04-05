@@ -82,6 +82,14 @@ const PERMISSION_GROUPS = [
       { key: 'knowledge_manage', label: 'จัดการ Knowledge Base', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
     ],
   },
+  {
+    name: '🏠 My Day & สื่อสาร',
+    items: [
+      { key: 'my_day', label: 'My Day (หน้าแรกส่วนตัว)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+      { key: 'announcement_manage', label: 'สร้าง/จัดการข่าวสารบริษัท', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
+      { key: 'shoutout', label: 'ส่ง Shout-out ชมเชย', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+    ],
+  },
 ];
 
 // Flatten for compatibility

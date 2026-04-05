@@ -8,6 +8,7 @@ import { Megaphone, Pin, Star, Plus } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import moment from 'moment';
 import AnnouncementForm from './AnnouncementForm';
+import { useAccessControl } from '../auth/useAccessControl';
 
 const TYPE_BADGE = {
   info: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -26,7 +27,8 @@ const CATEGORY_LABEL = {
 export default function CompanyFeed({ currentUser }) {
   const { t } = useLanguage();
   const [showForm, setShowForm] = useState(false);
-  const canManage = ['admin', 'management'].includes(currentUser?.role);
+  const ac = useAccessControl(currentUser);
+  const canManage = ac.canManageAnnouncements;
 
   const { data: announcements = [] } = useQuery({
     queryKey: ['announcements'],

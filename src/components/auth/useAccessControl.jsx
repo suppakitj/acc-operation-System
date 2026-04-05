@@ -178,6 +178,7 @@ export function useAccessControl(user) {
       canSeeAll: role === 'admin' || crossGroup,
       canViewReferral: p('referral') !== 'no',
       canEditReferral: p('referral') !== 'no' && p('referral') !== 'view_only',
+      canManageAnnouncements: p('announcement_manage') !== 'no' && p('announcement_manage') !== 'view_only',
       canViewStaffDashboard, canViewTeamAnalytics, canViewReports, canViewAuditLog, canViewDbBackup,
     };
   }, [user, matrix]);
@@ -199,7 +200,7 @@ function empty() {
     filterByDepartment: () => [], canAccessDepartment: () => false,
     getVisibleMenuIds: () => ['dashboard', 'notifications', 'settings'],
     canSeeAll: false,
-    canViewReferral: false, canEditReferral: false,
+    canViewReferral: false, canEditReferral: false, canManageAnnouncements: false,
     canViewStaffDashboard: false, canViewTeamAnalytics: false, canViewReports: false, canViewAuditLog: false, canViewDbBackup: false,
   };
 }
