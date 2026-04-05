@@ -105,28 +105,32 @@ export default function QuickTimer({ currentUser, activeTasks, runningEntry }) {
       ) : (
         <Card className="shadow-sm border">
           <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Select value={selectedTaskId} onValueChange={setSelectedTaskId}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder={t('my_day_select_task')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {activeTasks.map(task => (
-                    <SelectItem key={task.id} value={task.id}>
-                      {task.title} {task.customer_name ? `— ${task.customer_name}` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                size="sm"
-                className="shrink-0 gap-1.5"
-                onClick={handleStart}
-                disabled={!selectedTaskId || startTimer.isPending}
-              >
-                <Play className="w-3.5 h-3.5" /> {t('my_day_start_timer')}
-              </Button>
-            </div>
+            {activeTasks.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-2">ไม่มีงานที่สามารถจับเวลาได้</p>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Select value={selectedTaskId} onValueChange={setSelectedTaskId}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder={t('my_day_select_task')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeTasks.map(task => (
+                      <SelectItem key={task.id} value={task.id}>
+                        {task.title} {task.customer_name ? `— ${task.customer_name}` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  className="shrink-0 gap-1.5"
+                  onClick={handleStart}
+                  disabled={!selectedTaskId || startTimer.isPending}
+                >
+                  <Play className="w-3.5 h-3.5" /> {t('my_day_start_timer')}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
