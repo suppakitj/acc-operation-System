@@ -20,24 +20,11 @@ export default function MyDay() {
 
   const { data: myTasks = [], isLoading: isLoadingTasks } = useQuery({
     queryKey: ['myTasks', currentUser?.email],
-    queryFn: async () => {
-      // Try filter by assigned_to first
-      const assigned = await base44.entities.Task.filter(
-        { assigned_to: currentUser.email },
-        '-due_date',
-        200
-      );
-      // If no tasks assigned, also try by created_by
-      if (assigned.length === 0) {
-        const created = await base44.entities.Task.filter(
-          { created_by: currentUser.email },
-          '-due_date',
-          200
-        );
-        return created;
-      }
-      return assigned;
-    },
+    queryFn: () => base44.entities.Task.filter(
+      { assigned_to: currentUser.email },
+      '-due_date',
+      200
+    ),
     enabled: !!currentUser?.email,
   });
 

@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Megaphone, Pin, Star, Plus } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
-import moment from 'moment';
+import { formatDistanceToNow } from 'date-fns';
+import { th } from 'date-fns/locale';
+import { parseUTCDate } from '@/lib/dateUtils';
 import AnnouncementForm from './AnnouncementForm';
 import { useAccessControl } from '../auth/useAccessControl';
 
@@ -95,7 +97,7 @@ export default function CompanyFeed({ currentUser }) {
                   <p className="font-medium text-sm">{a.pinned ? '📌 ' : ''}{a.title}</p>
                   <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{a.content}</p>
                   <p className="text-[10px] text-muted-foreground mt-2">
-                    {a.author_name || a.author_email} · {moment(a.created_date).fromNow()}
+                    {a.author_name || a.author_email} · {formatDistanceToNow(parseUTCDate(a.created_date), { addSuffix: true, locale: th })}
                   </p>
                 </CardContent>
               </Card>
