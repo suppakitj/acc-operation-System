@@ -103,6 +103,7 @@ export default function MyDay() {
       />
       <MyStats myTasks={myTasks} myTimeEntries={myTimeEntries} />
       <PulseSurvey currentUser={currentUser} />
+      <CompanyFeed currentUser={currentUser} />
       <Achievements
         myTasks={myTasks}
         myTimeEntries={myTimeEntries}
@@ -114,7 +115,6 @@ export default function MyDay() {
         runningEntry={runningEntry}
       />
       <SkillMap currentUser={currentUser} />
-      <CompanyFeed currentUser={currentUser} />
       <IdeaBox currentUser={currentUser} />
     </div>
   );
