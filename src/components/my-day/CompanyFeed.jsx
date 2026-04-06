@@ -10,6 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { parseUTCDate } from '@/lib/dateUtils';
 import AnnouncementForm from './AnnouncementForm';
+import ShoutOutForm from './ShoutOutForm';
 import { useAccessControl } from '../auth/useAccessControl';
 
 const TYPE_BADGE = {
@@ -29,6 +30,7 @@ const CATEGORY_LABEL = {
 export default function CompanyFeed({ currentUser }) {
   const { t } = useLanguage();
   const [showForm, setShowForm] = useState(false);
+  const [showShoutOutForm, setShowShoutOutForm] = useState(false);
   const ac = useAccessControl(currentUser);
   const canManage = ac.canManageAnnouncements;
 
@@ -63,6 +65,56 @@ export default function CompanyFeed({ currentUser }) {
 
   return (
     <div className="space-y-4">
+      {/* Shout-outs — แสดงก่อน Announcements */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold flex items-center gap-1.5">
+            <Star className="w-4 h-4 text-amber-500" /> {t('my_day_shoutouts')}
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs gap-1 border-amber-300 text-amber-700 hover:bg-amber-50"
+            onClick={() => setShowShoutOutForm(true)}
+          >
+            <Star className="w-3 h-3" /> {t('my_day_shoutout_btn')}
+          </Button>
+        </div>
+
+        {recentShoutOuts.length === 0 ? (
+          <Card className="shadow-sm border">
+            <CardContent className="p-6 text-center">
+              <Star className="w-8 h-8 mx-auto text-muted-foreground/30 mb-2" />
+              <p className="text-sm text-muted-foreground">{t('my_day_shoutout_no_data')}</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {recentShoutOuts.map(s => (
+              <Card key={s.id} className="shadow-sm border">
+                <CardContent className="p-3">
+                  <div className="flex items-start gap-2">
+                    <Star className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm">
+                        <span className="font-medium">{s.from_name}</span>
+                        {' ชมเชย '}
+                        <span className="font-medium">{s.to_name}</span>
+                        {': '}
+                        <span className="text-muted-foreground">{s.message}</span>
+                      </p>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 mt-1">
+                        {CATEGORY_LABEL[s.category] || s.category}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Announcements */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -106,38 +158,8 @@ export default function CompanyFeed({ currentUser }) {
         )}
       </div>
 
-      {/* Shout-outs */}
-      {recentShoutOuts.length > 0 && (
-        <div className="space-y-3">
-          <p className="text-sm font-semibold flex items-center gap-1.5">
-            <Star className="w-4 h-4 text-amber-500" /> {t('my_day_shoutouts')}
-          </p>
-          <div className="space-y-2">
-            {recentShoutOuts.map(s => (
-              <Card key={s.id} className="shadow-sm border">
-                <CardContent className="p-3">
-                  <div className="flex items-start gap-2">
-                    <Star className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm">
-                        <span className="font-medium">{s.from_name}</span>
-                        {' ชมเชย '}
-                        <span className="font-medium">{s.to_name}</span>
-                        {': '}
-                        <span className="text-muted-foreground">{s.message}</span>
-                      </p>
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 mt-1">
-                        {CATEGORY_LABEL[s.category] || s.category}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
       {canManage && <AnnouncementForm open={showForm} onOpenChange={setShowForm} currentUser={currentUser} />}
+      <ShoutOutForm open={showShoutOutForm} onOpenChange={setShowShoutOutForm} currentUser={currentUser} />
     </div>
   );
 }

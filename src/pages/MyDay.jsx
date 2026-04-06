@@ -9,6 +9,7 @@ import TodayFocus from '../components/my-day/TodayFocus';
 import MyStats from '../components/my-day/MyStats';
 import QuickTimer from '../components/my-day/QuickTimer';
 import CompanyFeed from '../components/my-day/CompanyFeed';
+import Achievements from '../components/my-day/Achievements';
 
 export default function MyDay() {
   const queryClient = useQueryClient();
@@ -98,6 +99,11 @@ export default function MyDay() {
         onStatusChange={handleStatusChange}
       />
       <MyStats myTasks={myTasks} myTimeEntries={myTimeEntries} />
+      <Achievements
+        myTasks={myTasks}
+        myTimeEntries={myTimeEntries}
+        currentUser={currentUser}
+      />
       <QuickTimer
         currentUser={currentUser}
         activeTasks={activeTasks}
