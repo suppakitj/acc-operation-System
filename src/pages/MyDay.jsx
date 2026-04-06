@@ -10,7 +10,6 @@ import MyStats from '../components/my-day/MyStats';
 import PulseSurvey from '../components/my-day/PulseSurvey';
 import QuickTimer from '../components/my-day/QuickTimer';
 import CompanyFeed from '../components/my-day/CompanyFeed';
-import Achievements from '../components/my-day/Achievements';
 import SkillMap from '../components/my-day/SkillMap';
 import IdeaBox from '../components/my-day/IdeaBox';
 
@@ -102,18 +101,13 @@ export default function MyDay() {
         onStatusChange={handleStatusChange}
       />
       <MyStats myTasks={myTasks} myTimeEntries={myTimeEntries} />
-      <CompanyFeed currentUser={currentUser} />
       <PulseSurvey currentUser={currentUser} />
-      <Achievements
-        myTasks={myTasks}
-        myTimeEntries={myTimeEntries}
-        currentUser={currentUser}
-      />
       <QuickTimer
         currentUser={currentUser}
         activeTasks={activeTasks}
         runningEntry={runningEntry}
       />
+      <CompanyFeed currentUser={currentUser} />
       <SkillMap currentUser={currentUser} />
       <IdeaBox currentUser={currentUser} />
     </div>

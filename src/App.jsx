@@ -45,6 +45,7 @@ import ExternalServiceMaster from './pages/ExternalServiceMaster';
 import KnowledgeBase from './pages/KnowledgeBase';
 import KnowledgeManage from './pages/KnowledgeManage';
 import MyDay from './pages/MyDay';
+import EngagementInsights from './pages/EngagementInsights';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -109,6 +110,7 @@ const AuthenticatedApp = () => {
         <Route path="/ExternalServiceMaster" element={<ExternalServiceMaster />} />
         <Route path="/KnowledgeBase" element={<KnowledgeBase />} />
         <Route path="/KnowledgeManage" element={<KnowledgeManage />} />
+        <Route path="/EngagementInsights" element={<EngagementInsights />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

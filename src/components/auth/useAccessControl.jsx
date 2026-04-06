@@ -156,6 +156,9 @@ export function useAccessControl(user) {
       if (p('knowledge_base') !== 'no') menus.push('knowledge_base');
       if (p('knowledge_manage') !== 'no') menus.push('knowledge_manage');
 
+      // Engagement Insights
+      if (p('engagement_insights') !== 'no') menus.push('engagement_insights');
+
       // My Day
       if (p('my_day') !== 'no') menus.push('my_day');
 
@@ -180,6 +183,7 @@ export function useAccessControl(user) {
       canEditReferral: p('referral') !== 'no' && p('referral') !== 'view_only',
       canManageAnnouncements: p('announcement_manage') !== 'no' && p('announcement_manage') !== 'view_only',
       canViewStaffDashboard, canViewTeamAnalytics, canViewReports, canViewAuditLog, canViewDbBackup,
+      canViewEngagementInsights: p('engagement_insights') !== 'no',
     };
   }, [user, matrix]);
 }
@@ -202,5 +206,6 @@ function empty() {
     canSeeAll: false,
     canViewReferral: false, canEditReferral: false, canManageAnnouncements: false,
     canViewStaffDashboard: false, canViewTeamAnalytics: false, canViewReports: false, canViewAuditLog: false, canViewDbBackup: false,
+    canViewEngagementInsights: false,
   };
 }
