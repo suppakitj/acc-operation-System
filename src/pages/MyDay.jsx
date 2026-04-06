@@ -7,9 +7,12 @@ import { toast } from 'sonner';
 import GreetingHeader from '../components/my-day/GreetingHeader';
 import TodayFocus from '../components/my-day/TodayFocus';
 import MyStats from '../components/my-day/MyStats';
+import PulseSurvey from '../components/my-day/PulseSurvey';
 import QuickTimer from '../components/my-day/QuickTimer';
 import CompanyFeed from '../components/my-day/CompanyFeed';
 import Achievements from '../components/my-day/Achievements';
+import SkillMap from '../components/my-day/SkillMap';
+import IdeaBox from '../components/my-day/IdeaBox';
 
 export default function MyDay() {
   const queryClient = useQueryClient();
@@ -99,6 +102,7 @@ export default function MyDay() {
         onStatusChange={handleStatusChange}
       />
       <MyStats myTasks={myTasks} myTimeEntries={myTimeEntries} />
+      <PulseSurvey currentUser={currentUser} />
       <Achievements
         myTasks={myTasks}
         myTimeEntries={myTimeEntries}
@@ -109,7 +113,9 @@ export default function MyDay() {
         activeTasks={activeTasks}
         runningEntry={runningEntry}
       />
+      <SkillMap currentUser={currentUser} />
       <CompanyFeed currentUser={currentUser} />
+      <IdeaBox currentUser={currentUser} />
     </div>
   );
 }
