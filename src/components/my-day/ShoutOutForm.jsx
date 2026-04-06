@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useUserList } from '@/hooks/useUserList';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -87,16 +88,15 @@ export default function ShoutOutForm({ open, onOpenChange, currentUser }) {
           {/* To */}
           <div className="space-y-1.5">
             <Label>{t('my_day_shoutout_to')} *</Label>
-            <Select value={toEmail} onValueChange={setToEmail}>
-              <SelectTrigger><SelectValue placeholder="เลือกเพื่อนร่วมงาน..." /></SelectTrigger>
-              <SelectContent>
-                {eligibleUsers.map(u => (
-                  <SelectItem key={u.email} value={u.email}>
-                    {u.full_name} {u.department ? `(${DEPT_LABELS[u.department] || u.department})` : ''}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={toEmail}
+              onValueChange={setToEmail}
+              placeholder="พิมพ์ชื่อเพื่อนร่วมงาน..."
+              options={eligibleUsers.map(u => ({
+                value: u.email,
+                label: `${u.full_name}${u.department ? ` (${DEPT_LABELS[u.department] || u.department})` : ''}`,
+              }))}
+            />
           </div>
 
           {/* Category */}
