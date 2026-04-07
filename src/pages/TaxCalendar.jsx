@@ -84,7 +84,7 @@ export default function TaxCalendar() {
     return { total: deadlines.length, shifted, upcoming, pastDue };
   }, [deadlines]);
 
-  const years = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1, now.getFullYear() + 2];
+  const years = [now.getFullYear(), now.getFullYear() + 1, now.getFullYear() + 2];
 
   if (!currentUser) return null;
 
