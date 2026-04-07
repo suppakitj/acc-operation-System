@@ -47,6 +47,7 @@ import KnowledgeManage from './pages/KnowledgeManage';
 import MyDay from './pages/MyDay';
 import EngagementInsights from './pages/EngagementInsights';
 import DirectorVault from './pages/DirectorVault';
+import ObligationDashboard from './pages/ObligationDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -113,6 +114,7 @@ const AuthenticatedApp = () => {
         <Route path="/KnowledgeManage" element={<KnowledgeManage />} />
         <Route path="/EngagementInsights" element={<EngagementInsights />} />
         <Route path="/DirectorVault" element={<DirectorVault />} />
+        <Route path="/ObligationDashboard" element={<ObligationDashboard />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

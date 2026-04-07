@@ -162,6 +162,9 @@ export function useAccessControl(user) {
       // Director Vault
       if (p('director_vault') !== 'no') menus.push('director_vault');
 
+      // Obligation Dashboard
+      if (p('obligation_dashboard') !== 'no') menus.push('obligation_dashboard');
+
       // My Day
       if (p('my_day') !== 'no') menus.push('my_day');
 
@@ -188,6 +191,7 @@ export function useAccessControl(user) {
       canViewStaffDashboard, canViewTeamAnalytics, canViewReports, canViewAuditLog, canViewDbBackup,
       canViewEngagementInsights: p('engagement_insights') !== 'no',
       canViewDirectorVault: p('director_vault') !== 'no',
+      canViewObligationDashboard: p('obligation_dashboard') !== 'no',
     };
   }, [user, matrix]);
 }
@@ -212,5 +216,6 @@ function empty() {
     canViewStaffDashboard: false, canViewTeamAnalytics: false, canViewReports: false, canViewAuditLog: false, canViewDbBackup: false,
     canViewEngagementInsights: false,
     canViewDirectorVault: false,
+    canViewObligationDashboard: false,
   };
 }

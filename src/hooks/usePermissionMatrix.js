@@ -46,6 +46,7 @@ const DEFAULT_MATRIX = {
   shoutout:         { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   engagement_insights: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
   director_vault:     { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  obligation_dashboard: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no',  staff: 'no' },
 };
 
 const PermissionMatrixContext = createContext(DEFAULT_MATRIX);
