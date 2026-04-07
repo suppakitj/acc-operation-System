@@ -702,5 +702,11 @@ export function LanguageProvider({ children }) {
 }
 
 export function useLanguage() {
-  return useContext(LanguageContext);
+  const ctx = useContext(LanguageContext);
+  if (!ctx) {
+    // Fallback when context is not available (e.g. during HMR)
+    const fallbackT = (key) => translations['th']?.[key] || key;
+    return { lang: 'th', setLang: () => {}, t: fallbackT };
+  }
+  return ctx;
 }
