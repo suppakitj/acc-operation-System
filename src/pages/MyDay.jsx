@@ -103,13 +103,13 @@ export default function MyDay() {
       />
       <MyStats myTasks={myTasks} myTimeEntries={myTimeEntries} />
       <PulseSurvey currentUser={currentUser} />
+      <CompanyFeed currentUser={currentUser} />
       <QuickTimer
         currentUser={currentUser}
         activeTasks={activeTasks}
         runningEntry={runningEntry}
       />
       <AppLauncher currentUser={currentUser} />
-      <CompanyFeed currentUser={currentUser} />
       <SkillMap currentUser={currentUser} />
       <IdeaBox currentUser={currentUser} />
     </div>
