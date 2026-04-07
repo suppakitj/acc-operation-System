@@ -13,6 +13,11 @@ import TemplateFormDialog from '../components/templates/TemplateFormDialog';
 import TablePagination, { paginateData } from '../components/shared/TablePagination';
 
 const SERVICE_LABELS = { accounting: 'ทำบัญชี', payroll: 'เงินเดือน', tax_consulting: 'ที่ปรึกษาภาษี', audit: 'ตรวจสอบ', peak_licensing: 'Peak Account' };
+const OBLIGATION_LABELS = {
+  pnd1_monthly: 'ภงด.1', pnd1k_yearly: 'ภงด.1ก', pnd3_monthly: 'ภงด.3', pnd53_monthly: 'ภงด.53',
+  pp30_monthly: 'ภ.พ.30', sso_monthly: 'ประกันสังคม', pnd90_director: 'ภงด.90', pnd91_director: 'ภงด.91',
+  pnd50_half: 'ภงด.50 ครึ่งปี', pnd50_annual: 'ภงด.50 ปี', audit_annual: 'ตรวจสอบงบ', dbd_filing: 'ยื่นงบ DBD',
+};
 const RECURRING_LABELS = { monthly: 'รายเดือน', quarterly: 'รายไตรมาส', yearly: 'รายปี' };
 const MONTH_LABELS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
@@ -168,7 +173,13 @@ export default function TaskTemplates() {
                     </div>
                   </td>
                   <td className="px-3 py-2 hidden md:table-cell">
-                    <Badge variant="secondary" className="text-[9px] px-1.5">{SERVICE_LABELS[tmpl.service_type] || tmpl.service_type}</Badge>
+                    {tmpl.match_type === 'obligation' ? (
+                      <Badge variant="outline" className="text-[9px] px-1.5 bg-amber-50 text-amber-700 border-amber-200">
+                        {OBLIGATION_LABELS[tmpl.obligation_type] || tmpl.obligation_type || 'obligation'}
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-[9px] px-1.5">{SERVICE_LABELS[tmpl.service_type] || tmpl.service_type}</Badge>
+                    )}
                   </td>
                   <td className="px-3 py-2 hidden md:table-cell">
                     <Badge variant="outline" className="text-[9px] px-1.5">{RECURRING_LABELS[tmpl.recurring_type] || tmpl.recurring_type}</Badge>

@@ -82,7 +82,7 @@ export default function TaskGeneration() {
       {/* Info bar */}
       <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
         <Info className="w-4 h-4 shrink-0" />
-        <span>มี {activeTemplates.length} templates ที่ active — ระบบจะจับคู่กับลูกค้าที่ใช้บริการตรงกัน แล้วสร้าง task พร้อมกัน</span>
+        <span>มี {activeTemplates.length} templates ที่ active — ระบบจับคู่กับลูกค้าตาม Service หรือ Obligation ที่ตรงกัน</span>
       </div>
 
       {/* Controls */}
@@ -168,7 +168,7 @@ export default function TaskGeneration() {
           <h3 className="text-xs font-semibold text-muted-foreground">ระบบทำงานอย่างไร?</h3>
           <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal ml-4">
             <li>ดึง <b>Task Templates</b> ที่ active และตรงกับเดือนที่เลือก</li>
-            <li>ดึง <b>ลูกค้า</b> ที่ active และมี <b>ประเภทบริการ</b> ตรงกับ template</li>
+            <li>ดึง <b>ลูกค้า</b> ที่ active — จับคู่ตาม <b>Service</b> (ประเภทบริการ) หรือ <b>Obligation</b> (ภาระผูกพัน) ของลูกค้าที่ตรงกับ template</li>
             <li>จับคู่ template × ลูกค้า = สร้าง task ให้แต่ละคู่</li>
             <li><b>ผู้รับผิดชอบ</b> ดึงจาก "เจ้าหน้าที่หลัก" ใน Customer Profile หรือจาก template</li>
             <li>ระบบตรวจสอบ <b>ไม่ให้ซ้ำ</b> — ถ้าเดือนนั้นมี task จาก template เดียวกัน + ลูกค้าเดียวกันอยู่แล้ว จะข้าม</li>

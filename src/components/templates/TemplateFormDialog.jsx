@@ -18,6 +18,21 @@ const SERVICES = [
   { value: 'peak_licensing', label: 'Licensing Peak Account' },
 ];
 
+const OBLIGATIONS = [
+  { value: 'pnd1_monthly', label: 'ภงด.1 รายเดือน' },
+  { value: 'pnd1k_yearly', label: 'ภงด.1ก สิ้นปี' },
+  { value: 'pnd3_monthly', label: 'ภงด.3 รายเดือน' },
+  { value: 'pnd53_monthly', label: 'ภงด.53 รายเดือน' },
+  { value: 'pp30_monthly', label: 'ภ.พ.30 รายเดือน' },
+  { value: 'sso_monthly', label: 'ประกันสังคม รายเดือน' },
+  { value: 'pnd90_director', label: 'ภงด.90 กรรมการ' },
+  { value: 'pnd91_director', label: 'ภงด.91 กรรมการ' },
+  { value: 'pnd50_half', label: 'ภงด.50 ครึ่งปี' },
+  { value: 'pnd50_annual', label: 'ภงด.50 ประจำปี' },
+  { value: 'audit_annual', label: 'ตรวจสอบงบการเงิน' },
+  { value: 'dbd_filing', label: 'ยื่นงบ กรมพัฒนาธุรกิจ' },
+];
+
 const DEPARTMENTS = [
   { value: 'management', label: 'Management' },
   { value: 'accounting', label: 'บัญชี' },
@@ -43,6 +58,7 @@ export default function TemplateFormDialog({ open, onOpenChange, template, onSub
     if (open) {
       setForm({
         name: '', description: '', service_type: '', department: '',
+        match_type: 'service', obligation_type: '',
         recurring_type: 'monthly', applicable_months: [],
         due_date_rule: 15, default_priority: 'medium', default_status: 'pending',
         default_owner_type: 'from_customer', default_owner: '', default_owner_name: '',
@@ -67,7 +83,10 @@ export default function TemplateFormDialog({ open, onOpenChange, template, onSub
   };
 
   const handleSubmit = () => {
-    if (!form.name || !form.service_type || !form.recurring_type) return;
+    const matchType = form.match_type || 'service';
+    if (!form.name || !form.recurring_type) return;
+    if (matchType === 'service' && !form.service_type) return;
+    if (matchType === 'obligation' && !form.obligation_type) return;
     onSubmit(form);
   };
 
@@ -88,12 +107,35 @@ export default function TemplateFormDialog({ open, onOpenChange, template, onSub
               <div className={template?.template_code ? '' : 'md:col-span-2'}>
                 <div className="space-y-1"><Label>ชื่อ Task *</Label><Input value={form.name || ''} onChange={e => update('name', e.target.value)} /></div>
               </div>
-              <div className="space-y-1"><Label>ประเภทบริการ *</Label>
-                <Select value={form.service_type || ''} onValueChange={v => update('service_type', v)}>
-                  <SelectTrigger><SelectValue placeholder="เลือกบริการ" /></SelectTrigger>
-                  <SelectContent>{SERVICES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+              <div className="space-y-1"><Label>วิธีจับคู่ลูกค้า *</Label>
+                <Select value={form.match_type || 'service'} onValueChange={v => update('match_type', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="service">ตาม Service (ประเภทบริการ)</SelectItem>
+                    <SelectItem value="obligation">ตาม Obligation (ภาระผูกพัน)</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
+              {(form.match_type || 'service') === 'service' && (
+                <div className="space-y-1"><Label>ประเภทบริการ *</Label>
+                  <Select value={form.service_type || ''} onValueChange={v => update('service_type', v)}>
+                    <SelectTrigger><SelectValue placeholder="เลือกบริการ" /></SelectTrigger>
+                    <SelectContent>{SERVICES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              )}
+              {form.match_type === 'obligation' && (
+                <div className="space-y-1"><Label>ภาระผูกพัน *</Label>
+                  <Select value={form.obligation_type || ''} onValueChange={v => update('obligation_type', v)}>
+                    <SelectTrigger><SelectValue placeholder="เลือกภาระผูกพัน" /></SelectTrigger>
+                    <SelectContent>
+                      {OBLIGATIONS.map(ob => (
+                        <SelectItem key={ob.value} value={ob.value}>{ob.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-1"><Label>แผนก</Label>
                 <Select value={form.department || '_none'} onValueChange={v => update('department', v === '_none' ? '' : v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -219,7 +261,7 @@ export default function TemplateFormDialog({ open, onOpenChange, template, onSub
             </div>
           </div>
 
-          <Button onClick={handleSubmit} disabled={isSaving || !form.name || !form.service_type} className="w-full">
+          <Button onClick={handleSubmit} disabled={isSaving || !form.name || ((form.match_type || 'service') === 'service' ? !form.service_type : !form.obligation_type)} className="w-full">
             {isSaving ? 'กำลังบันทึก...' : (template ? 'อัปเดต Template' : 'สร้าง Template')}
           </Button>
         </div>

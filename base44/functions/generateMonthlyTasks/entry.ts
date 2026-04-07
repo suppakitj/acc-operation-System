@@ -98,10 +98,21 @@ Deno.serve(async (req) => {
     let skippedNoMatch = 0;
 
     for (const tmpl of templates) {
-      // Find customers that use this service
-      const matchingCustomers = customers.filter(c => 
-        c.services && c.services.includes(tmpl.service_type)
-      );
+      // Determine match type: obligation-based or service-based
+      const matchType = tmpl.match_type || 'service';
+
+      let matchingCustomers;
+      if (matchType === 'obligation' && tmpl.obligation_type) {
+        // Match by obligation — ดูจาก customer.obligations[]
+        matchingCustomers = customers.filter(c =>
+          c.obligations && c.obligations.includes(tmpl.obligation_type)
+        );
+      } else {
+        // Match by service (default) — ดูจาก customer.services[] เหมือนเดิม
+        matchingCustomers = customers.filter(c =>
+          c.services && c.services.includes(tmpl.service_type)
+        );
+      }
 
       if (matchingCustomers.length === 0) {
         skippedNoMatch++;
@@ -146,7 +157,7 @@ Deno.serve(async (req) => {
           description: tmpl.description || '',
           customer_id: customer.id,
           customer_name: customer.company_name,
-          service_type: tmpl.service_type,
+          service_type: tmpl.service_type || tmpl.obligation_type || '',
           department: tmpl.department || '',
           assigned_to: assignedTo,
           assigned_name: assignedName,
