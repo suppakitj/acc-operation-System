@@ -1,0 +1,232 @@
+{
+  "name": "Customer",
+  "type": "object",
+  "properties": {
+    "customer_code": {
+      "type": "string",
+      "description": "\u0e23\u0e2b\u0e31\u0e2a\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32 (Auto Gen)"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32 / \u0e1a\u0e23\u0e34\u0e29\u0e31\u0e17"
+    },
+    "company_name_en": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1a\u0e23\u0e34\u0e29\u0e31\u0e17 (\u0e2d\u0e31\u0e07\u0e01\u0e24\u0e29)"
+    },
+    "tax_id": {
+      "type": "string",
+      "description": "\u0e40\u0e25\u0e02 TAX ID 13 \u0e2b\u0e25\u0e31\u0e01"
+    },
+    "branch_code": {
+      "type": "string",
+      "description": "\u0e40\u0e25\u0e02\u0e2a\u0e32\u0e02\u0e32 \u0e40\u0e0a\u0e48\u0e19 00000 = \u0e2a\u0e33\u0e19\u0e31\u0e01\u0e07\u0e32\u0e19\u0e43\u0e2b\u0e0d\u0e48"
+    },
+    "address": {
+      "type": "string",
+      "description": "\u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32"
+    },
+    "customer_group": {
+      "type": "string",
+      "enum": [
+        "individual",
+        "sme",
+        "corporate",
+        "government",
+        "other"
+      ],
+      "default": "sme",
+      "description": "\u0e01\u0e25\u0e38\u0e48\u0e21\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32"
+    },
+    "work_group": {
+      "type": "string",
+      "enum": [
+        "group_a",
+        "group_b",
+        "group_c",
+        "group_d"
+      ],
+      "description": "\u0e01\u0e25\u0e38\u0e48\u0e21\u0e07\u0e32\u0e19"
+    },
+    "departments": {
+      "type": "array",
+      "description": "\u0e41\u0e1c\u0e19\u0e01\u0e23\u0e31\u0e1a\u0e1c\u0e34\u0e14\u0e0a\u0e2d\u0e1a (\u0e2b\u0e25\u0e32\u0e22\u0e41\u0e1c\u0e19\u0e01)",
+      "items": {
+        "type": "string",
+        "enum": [
+          "management",
+          "accounting",
+          "consulting",
+          "audit",
+          "billing",
+          "it"
+        ]
+      }
+    },
+    "supervisor": {
+      "type": "string",
+      "description": "\u0e2b\u0e31\u0e27\u0e2b\u0e19\u0e49\u0e32\u0e14\u0e39\u0e41\u0e25 (email)"
+    },
+    "supervisor_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e2b\u0e31\u0e27\u0e2b\u0e19\u0e49\u0e32\u0e14\u0e39\u0e41\u0e25"
+    },
+    "primary_officer": {
+      "type": "string",
+      "description": "\u0e40\u0e08\u0e49\u0e32\u0e2b\u0e19\u0e49\u0e32\u0e17\u0e35\u0e48\u0e2b\u0e25\u0e31\u0e01 (email)"
+    },
+    "primary_officer_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e40\u0e08\u0e49\u0e32\u0e2b\u0e19\u0e49\u0e32\u0e17\u0e35\u0e48\u0e2b\u0e25\u0e31\u0e01"
+    },
+    "contact_person": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d"
+    },
+    "contact_email": {
+      "type": "string",
+      "description": "\u0e2d\u0e35\u0e40\u0e21\u0e25\u0e1c\u0e39\u0e49\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d"
+    },
+    "contact_phone": {
+      "type": "string",
+      "description": "\u0e40\u0e1a\u0e2d\u0e23\u0e4c\u0e42\u0e17\u0e23\u0e1c\u0e39\u0e49\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d"
+    },
+    "line_id": {
+      "type": "string",
+      "description": "Line ID"
+    },
+    "line_group_id": {
+      "type": "string",
+      "description": "LINE Group ID \u0e2a\u0e33\u0e2b\u0e23\u0e31\u0e1a\u0e2a\u0e48\u0e07\u0e41\u0e08\u0e49\u0e07\u0e40\u0e15\u0e37\u0e2d\u0e19\u0e40\u0e02\u0e49\u0e32\u0e01\u0e25\u0e38\u0e48\u0e21\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32"
+    },
+    "services": {
+      "type": "array",
+      "description": "\u0e1b\u0e23\u0e30\u0e40\u0e20\u0e17\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23\u0e17\u0e35\u0e48\u0e43\u0e0a\u0e49",
+      "items": {
+        "type": "string",
+        "enum": [
+          "accounting",
+          "payroll",
+          "tax_consulting",
+          "audit",
+          "peak_licensing"
+        ]
+      }
+    },
+    "obligations": {
+      "type": "array",
+      "description": "\u0e20\u0e32\u0e23\u0e30\u0e1c\u0e39\u0e01\u0e1e\u0e31\u0e19\u0e17\u0e35\u0e48 ACC \u0e15\u0e49\u0e2d\u0e07\u0e14\u0e33\u0e40\u0e19\u0e34\u0e19\u0e01\u0e32\u0e23",
+      "items": {
+        "type": "string",
+        "enum": [
+          "pnd1_monthly",
+          "pnd1k_yearly",
+          "pnd3_monthly",
+          "pnd53_monthly",
+          "pp30_monthly",
+          "sso_monthly",
+          "pnd90_director",
+          "pnd91_director",
+          "pnd50_half",
+          "pnd50_annual",
+          "audit_annual",
+          "dbd_filing"
+        ]
+      }
+    },
+    "peak_package": {
+      "type": "string",
+      "enum": [
+        "none",
+        "trial",
+        "basic",
+        "pro",
+        "pro_plus"
+      ],
+      "default": "none",
+      "description": "Peak Account Package"
+    },
+    "peak_license_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "peak_license_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "credit_term": {
+      "type": "number",
+      "description": "Credit Term (\u0e27\u0e31\u0e19)"
+    },
+    "monthly_fee": {
+      "type": "number",
+      "description": "\u0e04\u0e48\u0e32\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23\u0e23\u0e32\u0e22\u0e40\u0e14\u0e37\u0e2d\u0e19 (THB)"
+    },
+    "yearly_fee": {
+      "type": "number",
+      "description": "\u0e04\u0e48\u0e32\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23\u0e23\u0e32\u0e22\u0e1b\u0e35 (THB)"
+    },
+    "billing_profile": {
+      "type": "object",
+      "description": "Billing Profile",
+      "properties": {
+        "billing_name": {
+          "type": "string"
+        },
+        "billing_address": {
+          "type": "string"
+        },
+        "billing_tax_id": {
+          "type": "string"
+        },
+        "billing_email": {
+          "type": "string"
+        },
+        "payment_method": {
+          "type": "string",
+          "enum": [
+            "transfer",
+            "cash",
+            "cheque",
+            "credit_card",
+            "other"
+          ]
+        }
+      }
+    },
+    "referrer_id": {
+      "type": "string",
+      "description": "ID \u0e1c\u0e39\u0e49\u0e41\u0e19\u0e30\u0e19\u0e33 (ref Referrer)"
+    },
+    "referrer_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e41\u0e19\u0e30\u0e19\u0e33"
+    },
+    "referral_commission_pct": {
+      "type": "number",
+      "description": "% \u0e04\u0e48\u0e32\u0e41\u0e19\u0e30\u0e19\u0e33 (\u0e40\u0e0a\u0e48\u0e19 5 = 5%)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    },
+    "assigned_team": {
+      "type": "array",
+      "description": "\u0e17\u0e35\u0e21\u0e17\u0e35\u0e48\u0e14\u0e39\u0e41\u0e25 (user emails)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "\u0e2b\u0e21\u0e32\u0e22\u0e40\u0e2b\u0e15\u0e38"
+    }
+  },
+  "required": [
+    "company_name"
+  ]
+}

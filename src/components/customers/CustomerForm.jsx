@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '../LanguageContext';
-import { Building2, Users, Phone, Briefcase, CreditCard, FileText, UserCheck, MessageSquare } from 'lucide-react';
+import { Building2, Users, Phone, Briefcase, CreditCard, FileText, UserCheck, MessageSquare, ClipboardCheck } from 'lucide-react';
 import CustomerLineGroups from './CustomerLineGroups';
 
 const SERVICES = [
@@ -19,6 +19,21 @@ const SERVICES = [
   { value: 'tax_consulting', label: 'ที่ปรึกษาภาษีรายเดือน' },
   { value: 'audit', label: 'งานตรวจสอบบัญชี' },
   { value: 'peak_licensing', label: 'Licensing Peak Account' },
+];
+
+const OBLIGATIONS = [
+  { value: 'pnd1_monthly', label: 'ภงด.1 รายเดือน', desc: 'ภาษีเงินได้หัก ณ ที่จ่าย (เงินเดือน) ยื่นภายในวันที่ 7 ของเดือนถัดไป' },
+  { value: 'pnd1k_yearly', label: 'ภงด.1ก สิ้นปี', desc: 'สรุปยอดเงินได้พนักงานทั้งปี ยื่นภายใน ก.พ.' },
+  { value: 'pnd3_monthly', label: 'ภงด.3 รายเดือน', desc: 'หัก ณ ที่จ่าย บุคคลธรรมดา ยื่นภายในวันที่ 7' },
+  { value: 'pnd53_monthly', label: 'ภงด.53 รายเดือน', desc: 'หัก ณ ที่จ่าย นิติบุคคล ยื่นภายในวันที่ 7' },
+  { value: 'pp30_monthly', label: 'ภ.พ.30 รายเดือน', desc: 'ยื่น VAT ภายในวันที่ 15 ของเดือนถัดไป' },
+  { value: 'sso_monthly', label: 'ประกันสังคม รายเดือน', desc: 'ยื่นภายในวันที่ 15 ของเดือนถัดไป' },
+  { value: 'pnd90_director', label: 'ภงด.90 กรรมการ', desc: 'ภาษีบุคคลธรรมดา (มีรายได้อื่น) ยื่นภายใน มี.ค.' },
+  { value: 'pnd91_director', label: 'ภงด.91 กรรมการ', desc: 'ภาษีบุคคลธรรมดา (เงินเดือนอย่างเดียว) ยื่นภายใน มี.ค.' },
+  { value: 'pnd50_half', label: 'ภงด.50 ครึ่งปี', desc: 'ภาษีนิติบุคคลครึ่งปี ยื่นภายใน 2 เดือนหลังครบ 6 เดือน' },
+  { value: 'pnd50_annual', label: 'ภงด.50 ประจำปี', desc: 'ภาษีนิติบุคคลประจำปี ยื่นภายใน 150 วันหลังสิ้นรอบบัญชี' },
+  { value: 'audit_annual', label: 'ตรวจสอบงบการเงิน', desc: 'ปีละครั้ง' },
+  { value: 'dbd_filing', label: 'ยื่นงบ กรมพัฒนาธุรกิจ', desc: 'ภายใน 5 เดือนหลังสิ้นรอบบัญชี' },
 ];
 
 const DEPARTMENTS = [
@@ -88,7 +103,7 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
     customer_group: 'sme', work_group: '', departments: [],
     supervisor: '', supervisor_name: '', primary_officer: '', primary_officer_name: '',
     contact_person: '', contact_email: '', contact_phone: '', line_id: '',
-    services: [], peak_package: 'none', peak_license_start: '', peak_license_end: '',
+    services: [], obligations: [], peak_package: 'none', peak_license_start: '', peak_license_end: '',
     credit_term: 30, monthly_fee: null, yearly_fee: null,
     billing_profile: { billing_name: '', billing_address: '', billing_tax_id: '', billing_email: '', payment_method: 'transfer' },
     status: 'active', notes: '',
@@ -281,6 +296,31 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
             </FieldWrapper>
           </div>
         )}
+      </div>
+
+      {/* Section: ภาระผูกพัน */}
+      <div className="bg-card rounded-xl border p-4 md:p-5">
+        <SectionHeader icon={ClipboardCheck} title="ภาระผูกพัน (Obligations)" />
+        <p className="text-xs text-muted-foreground mb-3">เลือกภาระที่ ACC ต้องดำเนินการให้ลูกค้ารายนี้</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {OBLIGATIONS.map(ob => (
+            <div
+              key={ob.value}
+              className="flex items-start gap-2 p-2.5 rounded-lg border border-transparent hover:border-border hover:bg-muted/50 transition-all cursor-pointer"
+              onClick={() => !readOnly && toggleArr('obligations', ob.value)}
+            >
+              <Checkbox
+                checked={(form.obligations || []).includes(ob.value)}
+                disabled={readOnly}
+                className="mt-0.5"
+              />
+              <div>
+                <span className="text-xs font-medium">{ob.label}</span>
+                <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{ob.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Section: Billing Profile */}

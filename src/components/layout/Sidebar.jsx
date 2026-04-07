@@ -39,6 +39,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'customer_profile', label: 'Customer Profile', icon: Contact, path: '/CustomerProfile' },
     { id: 'customer_health', label: 'Customer Health', icon: HeartPulse, path: '/CustomerHealthScore' },
     { id: 'credential_vault', label: 'Credential Vault', icon: KeyRound, path: '/CustomerCredentials' },
+    { id: 'director_vault', label: 'ข้อมูลกรรมการ', icon: Shield, path: '/DirectorVault' },
     // ─── การเงิน ───
     { id: 'billing', label: t('menu_billing'), icon: CreditCard, path: '/Billing' },
     { id: 'peak', label: t('menu_peak'), icon: Key, path: '/PeakAccount' },
@@ -72,7 +73,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { key: 'personal', label: 'ส่วนตัว', icon: Home, ids: ['my_day'] },
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
     { key: 'work', label: 'งาน & ตารางงาน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'ocr', 'schedule', 'templates', 'task_generation', 'time_tracking', 'knowledge_base', 'knowledge_manage'] },
-    { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault'] },
+    { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault', 'director_vault'] },
     { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },
     { key: 'reports', label: 'ทีม & รายงาน', icon: BarChart3, ids: ['staff_dashboard', 'team_analytics', 'engagement_insights', 'workload', 'staff_cost_report', 'forecast_risk'] },
     { key: 'comms', label: 'LINE', icon: MessageCircle, ids: ['line_chat', 'line_files'] },

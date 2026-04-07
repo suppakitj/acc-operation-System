@@ -159,6 +159,9 @@ export function useAccessControl(user) {
       // Engagement Insights
       if (p('engagement_insights') !== 'no') menus.push('engagement_insights');
 
+      // Director Vault
+      if (p('director_vault') !== 'no') menus.push('director_vault');
+
       // My Day
       if (p('my_day') !== 'no') menus.push('my_day');
 
@@ -184,6 +187,7 @@ export function useAccessControl(user) {
       canManageAnnouncements: p('announcement_manage') !== 'no' && p('announcement_manage') !== 'view_only',
       canViewStaffDashboard, canViewTeamAnalytics, canViewReports, canViewAuditLog, canViewDbBackup,
       canViewEngagementInsights: p('engagement_insights') !== 'no',
+      canViewDirectorVault: p('director_vault') !== 'no',
     };
   }, [user, matrix]);
 }
@@ -207,5 +211,6 @@ function empty() {
     canViewReferral: false, canEditReferral: false, canManageAnnouncements: false,
     canViewStaffDashboard: false, canViewTeamAnalytics: false, canViewReports: false, canViewAuditLog: false, canViewDbBackup: false,
     canViewEngagementInsights: false,
+    canViewDirectorVault: false,
   };
 }
