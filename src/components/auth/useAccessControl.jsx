@@ -165,6 +165,9 @@ export function useAccessControl(user) {
       // Obligation Dashboard
       if (p('obligation_dashboard') !== 'no') menus.push('obligation_dashboard');
 
+      // Tax Calendar
+      if (p('tax_calendar') !== 'no') menus.push('tax_calendar');
+
       // My Day
       if (p('my_day') !== 'no') menus.push('my_day');
 
