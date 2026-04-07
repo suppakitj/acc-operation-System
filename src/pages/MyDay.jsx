@@ -102,8 +102,8 @@ export default function MyDay() {
         onStatusChange={handleStatusChange}
       />
       <MyStats myTasks={myTasks} myTimeEntries={myTimeEntries} />
-      <PulseSurvey currentUser={currentUser} />
       <CompanyFeed currentUser={currentUser} />
+      <PulseSurvey currentUser={currentUser} />
       <QuickTimer
         currentUser={currentUser}
         activeTasks={activeTasks}
