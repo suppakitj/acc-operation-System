@@ -269,6 +269,7 @@ const translations = {
     my_day_shoutout_submit: 'ส่งชมเชย',
     my_day_shoutout_no_data: 'ยังไม่มีการชมเชย — เป็นคนแรกที่ชมเชยเพื่อนร่วมงาน!',
     my_day_shoutout_success: 'ส่งชมเชยเรียบร้อย!',
+    my_day_apps_title: 'เครื่องมือ & ลิงก์',
     // Pulse Survey
     my_day_pulse_title: 'สัปดาห์นี้เป็นอย่างไรบ้าง?',
     my_day_pulse_done: 'ขอบคุณที่ตอบแบบสำรวจสัปดาห์นี้!',
@@ -367,6 +368,7 @@ const translations = {
     my_day_shoutout_submit: 'Send Shout-out',
     my_day_shoutout_no_data: 'No shout-outs yet — be the first to recognize a colleague!',
     my_day_shoutout_success: 'Shout-out sent!',
+    my_day_apps_title: 'Tools & Links',
     // Pulse Survey
     my_day_pulse_title: 'How is your week going?',
     my_day_pulse_done: 'Thanks for sharing this week!',
@@ -611,6 +613,7 @@ const translations = {
     language_desc: 'Choose your preferred language',
     save_settings: 'Save Settings',
     saved: 'Saved',
+    my_day_apps_title: 'Tools & Links',
     // Engagement Insights
     menu_engagement_insights: 'Engagement Insights',
     engagement_pulse_title: 'Pulse Survey',

@@ -1,0 +1,90 @@
+{
+  "name": "MiniApp",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e41\u0e2a\u0e14\u0e07\u0e1c\u0e25 \u0e40\u0e0a\u0e48\u0e19 'Peak Account', 'DBD e-Filing'"
+    },
+    "url": {
+      "type": "string",
+      "description": "URL \u0e17\u0e35\u0e48\u0e08\u0e30\u0e40\u0e1b\u0e34\u0e14 \u0e40\u0e0a\u0e48\u0e19 'https://app.peakaccount.com'"
+    },
+    "icon": {
+      "type": "string",
+      "description": "lucide icon name \u0e40\u0e0a\u0e48\u0e19 'Calculator', 'FileText' \u0e2b\u0e23\u0e37\u0e2d emoji \u0e40\u0e0a\u0e48\u0e19 '\ud83c\udfe6'"
+    },
+    "color": {
+      "type": "string",
+      "description": "\u0e2a\u0e35 background: blue, green, amber, red, purple, pink, teal, slate",
+      "default": "blue"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "tax_gov",
+        "accounting",
+        "hr_social",
+        "internal",
+        "other"
+      ],
+      "default": "other",
+      "description": "\u0e2b\u0e21\u0e27\u0e14\u0e2b\u0e21\u0e39\u0e48: \u0e20\u0e32\u0e29\u0e35/\u0e23\u0e32\u0e0a\u0e01\u0e32\u0e23, \u0e1a\u0e31\u0e0d\u0e0a\u0e35, HR/\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19\u0e2a\u0e31\u0e07\u0e04\u0e21, \u0e23\u0e30\u0e1a\u0e1a\u0e20\u0e32\u0e22\u0e43\u0e19, \u0e2d\u0e37\u0e48\u0e19\u0e46"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u0e04\u0e33\u0e2d\u0e18\u0e34\u0e1a\u0e32\u0e22\u0e2a\u0e31\u0e49\u0e19\u0e46"
+    },
+    "target_roles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "admin",
+          "management",
+          "manager",
+          "super_supervisor",
+          "staff"
+        ]
+      },
+      "description": "role \u0e17\u0e35\u0e48\u0e40\u0e2b\u0e47\u0e19 (\u0e27\u0e48\u0e32\u0e07 = \u0e17\u0e38\u0e01 role)"
+    },
+    "target_departments": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "management",
+          "accounting",
+          "consulting",
+          "audit",
+          "billing",
+          "it"
+        ]
+      },
+      "description": "\u0e41\u0e1c\u0e19\u0e01\u0e17\u0e35\u0e48\u0e40\u0e2b\u0e47\u0e19 (\u0e27\u0e48\u0e32\u0e07 = \u0e17\u0e38\u0e01\u0e41\u0e1c\u0e19\u0e01)"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0,
+      "description": "\u0e25\u0e33\u0e14\u0e31\u0e1a\u0e01\u0e32\u0e23\u0e41\u0e2a\u0e14\u0e07\u0e1c\u0e25 (\u0e19\u0e49\u0e2d\u0e22\u0e41\u0e2a\u0e14\u0e07\u0e01\u0e48\u0e2d\u0e19)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    },
+    "open_in_new_tab": {
+      "type": "boolean",
+      "default": true,
+      "description": "\u0e40\u0e1b\u0e34\u0e14 tab \u0e43\u0e2b\u0e21\u0e48\u0e2b\u0e23\u0e37\u0e2d\u0e44\u0e21\u0e48"
+    }
+  },
+  "required": [
+    "name",
+    "url"
+  ]
+}
