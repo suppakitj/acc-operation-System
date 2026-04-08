@@ -28,7 +28,17 @@ export default function MentionInput({
   const buildItems = () => {
     const items = [];
     if (isGroup) {
-      // Group chat: show only LINE group members
+      // @All — mention ทุกคนในกลุ่ม (ต้องอยู่อันแรก)
+      items.push({
+        key: 'line_all',
+        display_name: 'All',
+        subtitle: 'แจ้งเตือนทุกคนในกลุ่ม',
+        picture_url: null,
+        isLineMember: true,
+        isAll: true,
+        line_user_id: '__ALL__',
+      });
+      // Group chat: show LINE group members
       lineMembers.forEach(m => {
         items.push({
           key: `line_${m.line_user_id}`,
@@ -204,7 +214,11 @@ export default function MentionInput({
                 onMouseEnter={() => setSelectedIdx(idx)}
                 onClick={() => insertMention(item)}
               >
-                {item.picture_url ? (
+                {item.isAll ? (
+                  <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                    <Users className="w-3 h-3 text-red-600" />
+                  </div>
+                ) : item.picture_url ? (
                   <img src={item.picture_url} className="w-6 h-6 rounded-full object-cover shrink-0" alt="" />
                 ) : item.isLineMember ? (
                   <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0">

@@ -54,15 +54,24 @@ Deno.serve(async (req) => {
 
       mentions.forEach((m, idx) => {
         const placeholder = `mention${idx}`;
-        // Replace @displayName with {placeholder} in the text
         textV2 = textV2.replace(`@${m.display_name}`, `{${placeholder}}`);
-        substitution[placeholder] = {
-          type: 'mention',
-          mentionee: {
-            type: 'user',
-            userId: m.line_user_id,
-          },
-        };
+        if (m.line_user_id === '__ALL__' || m.isAll) {
+          // @All — mention ทุกคนในกลุ่ม
+          substitution[placeholder] = {
+            type: 'mention',
+            mentionee: {
+              type: 'all',
+            },
+          };
+        } else {
+          substitution[placeholder] = {
+            type: 'mention',
+            mentionee: {
+              type: 'user',
+              userId: m.line_user_id,
+            },
+          };
+        }
       });
 
       lineMessage = {
