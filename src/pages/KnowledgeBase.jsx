@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Plus, Search, Clock, TrendingUp, ThumbsUp, Eye, ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAccessControl } from '@/components/auth/useAccessControl';
 import { cn } from '@/lib/utils';
 import moment from 'moment';
@@ -37,6 +38,8 @@ export default function KnowledgeBase() {
   const [sortBy, setSortBy] = useState('latest');
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingArticle, setEditingArticle] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const published = useMemo(() => articles.filter(a => a.status === 'published'), [articles]);
@@ -85,6 +88,28 @@ export default function KnowledgeBase() {
     }
   };
 
+  const handleEditSave = async (data, articleId) => {
+    setSaving(true);
+    try {
+      if (articleId) {
+        await base44.entities.KnowledgeArticle.update(articleId, data);
+        toast.success('อัปเดตบทความเรียบร้อย');
+      }
+      queryClient.invalidateQueries({ queryKey: ['knowledgeArticles'] });
+      queryClient.invalidateQueries({ queryKey: ['knowledgeArticlesAll'] });
+      setShowEditForm(false);
+      setEditingArticle(null);
+      if (selectedArticle?.id === articleId) {
+        const updated = await base44.entities.KnowledgeArticle.filter({ id: articleId });
+        if (updated.length) setSelectedArticle(updated[0]);
+      }
+    } catch (e) {
+      toast.error('บันทึกล้มเหลว: ' + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Article detail view
   if (selectedArticle) {
     return (
@@ -92,7 +117,7 @@ export default function KnowledgeBase() {
         article={selectedArticle}
         categories={categories}
         onBack={() => setSelectedArticle(null)}
-        onEdit={() => {}}
+        onEdit={(article) => { setEditingArticle(article); setShowEditForm(true); }}
         canEdit={isManager || selectedArticle?.author_email === currentUser?.email}
       />
     );
@@ -304,6 +329,18 @@ export default function KnowledgeBase() {
         currentUser={currentUser}
         isManager={isManager}
         onSave={handleSave}
+        saving={saving}
+      />
+
+      {/* Edit form dialog */}
+      <ArticleForm
+        open={showEditForm}
+        onOpenChange={(open) => { if (!open) { setShowEditForm(false); setEditingArticle(null); } }}
+        article={editingArticle}
+        categories={categories}
+        currentUser={currentUser}
+        isManager={isManager}
+        onSave={handleEditSave}
         saving={saving}
       />
     </div>

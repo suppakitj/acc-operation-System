@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Eye, ThumbsUp, ThumbsDown, ExternalLink, Pencil, Paperclip, FileText, Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import moment from 'moment';
 import { base44 } from '@/api/base44Client';
 
@@ -75,18 +76,35 @@ export default function ArticleView({ article, categories, onBack, onEdit, canEd
 
       <div className="prose prose-sm max-w-none mb-8">
         <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
           components={{
             h1: ({ children }) => <h1 className="text-lg font-bold mt-4 mb-2">{children}</h1>,
             h2: ({ children }) => <h2 className="text-base font-bold mt-3 mb-2">{children}</h2>,
             h3: ({ children }) => <h3 className="text-sm font-bold mt-3 mb-1">{children}</h3>,
-            p: ({ children }) => <p className="text-sm mb-2 leading-relaxed">{children}</p>,
+            p: ({ children }) => {
+              const processChild = (child) => {
+                if (typeof child !== 'string') return child;
+                const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`[\]]+)/g;
+                const parts = child.split(urlRegex);
+                if (parts.length === 1) return child;
+                return parts.map((part, i) =>
+                  urlRegex.test(part)
+                    ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-primary underline break-all hover:text-primary/80">{part}</a>
+                    : part
+                );
+              };
+              const processed = Array.isArray(children)
+                ? children.map((child, i) => <React.Fragment key={i}>{processChild(child)}</React.Fragment>)
+                : processChild(children);
+              return <p className="text-sm mb-2 leading-relaxed">{processed}</p>;
+            },
             ul: ({ children }) => <ul className="list-disc ml-4 mb-2 text-sm">{children}</ul>,
             ol: ({ children }) => <ol className="list-decimal ml-4 mb-2 text-sm">{children}</ol>,
             li: ({ children }) => <li className="mb-1">{children}</li>,
             code: ({ inline, children }) => inline
               ? <code className="bg-muted px-1 py-0.5 rounded text-xs">{children}</code>
               : <pre className="bg-muted rounded p-3 text-xs overflow-x-auto mb-2"><code>{children}</code></pre>,
-            a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline">{children}</a>,
+            a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline break-all hover:text-primary/80">{children}</a>,
           }}
         >
           {article.content || ''}
