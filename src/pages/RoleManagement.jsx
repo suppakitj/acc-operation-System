@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useUserList } from '../hooks/useUserList';
@@ -6,169 +6,238 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, Check, X, Minus, Pencil, Save, XCircle } from 'lucide-react';
+import { Shield, Pencil, Save, XCircle, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
 
 const ROLES = ['admin', 'management', 'manager', 'super_supervisor', 'staff'];
+const ROLE_LABELS = {
+  admin: 'Admin', management: 'Management', manager: 'Manager',
+  super_supervisor: 'Super Supervisor', staff: 'Staff',
+};
+const ROLE_COLORS = {
+  admin: 'bg-red-100 text-red-700 border-red-200',
+  management: 'bg-purple-100 text-purple-700 border-purple-200',
+  manager: 'bg-blue-100 text-blue-700 border-blue-200',
+  super_supervisor: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  staff: 'bg-gray-100 text-gray-700 border-gray-200',
+};
+
+const PERM_OPTIONS = [
+  { value: 'yes', label: '✅ ใช่', color: 'text-green-700 bg-green-50' },
+  { value: 'dept', label: '🏢 เฉพาะแผนก', color: 'text-blue-700 bg-blue-50' },
+  { value: 'own', label: '👤 เฉพาะงานตัวเอง', color: 'text-yellow-700 bg-yellow-50' },
+  { value: 'edit_only', label: '✏️ แก้ไขเท่านั้น', color: 'text-orange-700 bg-orange-50' },
+  { value: 'view_only', label: '👁 ดูอย่างเดียว', color: 'text-teal-700 bg-teal-50' },
+  { value: 'no', label: '❌ ไม่', color: 'text-red-700 bg-red-50' },
+];
 
 const PERMISSION_GROUPS = [
   {
     name: '🔐 ระบบ & ผู้ใช้',
     items: [
-      { key: 'login', label: 'Login ระบบ', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-      { key: 'user_master', label: 'จัดการ User & User Master', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
-      { key: 'role_mgmt', label: 'User Role Management', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
-      { key: 'audit_log', label: 'Audit Log', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
-      { key: 'db_backup', label: 'Backup Database', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
+      { key: 'login', label: 'Login ระบบ' },
+      { key: 'user_master', label: 'จัดการ User & User Master' },
+      { key: 'role_mgmt', label: 'User Role Management' },
+      { key: 'audit_log', label: 'Audit Log' },
+      { key: 'db_backup', label: 'Backup Database' },
     ],
   },
   {
     name: '📋 งาน (Task)',
     items: [
-      { key: 'view_task', label: 'ดู Task ทั้งหมด', admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'dept' },
-      { key: 'add_task', label: 'เพิ่ม Task Manual', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-      { key: 'edit_assignee', label: 'แก้ไขผู้รับผิดชอบ', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
-      { key: 'change_due', label: 'เปลี่ยน Due Date', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
-      { key: 'change_status', label: 'เปลี่ยน Status งาน', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
-      { key: 'template', label: 'จัดการ Task Template', admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'no' },
-      { key: 'task_generation', label: 'สร้างงานอัตโนมัติ', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
-      { key: 'task_calendar', label: 'Task Calendar (Drag & Drop)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-      { key: 'cross_group', label: 'ดูข้ามกลุ่ม', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
+      { key: 'view_task', label: 'ดู Task ทั้งหมด' },
+      { key: 'add_task', label: 'เพิ่ม Task Manual' },
+      { key: 'edit_assignee', label: 'แก้ไขผู้รับผิดชอบ' },
+      { key: 'change_due', label: 'เปลี่ยน Due Date' },
+      { key: 'change_status', label: 'เปลี่ยน Status งาน' },
+      { key: 'template', label: 'จัดการ Task Template' },
+      { key: 'task_generation', label: 'สร้างงานอัตโนมัติ' },
+      { key: 'task_calendar', label: 'Task Calendar (Drag & Drop)' },
+      { key: 'cross_group', label: 'ดูข้ามกลุ่ม' },
     ],
   },
   {
     name: '📅 ตารางงาน',
     items: [
-      { key: 'view_schedule', label: 'ดูตารางทีม', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'dept', staff: 'dept' },
-      { key: 'add_schedule', label: 'เพิ่มตารางงาน', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-      { key: 'edit_schedule', label: 'แก้ไข/ลบตารางงาน', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
+      { key: 'view_schedule', label: 'ดูตารางทีม' },
+      { key: 'add_schedule', label: 'เพิ่มตารางงาน' },
+      { key: 'edit_schedule', label: 'แก้ไข/ลบตารางงาน' },
     ],
   },
   {
     name: '👥 ลูกค้า & Billing',
     items: [
-      { key: 'customer', label: 'จัดการ Customer Master Data', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'yes', staff: 'edit_only' },
-      { key: 'view_billing', label: 'ดู Billing', admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'no' },
-      { key: 'peak', label: 'Licensing Peak Account', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
-      { key: 'referral', label: 'ค่าแนะนำ (Referral)', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
-      { key: 'customer_profile', label: 'Customer Profile Dashboard', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
-      { key: 'customer_health', label: 'Customer Health Score', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
-      { key: 'credential_vault', label: 'Credential Vault (Username/Password)', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
-      { key: 'external_service', label: 'External Service Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
+      { key: 'customer', label: 'จัดการ Customer Master Data' },
+      { key: 'view_billing', label: 'ดู Billing' },
+      { key: 'peak', label: 'Licensing Peak Account' },
+      { key: 'referral', label: 'ค่าแนะนำ (Referral)' },
+      { key: 'customer_profile', label: 'Customer Profile Dashboard' },
+      { key: 'customer_health', label: 'Customer Health Score' },
+      { key: 'credential_vault', label: 'Credential Vault' },
+      { key: 'director_vault', label: 'ข้อมูลกรรมการ (PDPA)' },
+      { key: 'external_service', label: 'External Service Master' },
     ],
   },
   {
     name: '📊 รายงาน & วิเคราะห์',
     items: [
-      { key: 'staff_dashboard', label: 'Staff Dashboard', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
-      { key: 'team_analytics', label: 'Team Analytics', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
-      { key: 'time_tracking', label: 'SLA / Time Tracking', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-      { key: 'workload', label: 'Workload Balancer', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
-      { key: 'staff_cost_report', label: 'Staff Cost Report', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
-      { key: 'kpi_dashboard', label: 'KPI Dashboard', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
-      { key: 'forecast_risk', label: 'Forecast & Risk Management', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
-      { key: 'reports', label: 'รายงาน (Reports)', admin: 'yes', management: 'no', manager: 'no', super_supervisor: 'no', staff: 'no' },
+      { key: 'staff_dashboard', label: 'Staff Dashboard' },
+      { key: 'team_analytics', label: 'Team Analytics' },
+      { key: 'engagement_insights', label: 'Engagement Insights' },
+      { key: 'obligation_dashboard', label: 'Obligation Dashboard' },
+      { key: 'customer_summary', label: 'สรุปงานลูกค้า' },
+      { key: 'time_tracking', label: 'SLA / Time Tracking' },
+      { key: 'workload', label: 'Workload Balancer' },
+      { key: 'staff_cost_report', label: 'Staff Cost Report' },
+      { key: 'kpi_dashboard', label: 'KPI Dashboard' },
+      { key: 'forecast_risk', label: 'Forecast & Risk' },
+      { key: 'reports', label: 'รายงาน (Reports)' },
     ],
   },
   {
     name: '⚙️ Master Data & เครื่องมือ',
     items: [
-      { key: 'service_master', label: 'จัดการ Service Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
-      { key: 'holiday_master', label: 'จัดการ Holiday Master', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
-      { key: 'ocr', label: 'OCR (แปลงเอกสาร)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-      { key: 'knowledge_base', label: 'Knowledge Base (อ่าน/ค้นหา)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-      { key: 'knowledge_manage', label: 'จัดการ Knowledge Base', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+      { key: 'service_master', label: 'Service Master' },
+      { key: 'holiday_master', label: 'Holiday Master' },
+      { key: 'tax_calendar', label: 'ปฏิทินภาษี' },
+      { key: 'ocr', label: 'OCR (แปลงเอกสาร)' },
+      { key: 'knowledge_base', label: 'Knowledge Base (อ่าน)' },
+      { key: 'knowledge_manage', label: 'จัดการ Knowledge Base' },
     ],
   },
   {
     name: '🏠 My Day & สื่อสาร',
     items: [
-      { key: 'my_day', label: 'My Day (หน้าแรกส่วนตัว)', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
-      { key: 'announcement_manage', label: 'สร้าง/จัดการข่าวสารบริษัท', admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
-      { key: 'shoutout', label: 'ส่ง Shout-out ชมเชย', admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+      { key: 'my_day', label: 'My Day (หน้าแรก)' },
+      { key: 'my_skills', label: 'ทักษะของฉัน' },
+      { key: 'announcement_manage', label: 'สร้าง/จัดการข่าวสาร' },
+      { key: 'shoutout', label: 'ส่ง Shout-out ชมเชย' },
     ],
   },
 ];
 
-// Flatten for compatibility
-const DEFAULT_MATRIX = PERMISSION_GROUPS.flatMap(g => g.items);
+const DEFAULT_PERMS = {
+  login:          { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  user_master:    { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  role_mgmt:      { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  audit_log:      { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  db_backup:      { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  view_task:      { admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'dept' },
+  add_task:       { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  edit_assignee:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
+  change_due:     { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
+  change_status:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
+  template:       { admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'no' },
+  task_generation:{ admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  task_calendar:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  cross_group:    { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  view_schedule:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'dept', staff: 'dept' },
+  add_schedule:   { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  edit_schedule:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
+  customer:       { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'yes', staff: 'edit_only' },
+  view_billing:   { admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'no' },
+  peak:           { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no',  staff: 'no' },
+  referral:       { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  customer_profile:{ admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  customer_health: { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  credential_vault:{ admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  director_vault:  { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  external_service:{ admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  staff_dashboard: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no',  staff: 'no' },
+  team_analytics:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no',  staff: 'no' },
+  engagement_insights: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
+  obligation_dashboard: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
+  customer_summary:{ admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no',  staff: 'no' },
+  time_tracking:   { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  workload:        { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no',  staff: 'no' },
+  staff_cost_report:{ admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no',  staff: 'no' },
+  kpi_dashboard:   { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
+  forecast_risk:   { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
+  reports:         { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  service_master:  { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  holiday_master:  { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  tax_calendar:    { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  ocr:             { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  knowledge_base:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  knowledge_manage:{ admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  my_day:          { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  my_skills:       { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  announcement_manage: { admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
+  shoutout:        { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+};
 
-const PERM_CYCLE = ['yes', 'dept', 'own', 'edit_only', 'view_only', 'no'];
-
-function PermCell({ value, editable, onClick }) {
-  const content = (() => {
-    if (value === 'yes') return <div className="flex justify-center"><Check className="w-4 h-4 text-green-600" /></div>;
-    if (value === 'no') return <div className="flex justify-center"><X className="w-4 h-4 text-red-400" /></div>;
-    if (value === 'dept') return <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px] px-1.5">เฉพาะแผนก</Badge>;
-    if (value === 'own') return <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 text-[10px] px-1.5">เฉพาะงานตัวเอง</Badge>;
-    if (value === 'edit_only') return <Badge variant="secondary" className="bg-orange-50 text-orange-700 text-[10px] px-1.5">แก้ไขเท่านั้น</Badge>;
-    if (value === 'view_only') return <Badge variant="secondary" className="bg-teal-50 text-teal-700 text-[10px] px-1.5">ดูอย่างเดียว</Badge>;
-    return <Minus className="w-4 h-4 text-muted-foreground mx-auto" />;
-  })();
-  if (!editable) return content;
+function PermValue({ value }) {
+  const opt = PERM_OPTIONS.find(o => o.value === value);
+  if (!opt) return <span className="text-xs text-muted-foreground">—</span>;
   return (
-    <button onClick={onClick} className="w-full flex justify-center cursor-pointer hover:bg-muted/40 rounded py-0.5 transition-colors" title="คลิกเพื่อเปลี่ยน">
-      {content}
-    </button>
+    <span className={`text-[11px] font-medium px-2 py-0.5 rounded ${opt.color}`}>
+      {opt.label}
+    </span>
   );
 }
 
-const ROLE_LABELS = {
-  admin: 'Admin',
-  management: 'Management',
-  manager: 'Manager',
-  super_supervisor: 'Super Supervisor',
-  staff: 'Staff',
-};
-
-const ROLE_COLORS = {
-  admin: 'bg-red-100 text-red-700',
-  management: 'bg-purple-100 text-purple-700',
-  manager: 'bg-blue-100 text-blue-700',
-  super_supervisor: 'bg-yellow-100 text-yellow-700',
-  staff: 'bg-gray-100 text-gray-700',
-};
-
 export default function RoleManagement() {
-  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
   const ac = useAccessControl(currentUser);
   const { data: users = [] } = useUserList();
+
+  const [activeRole, setActiveRole] = useState('manager');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValues, setEditValues] = useState({});
+
   const [editingUserId, setEditingUserId] = useState(null);
   const [selectedRole, setSelectedRole] = useState('');
-  const [isEditingMatrix, setIsEditingMatrix] = useState(false);
-  const [matrixEdits, setMatrixEdits] = useState(null); // local edits before save
 
-  // Load saved matrix from AppConfig
   const { data: matrixConfigs = [] } = useQuery({
     queryKey: ['appConfig', 'permission_matrix'],
     queryFn: () => base44.entities.AppConfig.filter({ key: 'permission_matrix' }),
   });
 
-  const savedMatrix = (() => {
+  const savedOverrides = useMemo(() => {
     const cfg = matrixConfigs.find(c => c.key === 'permission_matrix');
     if (cfg?.value) {
-      try { return JSON.parse(cfg.value); } catch { return null; }
+      try { return JSON.parse(cfg.value); } catch { return {}; }
     }
-    return null;
-  })();
+    return {};
+  }, [matrixConfigs]);
 
-  // Merge saved overrides into default matrix
-  const matrix = DEFAULT_MATRIX.map(row => {
-    const source = isEditingMatrix && matrixEdits ? matrixEdits : savedMatrix;
-    if (source?.[row.key]) {
-      return { ...row, ...source[row.key] };
-    }
-    return row;
-  });
+  const getPermValue = (permKey, role) => {
+    if (savedOverrides[permKey]?.[role] !== undefined) return savedOverrides[permKey][role];
+    return DEFAULT_PERMS[permKey]?.[role] || 'no';
+  };
 
-  const saveMatrixMutation = useMutation({
-    mutationFn: async (overrides) => {
+  const getCurrentValue = (permKey) => {
+    if (isEditing && editValues[permKey] !== undefined) return editValues[permKey];
+    return getPermValue(permKey, activeRole);
+  };
+
+  const handleStartEdit = () => {
+    const current = {};
+    PERMISSION_GROUPS.forEach(g => {
+      g.items.forEach(item => {
+        current[item.key] = getPermValue(item.key, activeRole);
+      });
+    });
+    setEditValues(current);
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditValues({});
+    setIsEditing(false);
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const existing = { ...savedOverrides };
+      Object.entries(editValues).forEach(([permKey, value]) => {
+        if (!existing[permKey]) existing[permKey] = {};
+        existing[permKey][activeRole] = value;
+      });
       const cfg = matrixConfigs.find(c => c.key === 'permission_matrix');
-      const val = JSON.stringify(overrides);
+      const val = JSON.stringify(existing);
       if (cfg) {
         await base44.entities.AppConfig.update(cfg.id, { value: val });
       } else {
@@ -176,41 +245,12 @@ export default function RoleManagement() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appConfig', 'permission_matrix'] });
-      setIsEditingMatrix(false);
-      setMatrixEdits(null);
-      toast.success('บันทึก Permission Matrix เรียบร้อย');
+      queryClient.invalidateQueries({ queryKey: ['appConfig'] });
+      setIsEditing(false);
+      setEditValues({});
+      toast.success(`บันทึกสิทธิ์ ${ROLE_LABELS[activeRole]} เรียบร้อย`);
     },
   });
-
-  const handleCellClick = (permKey, role) => {
-    if (!isEditingMatrix) return;
-    const current = matrixEdits || {};
-    const rowOverrides = current[permKey] || {};
-    const currentRow = DEFAULT_MATRIX.find(r => r.key === permKey);
-    const currentVal = rowOverrides[role] || currentRow[role];
-    const nextIdx = (PERM_CYCLE.indexOf(currentVal) + 1) % PERM_CYCLE.length;
-    setMatrixEdits({
-      ...current,
-      [permKey]: { ...rowOverrides, [role]: PERM_CYCLE[nextIdx] },
-    });
-  };
-
-  const handleSaveMatrix = () => {
-    if (!matrixEdits) { setIsEditingMatrix(false); return; }
-    // Merge with existing saved
-    const existing = savedMatrix || {};
-    const merged = { ...existing };
-    Object.entries(matrixEdits).forEach(([key, vals]) => {
-      merged[key] = { ...(merged[key] || {}), ...vals };
-    });
-    saveMatrixMutation.mutate(merged);
-  };
-
-  const handleStartEditMatrix = () => {
-    setMatrixEdits(null); // start fresh edits
-    setIsEditingMatrix(true);
-  };
 
   const updateRoleMutation = useMutation({
     mutationFn: ({ id, role }) => base44.entities.User.update(id, { role }),
@@ -218,7 +258,7 @@ export default function RoleManagement() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setEditingUserId(null);
       setSelectedRole('');
-      toast.success('บันทึก Role เรียบร้อย');
+      toast.success('เปลี่ยน Role เรียบร้อย');
     },
   });
 
@@ -226,11 +266,7 @@ export default function RoleManagement() {
     return <div className="text-center py-12 text-muted-foreground">เฉพาะ Admin เท่านั้นที่จัดการสิทธิ์ได้</div>;
   }
 
-  // Count users per role
-  const roleCounts = ROLES.reduce((acc, r) => {
-    acc[r] = users.filter(u => u.role === r).length;
-    return acc;
-  }, {});
+  const roleUsers = users.filter(u => u.role === activeRole);
 
   return (
     <div className="space-y-5">
@@ -238,164 +274,149 @@ export default function RoleManagement() {
         <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
           <Shield className="w-5 h-5" /> User Role Management
         </h1>
-        <p className="text-sm text-muted-foreground">Role Permission Matrix — กำหนดสิทธิ์การใช้งานตาม Role</p>
+        <p className="text-sm text-muted-foreground">เลือก Role แล้วดู/แก้ไขสิทธิ์ — แก้ทีละ Role ป้องกันแก้ผิด</p>
       </div>
 
-      {/* Role Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        {ROLES.map(role => (
-          <Card key={role} className="p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <Badge variant="secondary" className={`text-[10px] ${ROLE_COLORS[role]}`}>{ROLE_LABELS[role]}</Badge>
-            </div>
-            <p className="text-lg font-bold">{roleCounts[role]}</p>
-            <p className="text-[11px] text-muted-foreground">คน</p>
-          </Card>
-        ))}
+      {/* Role Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {ROLES.map(role => {
+          const count = users.filter(u => u.role === role).length;
+          const isActive = activeRole === role;
+          return (
+            <button
+              key={role}
+              onClick={() => {
+                if (isEditing) { toast.error('กรุณาบันทึกหรือยกเลิกก่อนเปลี่ยน Role'); return; }
+                setActiveRole(role);
+              }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all ${
+                isActive
+                  ? `${ROLE_COLORS[role]} border-current shadow-sm`
+                  : 'bg-card border-border hover:border-primary/30'
+              }`}
+            >
+              <span className={`text-sm font-medium ${isActive ? '' : 'text-muted-foreground'}`}>
+                {ROLE_LABELS[role]}
+              </span>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{count}</Badge>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Permission Matrix Table */}
+      {/* Permission List */}
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Permission Matrix</CardTitle>
+          <div>
+            <CardTitle className="text-base flex items-center gap-2">
+              สิทธิ์ของ <Badge className={`${ROLE_COLORS[activeRole]} text-xs`}>{ROLE_LABELS[activeRole]}</Badge>
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              {roleUsers.length} คน — {isEditing ? 'กำลังแก้ไข (เลือกค่าจาก dropdown)' : 'โหมดดู'}
+            </p>
+          </div>
           <div className="flex gap-2">
-            {isEditingMatrix ? (
+            {isEditing ? (
               <>
-                <Button size="sm" variant="outline" className="text-xs h-7 gap-1"
-                  onClick={() => { setIsEditingMatrix(false); setMatrixEdits(null); }}>
-                  <XCircle className="w-3 h-3" /> ยกเลิก
+                <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={handleCancelEdit}>
+                  <XCircle className="w-3.5 h-3.5" /> ยกเลิก
                 </Button>
-                <Button size="sm" className="text-xs h-7 gap-1" disabled={saveMatrixMutation.isPending}
-                  onClick={handleSaveMatrix}>
-                  <Save className="w-3 h-3" /> บันทึก
+                <Button size="sm" className="text-xs h-8 gap-1" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+                  <Save className="w-3.5 h-3.5" /> บันทึก
                 </Button>
               </>
             ) : (
-              <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={handleStartEditMatrix}>
-                <Pencil className="w-3 h-3" /> แก้ไข
+              <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={handleStartEdit}>
+                <Pencil className="w-3.5 h-3.5" /> แก้ไขสิทธิ์ {ROLE_LABELS[activeRole]}
               </Button>
             )}
           </div>
         </CardHeader>
-        {isEditingMatrix && (
-          <div className="px-6 pb-2">
-            <p className="text-[11px] text-muted-foreground bg-yellow-50 border border-yellow-200 rounded px-2 py-1">
-              คลิกที่ช่องเพื่อสลับค่า: ✅ ใช่ → 🏢 เฉพาะแผนก → 👤 เฉพาะงานตัวเอง → ✏️ แก้ไขเท่านั้น → 👁 ดูอย่างเดียว → ❌ ไม่ → ✅ ใช่
-            </p>
-          </div>
-        )}
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="border-b bg-muted/30">
-                <tr>
-                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground min-w-[200px]">ความสามารถ</th>
-                  {ROLES.map(role => (
-                    <th key={role} className="px-3 py-3 text-center min-w-[100px]">
-                      <Badge variant="secondary" className={`text-[10px] ${ROLE_COLORS[role]}`}>
-                        {ROLE_LABELS[role]}
-                      </Badge>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {PERMISSION_GROUPS.map((group, gi) => {
-                  const groupRows = group.items.map(item => {
-                    const source = isEditingMatrix && matrixEdits ? matrixEdits : savedMatrix;
-                    if (source?.[item.key]) return { ...item, ...source[item.key] };
-                    return item;
-                  });
-                  return (
-                    <React.Fragment key={group.name}>
-                      <tr className="bg-muted/50">
-                        <td colSpan={ROLES.length + 1} className="px-4 py-2 text-xs font-bold text-foreground">
-                          {group.name}
-                        </td>
-                      </tr>
-                      {groupRows.map((row, i) => (
-                        <tr key={row.key} className={`border-b last:border-b-0 ${i % 2 === 0 ? 'bg-card' : 'bg-muted/10'}`}>
-                          <td className="px-4 py-2.5 text-xs font-medium pl-6">{row.label}</td>
-                          {ROLES.map(role => (
-                            <td key={role} className="px-3 py-2.5 text-center">
-                              <PermCell
-                                value={row[role]}
-                                editable={isEditingMatrix}
-                                onClick={() => handleCellClick(row.key, role)}
-                              />
-                            </td>
+          {PERMISSION_GROUPS.map(group => (
+            <div key={group.name}>
+              <div className="px-4 py-2 bg-muted/50 border-y text-xs font-bold">{group.name}</div>
+              {group.items.map((item, i) => {
+                const value = getCurrentValue(item.key);
+                return (
+                  <div key={item.key} className={`flex items-center justify-between px-4 py-2.5 ${i % 2 === 0 ? '' : 'bg-muted/10'}`}>
+                    <span className="text-xs font-medium pl-2">{item.label}</span>
+                    {isEditing ? (
+                      <Select
+                        value={value}
+                        onValueChange={v => setEditValues(prev => ({ ...prev, [item.key]: v }))}
+                      >
+                        <SelectTrigger className="w-[180px] h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PERM_OPTIONS.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                              {opt.label}
+                            </SelectItem>
                           ))}
-                        </tr>
-                      ))}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <PermValue value={value} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </CardContent>
       </Card>
 
-      {/* User List by Role */}
+      {/* Users in this Role */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">ผู้ใช้ตาม Role</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            ผู้ใช้ที่เป็น {ROLE_LABELS[activeRole]} ({roleUsers.length} คน)
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {ROLES.map(role => {
-              const roleUsers = users.filter(u => u.role === role);
-              if (roleUsers.length === 0) return null;
-              return (
-                <div key={role}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="secondary" className={`text-[10px] ${ROLE_COLORS[role]}`}>{ROLE_LABELS[role]}</Badge>
-                    <span className="text-xs text-muted-foreground">{roleUsers.length} คน</span>
+          {roleUsers.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">ไม่มีผู้ใช้ใน Role นี้</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {roleUsers.map(u => (
+                <div key={u.id} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-primary text-[11px] font-bold">{u.full_name?.[0]?.toUpperCase() || 'U'}</span>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {roleUsers.map(u => (
-                      <div key={u.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
-                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <span className="text-primary text-[10px] font-bold">{u.full_name?.[0]?.toUpperCase() || 'U'}</span>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium truncate">{u.full_name}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">{u.email}</p>
-                        </div>
-                        {editingUserId === u.id ? (
-                          <div className="flex items-center gap-1 shrink-0">
-                            <Select value={selectedRole} onValueChange={setSelectedRole}>
-                              <SelectTrigger className="h-7 w-[130px] text-[10px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {ROLES.map(r => (
-                                  <SelectItem key={r} value={r} className="text-xs">{ROLE_LABELS[r]}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Button size="icon" variant="ghost" className="h-6 w-6" disabled={updateRoleMutation.isPending}
-                              onClick={() => updateRoleMutation.mutate({ id: u.id, role: selectedRole })}>
-                              <Save className="w-3 h-3 text-green-600" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-6 w-6"
-                              onClick={() => { setEditingUserId(null); setSelectedRole(''); }}>
-                              <XCircle className="w-3 h-3 text-red-400" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0"
-                            onClick={() => { setEditingUserId(u.id); setSelectedRole(u.role || 'staff'); }}>
-                            <Pencil className="w-3 h-3 text-muted-foreground" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium truncate">{u.full_name}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{u.email}</p>
                   </div>
+                  {editingUserId === u.id ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Select value={selectedRole} onValueChange={setSelectedRole}>
+                        <SelectTrigger className="h-7 w-[130px] text-[10px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {ROLES.map(r => <SelectItem key={r} value={r} className="text-xs">{ROLE_LABELS[r]}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Button size="icon" variant="ghost" className="h-6 w-6" disabled={updateRoleMutation.isPending}
+                        onClick={() => updateRoleMutation.mutate({ id: u.id, role: selectedRole })}>
+                        <Save className="w-3 h-3 text-green-600" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-6 w-6"
+                        onClick={() => { setEditingUserId(null); setSelectedRole(''); }}>
+                        <XCircle className="w-3 h-3 text-red-400" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0"
+                      onClick={() => { setEditingUserId(u.id); setSelectedRole(u.role || 'staff'); }}>
+                      <Pencil className="w-3 h-3 text-muted-foreground" />
+                    </Button>
+                  )}
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
