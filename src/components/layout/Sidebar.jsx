@@ -74,7 +74,8 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const menuGroups = [
     { key: 'personal', label: 'ส่วนตัว', icon: Home, ids: ['my_day'] },
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
-    { key: 'work', label: 'งาน & ตารางงาน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'ocr', 'schedule', 'tax_calendar', 'templates', 'task_generation', 'time_tracking', 'knowledge_base', 'knowledge_manage'] },
+    { key: 'daily_work', label: 'งานประจำวัน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'time_tracking', 'ocr'] },
+    { key: 'work_setup', label: 'เทมเพลต & ความรู้', icon: ClipboardList, ids: ['templates', 'task_generation', 'tax_calendar', 'knowledge_base', 'knowledge_manage'] },
     { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault', 'director_vault'] },
     { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },
     { key: 'reports', label: 'ทีม & รายงาน', icon: BarChart3, ids: ['staff_dashboard', 'team_analytics', 'engagement_insights', 'obligation_dashboard', 'workload', 'staff_cost_report', 'forecast_risk'] },
@@ -94,7 +95,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const [expandedGroups, setExpandedGroups] = useState(() => {
     const saved = localStorage.getItem('sidebar_groups');
     if (saved) return JSON.parse(saved);
-    return { personal: true, overview: true, work: true, clients: true, comms: true, tools: true, system: false };
+    return { personal: true, daily_work: true, work_setup: false, overview: false, clients: false, finance: false, reports: false, comms: false, system: false };
   });
 
   useEffect(() => {
