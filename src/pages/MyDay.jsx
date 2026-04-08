@@ -10,7 +10,6 @@ import MyStats from '../components/my-day/MyStats';
 import PulseSurvey from '../components/my-day/PulseSurvey';
 import QuickTimer from '../components/my-day/QuickTimer';
 import CompanyFeed from '../components/my-day/CompanyFeed';
-import SkillMap from '../components/my-day/SkillMap';
 import IdeaBox from '../components/my-day/IdeaBox';
 import AppLauncher from '../components/my-day/AppLauncher';
 
@@ -110,7 +109,6 @@ export default function MyDay() {
         runningEntry={runningEntry}
       />
       <AppLauncher currentUser={currentUser} />
-      <SkillMap currentUser={currentUser} />
       <IdeaBox currentUser={currentUser} />
     </div>
   );
