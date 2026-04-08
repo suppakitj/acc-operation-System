@@ -37,7 +37,7 @@ const STATUS_OPTIONS = [
 ];
 
 export default function PeakLicenseForm({ open, onOpenChange, license, onSubmit, isSaving }) {
-  const { data: customers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
+  const { data: customers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500), staleTime: 60_000 });
   const peakCustomers = customers.filter(c => (c.services || []).includes('peak_licensing'));
   const [form, setForm] = useState({});
 

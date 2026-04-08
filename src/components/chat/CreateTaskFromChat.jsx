@@ -35,7 +35,8 @@ export default function CreateTaskFromChat({ open, onOpenChange, message, chatDi
   const { data: users = [] } = useUserList();
   const { data: allCustomers = [] } = useQuery({
     queryKey: ['customers'],
-    queryFn: () => base44.entities.Customer.list(),
+    queryFn: () => base44.entities.Customer.list('-created_date', 500),
+    staleTime: 60_000,
   });
   const customers = allCustomers.filter(c => c.status === 'active');
 

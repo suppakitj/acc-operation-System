@@ -28,10 +28,10 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
     checklist: [], findings: [], is_recurring: false, recurring_type: '', template_id: '', ...task,
   });
 
-  const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
+  const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500), staleTime: 60_000 });
   const customers = allCustomers.filter(c => c.status === 'active');
   const { data: users = [] } = useUserList();
-  const { data: templates = [] } = useQuery({ queryKey: ['taskTemplates'], queryFn: () => base44.entities.TaskTemplate.list() });
+  const { data: templates = [] } = useQuery({ queryKey: ['taskTemplates'], queryFn: () => base44.entities.TaskTemplate.list('-created_date', 200), staleTime: 2 * 60_000 });
   const activeTemplates = templates.filter(t => t.status !== 'inactive');
   const [newCheckItem, setNewCheckItem] = useState('');
   const [showFindingForm, setShowFindingForm] = useState(false);

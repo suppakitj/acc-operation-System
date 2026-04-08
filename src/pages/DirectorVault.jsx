@@ -35,7 +35,8 @@ export default function DirectorVault() {
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
-    queryFn: () => base44.entities.Customer.list(),
+    queryFn: () => base44.entities.Customer.list('-created_date', 500),
+    staleTime: 60_000,
   });
 
   const [search, setSearch] = useState('');

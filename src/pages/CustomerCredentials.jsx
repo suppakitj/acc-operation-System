@@ -27,12 +27,14 @@ export default function CustomerCredentials() {
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
-    queryFn: () => base44.entities.Customer.list(),
+    queryFn: () => base44.entities.Customer.list('-created_date', 500),
+    staleTime: 60_000,
   });
 
   const { data: services = [] } = useQuery({
     queryKey: ['externalServices'],
-    queryFn: () => base44.entities.ExternalService.list(),
+    queryFn: () => base44.entities.ExternalService.list('-created_date', 100),
+    staleTime: 5 * 60_000,
   });
 
   const serviceOptions = useMemo(() => [

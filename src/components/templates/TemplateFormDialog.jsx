@@ -50,7 +50,7 @@ const MONTHS = [
 ];
 
 export default function TemplateFormDialog({ open, onOpenChange, template, onSubmit, isSaving }) {
-  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list() });
+  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: () => base44.entities.User.list('-created_date', 200), staleTime: 2 * 60_000 });
   const [form, setForm] = useState({});
   const [newItem, setNewItem] = useState('');
 
