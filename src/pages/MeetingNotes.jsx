@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserList } from '../hooks/useUserList';
+import StaffMultiSelect from '../components/meeting/StaffMultiSelect';
 
 export default function MeetingNotes() {
   const queryClient = useQueryClient();
@@ -47,7 +48,9 @@ export default function MeetingNotes() {
   const myNotes = useMemo(() => {
     if (!currentUser) return [];
     return allNotes.filter(n =>
-      n.manager_email === currentUser.email || n.staff_email === currentUser.email
+      n.manager_email === currentUser.email ||
+      n.staff_email === currentUser.email ||
+      (n.staff_emails || []).includes(currentUser.email)
     );
   }, [allNotes, currentUser]);
 
@@ -68,7 +71,7 @@ export default function MeetingNotes() {
 
   const emptyForm = {
     title: '', meeting_date: format(new Date(), 'yyyy-MM-dd'),
-    staff_email: '', staff_name: '', notes: '', customer_name: '',
+    staff_emails: [], staff_names: [], notes: '', customer_name: '',
     follow_up_date: '', action_items: [], status: 'open',
   };
   const [form, setForm] = useState(emptyForm);
@@ -76,11 +79,18 @@ export default function MeetingNotes() {
   const [newActionDue, setNewActionDue] = useState('');
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.MeetingNote.create({
-      ...data,
-      manager_email: currentUser.email,
-      manager_name: currentUser.full_name || currentUser.email,
-    }),
+    mutationFn: (data) => {
+      // backward compat: set staff_email/staff_name from first item
+      const staffEmails = data.staff_emails || [];
+      const staffNames = data.staff_names || [];
+      return base44.entities.MeetingNote.create({
+        ...data,
+        staff_email: staffEmails[0] || '',
+        staff_name: staffNames[0] || '',
+        manager_email: currentUser.email,
+        manager_name: currentUser.full_name || currentUser.email,
+      });
+    },
     onSuccess: (created, variables) => {
       queryClient.invalidateQueries({ queryKey: ['meetingNotes'] });
       setShowForm(false); setEditing(null); setForm(emptyForm);
@@ -91,22 +101,24 @@ export default function MeetingNotes() {
         const managerName = currentUser.full_name || currentUser.email;
         const actionCount = (variables.action_items || []).length;
         const actionList = (variables.action_items || []).map((a, i) => `${i + 1}. ${a.text}${a.due_date ? ` (กำหนด ${a.due_date})` : ''}`).join('\n');
+        const staffEmails = variables.staff_emails || [];
+        const staffNamesArr = variables.staff_names || [];
 
-        // Notification ในระบบ
-        if (variables.staff_email) {
+        // Notification ในระบบ — ส่งให้ทุกคน
+        staffEmails.forEach(email => {
           base44.entities.Notification.create({
             title: `📝 สั่งงานใหม่: ${variables.title}`,
             message: `${managerName} สั่งงาน "${variables.title}"${actionCount > 0 ? ` — ${actionCount} action items` : ''}`,
             type: 'task_assigned',
-            target_user: variables.staff_email,
+            target_user: email,
             customer_name: variables.customer_name || '',
           }).catch(e => console.warn('Notification failed:', e.message));
-        }
+        });
 
         // LINE กลุ่มบัญชี
         const groupId = getConfig('line_group_dept_accounting') || getConfig('line_group_id');
         if (groupId) {
-          const lineMsg = `📝 Meeting Note ใหม่\n━━━━━━━━━━━━━━━━\n📄 ${variables.title}\n👤 หัวหน้า: ${managerName}\n👥 พนักงาน: ${variables.staff_name || ''}${variables.customer_name ? `\n🏢 ${variables.customer_name}` : ''}${actionCount > 0 ? `\n\n📋 Action Items (${actionCount}):\n${actionList}` : ''}${variables.follow_up_date ? `\n\n🔔 Follow-up: ${variables.follow_up_date}` : ''}\n━━━━━━━━━━━━━━━━`;
+          const lineMsg = `📝 Meeting Note ใหม่\n━━━━━━━━━━━━━━━━\n📄 ${variables.title}\n👤 หัวหน้า: ${managerName}\n👥 พนักงาน: ${staffNamesArr.join(', ') || ''}${variables.customer_name ? `\n🏢 ${variables.customer_name}` : ''}${actionCount > 0 ? `\n\n📋 Action Items (${actionCount}):\n${actionList}` : ''}${variables.follow_up_date ? `\n\n🔔 Follow-up: ${variables.follow_up_date}` : ''}\n━━━━━━━━━━━━━━━━`;
           base44.functions.invoke('lineSendMessage', {
             line_user_id: groupId,
             message: lineMsg,
@@ -121,7 +133,15 @@ export default function MeetingNotes() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.MeetingNote.update(id, data),
+    mutationFn: ({ id, data }) => {
+      const staffEmails = data.staff_emails || [];
+      const staffNames = data.staff_names || [];
+      return base44.entities.MeetingNote.update(id, {
+        ...data,
+        staff_email: staffEmails[0] || '',
+        staff_name: staffNames[0] || '',
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meetingNotes'] });
       setShowForm(false); setEditing(null); setForm(emptyForm);
@@ -170,15 +190,15 @@ export default function MeetingNotes() {
     }));
   };
 
-  // Select staff helper
-  const selectStaff = (email) => {
-    const user = users.find(u => u.email === email);
-    setForm(prev => ({ ...prev, staff_email: email, staff_name: user?.full_name || email }));
+  // Select staff helper — multi
+  const handleStaffChange = (emails) => {
+    const names = emails.map(e => users.find(u => u.email === e)?.full_name || e);
+    setForm(prev => ({ ...prev, staff_emails: emails, staff_names: names }));
   };
 
   const handleSave = () => {
-    if (!form.title.trim() || !form.staff_email) {
-      toast.error('กรุณากรอกหัวข้อและเลือกพนักงาน');
+    if (!form.title.trim() || (form.staff_emails || []).length === 0) {
+      toast.error('กรุณากรอกหัวข้อและเลือกพนักงานอย่างน้อย 1 คน');
       return;
     }
     if (editing) {
@@ -190,9 +210,12 @@ export default function MeetingNotes() {
 
   const handleEdit = (note) => {
     setEditing(note);
+    // backward compat: migrate old single staff to arrays
+    const staffEmails = note.staff_emails?.length ? note.staff_emails : (note.staff_email ? [note.staff_email] : []);
+    const staffNames = note.staff_names?.length ? note.staff_names : (note.staff_name ? [note.staff_name] : []);
     setForm({
       title: note.title || '', meeting_date: note.meeting_date || '',
-      staff_email: note.staff_email || '', staff_name: note.staff_name || '',
+      staff_emails: staffEmails, staff_names: staffNames,
       notes: note.notes || '', customer_name: note.customer_name || '',
       follow_up_date: note.follow_up_date || '',
       action_items: note.action_items || [], status: note.status || 'open',
@@ -262,7 +285,9 @@ export default function MeetingNotes() {
                           📅 {note.meeting_date ? format(new Date(note.meeting_date), 'd MMM yy', { locale: th }) : '—'}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
-                          👤 {isManager ? note.staff_name : note.manager_name}
+                          👤 {isManager
+                            ? (note.staff_names?.length ? note.staff_names.join(', ') : note.staff_name)
+                            : note.manager_name}
                         </span>
                         {note.customer_name && <span className="text-[10px] text-muted-foreground">🏢 {note.customer_name}</span>}
                       </div>
@@ -341,16 +366,14 @@ export default function MeetingNotes() {
                 <Label>วันที่ประชุม</Label>
                 <Input type="date" value={form.meeting_date} onChange={e => setForm(p => ({ ...p, meeting_date: e.target.value }))} />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 col-span-2 sm:col-span-1">
                 <Label>พนักงาน *</Label>
-                <Select value={form.staff_email} onValueChange={selectStaff}>
-                  <SelectTrigger className="text-xs"><SelectValue placeholder="เลือกพนักงาน" /></SelectTrigger>
-                  <SelectContent>
-                    {users.filter(u => u.email !== currentUser?.email).map(u => (
-                      <SelectItem key={u.email} value={u.email} className="text-xs">{u.full_name || u.email}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <StaffMultiSelect
+                  users={users}
+                  selected={form.staff_emails || []}
+                  onChange={handleStaffChange}
+                  excludeEmail={currentUser?.email}
+                />
               </div>
             </div>
 

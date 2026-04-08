@@ -20,10 +20,24 @@
     },
     "staff_email": {
       "type": "string",
-      "description": "email \u0e25\u0e39\u0e01\u0e19\u0e49\u0e2d\u0e07\u0e17\u0e35\u0e48\u0e16\u0e39\u0e01\u0e2a\u0e31\u0e48\u0e07\u0e07\u0e32\u0e19"
+      "description": "email \u0e25\u0e39\u0e01\u0e19\u0e49\u0e2d\u0e07\u0e17\u0e35\u0e48\u0e16\u0e39\u0e01\u0e2a\u0e31\u0e48\u0e07\u0e07\u0e32\u0e19 (legacy single)"
     },
     "staff_name": {
       "type": "string"
+    },
+    "staff_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "email \u0e25\u0e39\u0e01\u0e19\u0e49\u0e2d\u0e07\u0e2b\u0e25\u0e32\u0e22\u0e04\u0e19"
+    },
+    "staff_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e25\u0e39\u0e01\u0e19\u0e49\u0e2d\u0e07\u0e2b\u0e25\u0e32\u0e22\u0e04\u0e19"
     },
     "notes": {
       "type": "string",
@@ -54,7 +68,6 @@
   "required": [
     "title",
     "manager_email",
-    "staff_email",
     "meeting_date"
   ]
 }
