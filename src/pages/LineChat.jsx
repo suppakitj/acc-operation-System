@@ -102,9 +102,11 @@ export default function LineChat() {
         chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
       }
     };
-    requestAnimationFrame(doScroll);
-    setTimeout(doScroll, 50);
-    setTimeout(doScroll, 200);
+    requestAnimationFrame(() => {
+      doScroll();
+      setTimeout(doScroll, 100);
+      setTimeout(doScroll, 300);
+    });
   }, []);
   const [activeMentions, setActiveMentions] = useState([]);
   const [triggerMentionName, setTriggerMentionName] = useState(null);
