@@ -13,6 +13,7 @@ import CompanyFeed from '../components/my-day/CompanyFeed';
 import IdeaBox from '../components/my-day/IdeaBox';
 import AppLauncher from '../components/my-day/AppLauncher';
 import MyTodoList from '../components/my-day/MyTodoList';
+import ReviewQueue from '../components/my-day/ReviewQueue';
 
 export default function MyDay() {
   const queryClient = useQueryClient();
@@ -40,6 +41,15 @@ export default function MyDay() {
       500
     ),
     enabled: !!currentUser?.email,
+  });
+
+  // ดึงงานรอตรวจ — เฉพาะ reviewer เท่านั้น
+  const isReviewer = ['admin', 'management', 'manager', 'super_supervisor'].includes(currentUser?.role);
+  const { data: reviewTasks = [] } = useQuery({
+    queryKey: ['reviewTasks'],
+    queryFn: () => base44.entities.Task.filter({ status: 'review' }, '-created_date', 50),
+    enabled: !!currentUser && isReviewer,
+    staleTime: 30_000,
   });
 
   // Derive task groups
@@ -80,7 +90,7 @@ export default function MyDay() {
   const handleStatusChange = (taskId, newStatus) => {
     const task = myTasks.find(t => t.id === taskId);
     const isStaff = currentUser?.role === 'staff';
-    const isReviewer = ['admin', 'management', 'manager', 'super_supervisor'].includes(currentUser?.role);
+    const isReviewerRole = ['admin', 'management', 'manager', 'super_supervisor'].includes(currentUser?.role);
 
     // Staff ห้ามกด completed
     if (isStaff && newStatus === 'completed') {
@@ -100,7 +110,7 @@ export default function MyDay() {
 
     // ถ้า reviewer ปิดงานตรง → set reviewer info
     let extraData = {};
-    if (newStatus === 'completed' && isReviewer) {
+    if (newStatus === 'completed' && isReviewerRole) {
       const today = format(new Date(), 'yyyy-MM-dd');
       extraData = {
         completed_date: today,
@@ -113,6 +123,47 @@ export default function MyDay() {
     }
 
     updateTaskStatus.mutate({ id: taskId, newStatus, extraData });
+  };
+
+  // Approve/Reject สำหรับ ReviewQueue
+  const handleReviewApprove = async (taskId) => {
+    const task = reviewTasks.find(t => t.id === taskId);
+    if (task) {
+      const checklist = task.checklist || [];
+      const checkedCount = checklist.filter(item => item.checked).length;
+      if (checklist.length > 0 && checkedCount !== checklist.length) {
+        toast.error(`Checklist ยังไม่ครบ (${checkedCount}/${checklist.length}) — กรุณาส่งกลับ`);
+        return;
+      }
+    }
+    const today = format(new Date(), 'yyyy-MM-dd');
+    await base44.entities.Task.update(taskId, {
+      status: 'completed',
+      completed_date: today,
+      review_status: 'approved',
+      reviewer_email: currentUser.email,
+      reviewer_name: currentUser.full_name || currentUser.email,
+      reviewed_date: today,
+    });
+    queryClient.invalidateQueries({ queryKey: ['reviewTasks'] });
+    queryClient.invalidateQueries({ queryKey: ['myTasks'] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    toast.success('✅ Approve เรียบร้อย');
+  };
+
+  const handleReviewReject = async (taskId, note) => {
+    await base44.entities.Task.update(taskId, {
+      status: 'in_progress',
+      review_status: 'rejected',
+      reviewer_email: currentUser.email,
+      reviewer_name: currentUser.full_name || currentUser.email,
+      reviewed_date: format(new Date(), 'yyyy-MM-dd'),
+      review_note: note || '',
+    });
+    queryClient.invalidateQueries({ queryKey: ['reviewTasks'] });
+    queryClient.invalidateQueries({ queryKey: ['myTasks'] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    toast.success('📤 ส่งกลับแล้ว');
   };
 
   if (isLoadingUser || isLoadingTasks) {
@@ -134,6 +185,12 @@ export default function MyDay() {
         dueToday={dueToday}
         overdue={overdue}
         onStatusChange={handleStatusChange}
+        currentUser={currentUser}
+      />
+      <ReviewQueue
+        reviewTasks={reviewTasks}
+        onApprove={handleReviewApprove}
+        onReject={handleReviewReject}
         currentUser={currentUser}
       />
       <MyTodoList currentUser={currentUser} />
