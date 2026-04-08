@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '../LanguageContext';
-import { Building2, Users, Phone, Briefcase, CreditCard, FileText, UserCheck, MessageSquare, ClipboardCheck } from 'lucide-react';
+import { Building2, Users, Phone, Briefcase, CreditCard, FileText, UserCheck, MessageSquare, ClipboardCheck, Plus, Trash2, Contact } from 'lucide-react';
 import CustomerLineGroups from './CustomerLineGroups';
 
 const SERVICES = [
@@ -107,7 +107,7 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
     company_name: '', company_name_en: '', tax_id: '', address: '',
     customer_group: 'sme', work_group: '', departments: [],
     supervisor: '', supervisor_name: '', primary_officer: '', primary_officer_name: '',
-    contact_person: '', contact_email: '', contact_phone: '', line_id: '',
+    contact_person: '', contact_email: '', contact_phone: '', line_id: '', contact_emails: [],
     services: [], obligations: [], fiscal_year_end: '12-31', peak_package: 'none', peak_license_start: '', peak_license_end: '',
     credit_term: 30, monthly_fee: null, yearly_fee: null,
     billing_profile: { billing_name: '', billing_address: '', billing_tax_id: '', billing_email: '', payment_method: 'transfer' },
@@ -260,6 +260,72 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
           <FieldWrapper label="Line ID">
             <Input value={form.line_id} onChange={e => update('line_id', e.target.value)} disabled={readOnly} />
           </FieldWrapper>
+        </div>
+      </div>
+
+      {/* Section: ผู้ติดต่อ (หลายคน) */}
+      <div className="bg-card rounded-xl border p-4 md:p-5">
+        <SectionHeader icon={Contact} title="ผู้ติดต่อ (หลายคน)" />
+        <div className="space-y-3">
+          {(form.contact_emails || []).map((c, idx) => (
+            <div key={idx} className="flex items-start gap-2 p-3 rounded-lg border bg-muted/30">
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <Input
+                  placeholder="ชื่อผู้ติดต่อ"
+                  value={c.name || ''}
+                  onChange={e => {
+                    const arr = [...form.contact_emails];
+                    arr[idx] = { ...arr[idx], name: e.target.value };
+                    update('contact_emails', arr);
+                  }}
+                  disabled={readOnly}
+                />
+                <Input
+                  placeholder="อีเมล"
+                  type="email"
+                  value={c.email || ''}
+                  onChange={e => {
+                    const arr = [...form.contact_emails];
+                    arr[idx] = { ...arr[idx], email: e.target.value };
+                    update('contact_emails', arr);
+                  }}
+                  disabled={readOnly}
+                />
+                <Select
+                  value={c.role || 'general'}
+                  onValueChange={v => {
+                    const arr = [...form.contact_emails];
+                    arr[idx] = { ...arr[idx], role: v };
+                    update('contact_emails', arr);
+                  }}
+                  disabled={readOnly}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="accountant">บัญชี</SelectItem>
+                    <SelectItem value="owner">เจ้าของกิจการ</SelectItem>
+                    <SelectItem value="manager">ผู้จัดการ</SelectItem>
+                    <SelectItem value="general">ทั่วไป</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {!readOnly && (
+                <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
+                  onClick={() => update('contact_emails', form.contact_emails.filter((_, i) => i !== idx))}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          ))}
+          {!readOnly && (
+            <Button variant="outline" size="sm" className="gap-1.5"
+              onClick={() => update('contact_emails', [...(form.contact_emails || []), { name: '', email: '', role: 'general' }])}>
+              <Plus className="w-3.5 h-3.5" /> เพิ่มผู้ติดต่อ
+            </Button>
+          )}
+          {(form.contact_emails || []).length === 0 && (
+            <p className="text-xs text-muted-foreground">ยังไม่มีผู้ติดต่อเพิ่มเติม — กดปุ่ม "เพิ่มผู้ติดต่อ" เพื่อเพิ่ม</p>
+          )}
         </div>
       </div>
 
