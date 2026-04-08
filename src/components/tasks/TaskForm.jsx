@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useUserList } from '@/hooks/useUserList';
@@ -10,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, ClipboardList, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, ClipboardList, AlertTriangle, Camera, Paperclip, Loader2, X, Image as ImageIcon } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import TaskTimeTracker from '../time-tracking/TaskTimeTracker';
 import DueDateChangeHistory from './DueDateChangeHistory';
+import { toast } from 'sonner';
 
 export default function TaskForm({ task, onSubmit, isLoading, permissions, currentUser }) {
   const canEditAssignee = permissions?.canEditAssignee !== false;
@@ -35,16 +36,63 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
   const [newCheckItem, setNewCheckItem] = useState('');
   const [showFindingForm, setShowFindingForm] = useState(false);
   const [newFinding, setNewFinding] = useState({ title: '', description: '', severity: 'medium', recommendation: '' });
+  const [uploadingFindingIdx, setUploadingFindingIdx] = useState(null);
+  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
   const addFinding = () => {
     if (!newFinding.title.trim()) return;
-    update('findings', [...(form.findings || []), { ...newFinding, id: Date.now() }]);
+    update('findings', [...(form.findings || []), { ...newFinding, id: Date.now(), photos: [] }]);
     setNewFinding({ title: '', description: '', severity: 'medium', recommendation: '' });
     setShowFindingForm(false);
   };
 
   const removeFinding = (idx) => {
     update('findings', (form.findings || []).filter((_, i) => i !== idx));
+  };
+
+  // ── Photo Upload for Findings ──
+  const handleFindingFileUpload = async (findingIdx, files) => {
+    if (!files || files.length === 0) return;
+    setUploadingFindingIdx(findingIdx);
+    try {
+      const updatedFindings = [...(form.findings || [])];
+      const finding = { ...updatedFindings[findingIdx] };
+      if (!finding.photos) finding.photos = [];
+
+      for (const file of Array.from(files)) {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        const res = await base44.functions.invoke('uploadFindingFile', {
+          file_url, file_name: file.name, file_size: file.size,
+          customer_name: form.customer_name || 'ไม่ระบุลูกค้า',
+        });
+        if (res.data?.success) {
+          finding.photos.push({
+            name: res.data.name, drive_url: res.data.drive_url,
+            drive_file_id: res.data.drive_file_id, thumbnail_url: res.data.thumbnail_url,
+            base44_url: file_url, size: res.data.size || file.size,
+          });
+          toast.success(`อัปโหลด "${file.name}" สำเร็จ`);
+        } else {
+          toast.error(res.data?.error || 'อัปโหลดไม่สำเร็จ');
+        }
+      }
+      updatedFindings[findingIdx] = finding;
+      update('findings', updatedFindings);
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error('เกิดข้อผิดพลาดในการอัปโหลด');
+    } finally {
+      setUploadingFindingIdx(null);
+    }
+  };
+
+  const removeFindingPhoto = (findingIdx, photoIdx) => {
+    const updatedFindings = [...(form.findings || [])];
+    const finding = { ...updatedFindings[findingIdx] };
+    finding.photos = (finding.photos || []).filter((_, i) => i !== photoIdx);
+    updatedFindings[findingIdx] = finding;
+    update('findings', updatedFindings);
   };
 
   const SEVERITY_CONFIG = {
@@ -239,6 +287,8 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
 
         {(form.findings || []).map((f, idx) => {
           const sev = SEVERITY_CONFIG[f.severity] || SEVERITY_CONFIG.medium;
+          const isUploading = uploadingFindingIdx === idx;
+          const photos = f.photos || [];
           return (
             <div key={f.id || idx} className={`rounded-lg border p-3 ${sev.color.split(' ')[0]} border-l-4`}
               style={{ borderLeftColor: f.severity === 'critical' ? '#dc2626' : f.severity === 'medium' ? '#d97706' : '#16a34a' }}>
@@ -252,6 +302,44 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
                   {f.recommendation && (
                     <p className="text-[11px] text-blue-700 bg-blue-50 rounded px-2 py-1 mt-1">💡 แนะนำ: {f.recommendation}</p>
                   )}
+
+                  {/* Photo Thumbnails */}
+                  {photos.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {photos.map((photo, pIdx) => (
+                        <div key={pIdx} className="relative group">
+                          <a href={photo.drive_url} target="_blank" rel="noopener noreferrer" className="block">
+                            <div className="w-16 h-16 rounded-lg border bg-white overflow-hidden flex items-center justify-center hover:ring-2 hover:ring-primary transition-all">
+                              {(photo.base44_url || photo.thumbnail_url) ? (
+                                <img src={photo.base44_url || photo.thumbnail_url} alt={photo.name} className="w-full h-full object-cover"
+                                  onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                              ) : null}
+                              <div className="flex-col items-center justify-center text-muted-foreground" style={{ display: (photo.base44_url || photo.thumbnail_url) ? 'none' : 'flex' }}>
+                                <ImageIcon className="w-5 h-5" /><span className="text-[8px] mt-0.5 truncate max-w-[56px]">{photo.name}</span>
+                              </div>
+                            </div>
+                          </a>
+                          <button onClick={(e) => { e.preventDefault(); removeFindingPhoto(idx, pIdx); }}
+                            className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Upload Buttons */}
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <Button variant="outline" size="sm" className="text-[10px] h-6 gap-1 px-2" disabled={isUploading}
+                      onClick={() => { cameraInputRef.current.dataset.findingIdx = idx; cameraInputRef.current.click(); }}>
+                      {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />} ถ่ายรูป
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-[10px] h-6 gap-1 px-2" disabled={isUploading}
+                      onClick={() => { fileInputRef.current.dataset.findingIdx = idx; fileInputRef.current.click(); }}>
+                      {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Paperclip className="w-3 h-3" />} แนบไฟล์
+                    </Button>
+                    {photos.length > 0 && <span className="text-[9px] text-muted-foreground ml-1">📎 {photos.length} ไฟล์</span>}
+                  </div>
                 </div>
                 <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeFinding(idx)}>
                   <Trash2 className="w-3 h-3 text-muted-foreground" />
@@ -260,6 +348,12 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
             </div>
           );
         })}
+
+        {/* Hidden file inputs */}
+        <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden"
+          onChange={(e) => { handleFindingFileUpload(parseInt(e.target.dataset.findingIdx), e.target.files); e.target.value = ''; }} />
+        <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple className="hidden"
+          onChange={(e) => { handleFindingFileUpload(parseInt(e.target.dataset.findingIdx), e.target.files); e.target.value = ''; }} />
 
         {showFindingForm && (
           <div className="rounded-lg border border-dashed border-orange-300 bg-orange-50/50 p-3 space-y-2">
