@@ -12,6 +12,7 @@ import TaskStatsRow from '../components/tasks/TaskStatsRow';
 import TaskDeptTabs from '../components/tasks/TaskDeptTabs';
 import TaskFilters from '../components/tasks/TaskFilters';
 import TaskTable from '../components/tasks/TaskTable';
+import ApproveFindingsDialog from '../components/tasks/ApproveFindingsDialog';
 import TablePagination, { paginateData } from '../components/shared/TablePagination';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
@@ -27,6 +28,9 @@ export default function Tasks() {
   const [sortDir, setSortDir] = useState('asc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  // Approve Dialog state
+  const [approveDialog, setApproveDialog] = useState({ open: false, taskId: null, task: null, customer: null });
+
   const [filters, setFilters] = useState({
     search: '', department: 'all', status: 'all', priority: 'all',
     owner: 'all', serviceType: 'all', client: 'all', taskType: 'all',
@@ -80,14 +84,31 @@ export default function Tasks() {
 
   const handleApprove = async (taskId) => {
     const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      const checklist = task.checklist || [];
-      const checkedCount = checklist.filter(item => item.checked).length;
-      if (checklist.length > 0 && checkedCount !== checklist.length) {
-        toast.error(`ไม่สามารถ Approve ได้ — checklist ยังไม่ครบ (${checkedCount}/${checklist.length}) กรุณาส่งกลับให้ staff ทำให้ครบก่อน`);
-        return;
-      }
+    if (!task) return;
+
+    // เช็ค checklist ครบ
+    const checklist = task.checklist || [];
+    const checkedCount = checklist.filter(item => item.checked).length;
+    if (checklist.length > 0 && checkedCount !== checklist.length) {
+      toast.error(`ไม่สามารถ Approve ได้ — checklist ยังไม่ครบ (${checkedCount}/${checklist.length}) กรุณาส่งกลับให้ staff ทำให้ครบก่อน`);
+      return;
     }
+
+    // ถ้ามี findings → เปิด dialog ให้เลือก email/LINE ก่อน
+    const findings = task.findings || [];
+    if (findings.length > 0) {
+      const customer = allCustomers.find(c => c.id === task.customer_id);
+      setApproveDialog({ open: true, taskId, task, customer });
+      return;
+    }
+
+    // ไม่มี findings → approve ปกติ
+    await doApprove(taskId);
+  };
+
+  // Approve จริง (ใช้ทั้งกรณีมี/ไม่มี findings)
+  const doApprove = async (taskId) => {
+    const task = tasks.find(t => t.id === taskId);
     const today = format(new Date(), 'yyyy-MM-dd');
     await base44.entities.Task.update(taskId, {
       status: 'completed',
@@ -98,9 +119,8 @@ export default function Tasks() {
       reviewed_date: today,
     });
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    toast.success('✅ Approve เรียบร้อย — งานปิดแล้ว');
+    toast.success('✅ Approve เรียบร้อย');
 
-    // แจ้งเตือน staff ว่างาน approved
     try {
       const reviewerName = currentUser.full_name || currentUser.email;
       if (task?.assigned_to && task.assigned_to !== currentUser.email) {
@@ -118,6 +138,92 @@ export default function Tasks() {
         `✅ งาน Approved\n━━━━━━━━━━━━━━━━\n📄 ${task?.title || ''}\n🏢 ${task?.customer_name || '-'}\n👤 ผู้รับผิดชอบ: ${task?.assigned_name || '-'}\n🔍 Approved โดย: ${reviewerName}\n━━━━━━━━━━━━━━━━`
       );
     } catch (e) { console.warn('Approve notification error:', e.message); }
+  };
+
+  // Approve + ส่ง Email/LINE ให้ลูกค้า
+  const doApproveAndSend = async ({ selectedEmails, selectedLineGroup, approveNote }) => {
+    const { taskId, task, customer } = approveDialog;
+
+    await doApprove(taskId);
+
+    const findings = task.findings || [];
+    const reviewerName = currentUser.full_name || currentUser.email;
+    const visitDate = task.start_date || task.due_date || format(new Date(), 'yyyy-MM-dd');
+
+    // ส่ง Email
+    if (selectedEmails.length > 0) {
+      const SEVERITY_LABEL = { critical: '🔴 ร้ายแรง', medium: '🟡 ปานกลาง', low: '🟢 เล็กน้อย' };
+      const findingsRows = findings.map((f, i) => `
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px 12px;text-align:center;font-size:13px;">${i + 1}</td>
+          <td style="padding:8px 12px;font-size:13px;">${SEVERITY_LABEL[f.severity] || '🟡'}</td>
+          <td style="padding:8px 12px;font-size:13px;font-weight:600;">${f.title}</td>
+          <td style="padding:8px 12px;font-size:13px;">${f.description || '-'}</td>
+          <td style="padding:8px 12px;font-size:13px;color:#1e40af;">${f.recommendation || '-'}</td>
+        </tr>`).join('');
+
+      const counts = { critical: 0, medium: 0, low: 0 };
+      findings.forEach(f => { if (counts[f.severity] !== undefined) counts[f.severity]++; });
+
+      const emailBody = `
+        <div style="font-family:'Segoe UI',Tahoma,sans-serif;max-width:800px;margin:0 auto;padding:20px;">
+          <div style="background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;padding:20px 24px;border-radius:12px 12px 0 0;">
+            <h2 style="margin:0;font-size:18px;">📋 สรุปผลการตรวจสอบ</h2>
+            <p style="margin:8px 0 0;font-size:13px;opacity:0.9;">${customer?.company_name || task.customer_name || ''}</p>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;padding:20px 24px;">
+            <table style="width:100%;font-size:13px;margin-bottom:16px;">
+              <tr><td style="color:#6b7280;width:120px;">วันที่ตรวจ:</td><td style="font-weight:600;">${visitDate}</td></tr>
+              <tr><td style="color:#6b7280;">ผู้ตรวจสอบ:</td><td>${task.assigned_name || ''}</td></tr>
+              <tr><td style="color:#6b7280;">ผู้อนุมัติ:</td><td>${reviewerName}</td></tr>
+              <tr><td style="color:#6b7280;">พบปัญหา:</td><td><b>${findings.length} รายการ</b> (${counts.critical > 0 ? `🔴 ${counts.critical} ร้ายแรง ` : ''}${counts.medium > 0 ? `🟡 ${counts.medium} ปานกลาง ` : ''}${counts.low > 0 ? `🟢 ${counts.low} เล็กน้อย` : ''})</td></tr>
+            </table>
+            <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+              <thead><tr style="background:#f9fafb;">
+                <th style="padding:8px 12px;text-align:center;font-size:11px;color:#6b7280;width:40px;">#</th>
+                <th style="padding:8px 12px;text-align:left;font-size:11px;color:#6b7280;width:80px;">ระดับ</th>
+                <th style="padding:8px 12px;text-align:left;font-size:11px;color:#6b7280;">ปัญหา</th>
+                <th style="padding:8px 12px;text-align:left;font-size:11px;color:#6b7280;">รายละเอียด</th>
+                <th style="padding:8px 12px;text-align:left;font-size:11px;color:#6b7280;">คำแนะนำ</th>
+              </tr></thead>
+              <tbody>${findingsRows}</tbody>
+            </table>
+            ${approveNote ? `<div style="margin-top:16px;padding:12px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd;"><p style="margin:0;font-size:13px;color:#0369a1;">💬 ${approveNote}</p></div>` : ''}
+            <p style="font-size:13px;color:#6b7280;margin-top:16px;">หากมีข้อสงสัยหรือต้องการข้อมูลเพิ่มเติม กรุณาติดต่อทีม ACC Consulting<br>ขอบคุณที่ไว้วางใจใช้บริการค่ะ</p>
+          </div>
+          <p style="text-align:center;font-size:11px;color:#9ca3af;margin-top:16px;">ส่งจากระบบ ACC Precision Hub — ACC Consulting Co., Ltd.</p>
+        </div>`;
+
+      for (const email of selectedEmails) {
+        base44.integrations.Core.SendEmail({
+          from_name: 'ACC Consulting',
+          to: email,
+          subject: `📋 สรุปผลการตรวจสอบ — ${customer?.company_name || task.customer_name} — ${visitDate}`,
+          body: emailBody,
+        }).catch(e => console.warn('Email failed:', e.message));
+      }
+      toast.success(`📧 ส่ง email ${selectedEmails.length} ฉบับ`);
+    }
+
+    // ส่ง LINE group ลูกค้า
+    if (selectedLineGroup) {
+      const SEVERITY_EMOJI = { critical: '🔴', medium: '🟡', low: '🟢' };
+      const findingsText = findings.map((f, i) =>
+        `${i + 1}. ${SEVERITY_EMOJI[f.severity] || '🟡'} ${f.title}${f.recommendation ? `\n   💡 ${f.recommendation}` : ''}`
+      ).join('\n');
+
+      const lineMsg = `📋 สรุปผลการตรวจสอบ\n━━━━━━━━━━━━━━━━\n🏢 ${customer?.company_name || task.customer_name}\n📅 วันที่ตรวจ: ${visitDate}\n👤 ผู้ตรวจ: ${task.assigned_name || ''}\n\n📝 พบปัญหา ${findings.length} รายการ:\n${findingsText}${approveNote ? `\n\n💬 ${approveNote}` : ''}\n━━━━━━━━━━━━━━━━\nACC Consulting Co., Ltd.`;
+
+      base44.functions.invoke('lineSendMessage', {
+        line_user_id: selectedLineGroup,
+        message: lineMsg,
+        display_name: 'ACC Consulting',
+        chat_type: 'group',
+      }).catch(e => console.warn('LINE failed:', e.message));
+      toast.success('💬 ส่ง LINE กลุ่มลูกค้าแล้ว');
+    }
+
+    setApproveDialog({ open: false, taskId: null, task: null, customer: null });
   };
 
   const handleReject = async (taskId) => {
@@ -449,6 +555,16 @@ export default function Tasks() {
       )}
 
       {/* Task Form Dialog */}
+      {/* Approve + Send Findings Dialog */}
+      <ApproveFindingsDialog
+        open={approveDialog.open}
+        onOpenChange={(open) => { if (!open) setApproveDialog({ open: false, taskId: null, task: null, customer: null }); }}
+        task={approveDialog.task}
+        customer={approveDialog.customer}
+        onApproveOnly={async () => { await doApprove(approveDialog.taskId); setApproveDialog({ open: false, taskId: null, task: null, customer: null }); }}
+        onApproveAndSend={doApproveAndSend}
+      />
+
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingTask ? t('edit_task') : t('create_task')}</DialogTitle></DialogHeader>
