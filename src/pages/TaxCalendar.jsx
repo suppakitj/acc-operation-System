@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import TaxCalendarStats from '../components/tax-calendar/TaxCalendarStats';
 import TaxCalendarMonth from '../components/tax-calendar/TaxCalendarMonth';
 import TaxCalendarInfo from '../components/tax-calendar/TaxCalendarInfo';
+import TaxCalendarAnnual from '../components/tax-calendar/TaxCalendarAnnual';
 
 const MONTH_FULL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
                      'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -68,7 +69,7 @@ export default function TaxCalendar() {
   const byMonth = useMemo(() => {
     const map = {};
     for (let m = 1; m <= 12; m++) map[m] = [];
-    deadlines.forEach(d => { if (map[d.for_month]) map[d.for_month].push(d); });
+    deadlines.forEach(d => { if (d.for_month > 0 && map[d.for_month]) map[d.for_month].push(d); });
     return map;
   }, [deadlines]);
 
@@ -191,6 +192,14 @@ export default function TaxCalendar() {
             <p className="text-xs text-muted-foreground mt-1">{t('tax_cal_empty_hint')}</p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Annual deadlines */}
+      {!isLoading && deadlines.length > 0 && (
+        <TaxCalendarAnnual
+          items={deadlines.filter(d => d.for_month === 0)}
+          selectedYear={selectedYear}
+        />
       )}
 
       {/* Info */}

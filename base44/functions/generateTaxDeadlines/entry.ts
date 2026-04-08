@@ -12,6 +12,55 @@ const TAX_RULES = [
   { type: 'sso',   label: 'ประกันสังคม', category: 'sso',             onlineDay: 25 },
 ];
 
+const ANNUAL_RULES = [
+  {
+    type: 'pnd50',
+    label: 'ภ.ง.ด.50 (ประจำปี)',
+    category: 'annual_cit',
+    calcDeadline: (year) => {
+      const yearEnd = new Date(year, 11, 31);
+      const deadline = new Date(yearEnd);
+      deadline.setDate(deadline.getDate() + 150);
+      return { filingYear: deadline.getFullYear(), month: deadline.getMonth() + 1, day: deadline.getDate() };
+    },
+  },
+  {
+    type: 'pnd51',
+    label: 'ภ.ง.ด.51 (ครึ่งปี)',
+    category: 'annual_cit',
+    calcDeadline: (year) => {
+      return { filingYear: year, month: 8, day: 31 };
+    },
+  },
+  {
+    type: 'dbd_filing',
+    label: 'ยื่นงบ DBD',
+    category: 'annual_filing',
+    calcDeadline: (year) => {
+      return { filingYear: year + 1, month: 5, day: 31 };
+    },
+  },
+  {
+    type: 'boj5',
+    label: 'บอจ.5 (บัญชีผู้ถือหุ้น)',
+    category: 'annual_filing',
+    calcDeadline: (year) => {
+      return { filingYear: year + 1, month: 5, day: 14 };
+    },
+  },
+  {
+    type: 'disclosure_form',
+    label: 'Disclosure Form (สบช.3)',
+    category: 'annual_filing',
+    calcDeadline: (year) => {
+      const yearEnd = new Date(year, 11, 31);
+      const deadline = new Date(yearEnd);
+      deadline.setDate(deadline.getDate() + 150);
+      return { filingYear: deadline.getFullYear(), month: deadline.getMonth() + 1, day: deadline.getDate() };
+    },
+  },
+];
+
 function formatDateStr(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -123,6 +172,45 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Generate annual deadlines ──
+    for (const rule of ANNUAL_RULES) {
+      const dedupKey = `${rule.type}_0_${year}`;
+      if (existingKeys.has(dedupKey)) { skippedDuplicate++; continue; }
+
+      const calc = rule.calcDeadline(year);
+      let actualDate;
+      if (calc.day > 28) {
+        const testDate = new Date(calc.filingYear, calc.month - 1, calc.day);
+        actualDate = formatDateStr(testDate);
+      } else {
+        actualDate = `${calc.filingYear}-${String(calc.month).padStart(2, '0')}-${String(calc.day).padStart(2, '0')}`;
+      }
+
+      const result = shiftToNextWorkday(actualDate, allHolidays);
+
+      const record = {
+        tax_type: rule.type,
+        tax_label: rule.label,
+        for_month: 0,
+        for_year: year,
+        deadline: result.date,
+        original_day: calc.day,
+        was_shifted: result.shifted,
+        shift_reason: result.shifted ? result.reason : '',
+        category: rule.category,
+        status: 'active',
+        generated_by: user.email,
+        notes: `งานรายปี — สิ้นรอบ 31 ธ.ค. ${year}`,
+      };
+
+      preview.push(record);
+      if (!dry_run) {
+        const c = await base44.asServiceRole.entities.TaxDeadline.create(record);
+        created.push(c);
+        existingKeys.add(dedupKey);
+      }
+    }
+
     console.log(`Generate tax deadlines for ${year}: ${preview.length} generated, ${skippedDuplicate} duplicates skipped`);
 
     return Response.json({
@@ -130,7 +218,7 @@ Deno.serve(async (req) => {
       dry_run,
       total_generated: preview.length,
       skipped_duplicate: skippedDuplicate,
-      tax_types: TAX_RULES.length,
+      tax_types: TAX_RULES.length + ANNUAL_RULES.length,
       deadlines: dry_run ? preview : created,
       generated_by: user.full_name || user.email,
     });

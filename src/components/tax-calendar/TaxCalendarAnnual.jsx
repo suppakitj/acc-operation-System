@@ -3,33 +3,18 @@ import { format, differenceInDays } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { CATEGORY_LABEL, CATEGORY_COLOR } from './TaxCalendarMonth';
 
-export const CATEGORY_LABEL = {
-  withholding_tax: 'ภาษีหัก ณ ที่จ่าย',
-  vat: 'ภาษีมูลค่าเพิ่ม',
-  sbt: 'ภาษีธุรกิจเฉพาะ',
-  sso: 'ประกันสังคม',
-  annual_cit: 'ภาษีนิติบุคคลรายปี',
-  annual_filing: 'งานยื่นรายปี',
-};
+export default function TaxCalendarAnnual({ items, selectedYear }) {
+  if (!items || items.length === 0) return null;
 
-export const CATEGORY_COLOR = {
-  withholding_tax: 'bg-blue-50 text-blue-700 border-blue-200',
-  vat: 'bg-green-50 text-green-700 border-green-200',
-  sbt: 'bg-purple-50 text-purple-700 border-purple-200',
-  sso: 'bg-teal-50 text-teal-700 border-teal-200',
-  annual_cit: 'bg-orange-50 text-orange-700 border-orange-200',
-  annual_filing: 'bg-rose-50 text-rose-700 border-rose-200',
-};
-
-export default function TaxCalendarMonth({ month, year, items, monthLabel }) {
   const sorted = [...items].sort((a, b) => a.deadline.localeCompare(b.deadline));
 
   return (
-    <Card className="shadow-sm border">
+    <Card className="shadow-sm border border-orange-200">
       <CardHeader className="pb-2 pt-3 px-4">
-        <CardTitle className="text-sm font-semibold">
-          รอบ {monthLabel} {year + 543}
+        <CardTitle className="text-sm font-semibold text-orange-700">
+          📅 งานรายปี — สิ้นรอบบัญชี {selectedYear + 543}
         </CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-3">
@@ -52,7 +37,7 @@ export default function TaxCalendarMonth({ month, year, items, monthLabel }) {
               const isSoon = daysLeft > 3 && daysLeft <= 7;
 
               return (
-                <tr key={d.id || `${d.tax_type}_${d.for_month}`} className={`border-b last:border-b-0 ${isPast ? 'opacity-40' : ''}`}>
+                <tr key={d.id || `${d.tax_type}_0`} className={`border-b last:border-b-0 ${isPast ? 'opacity-40' : ''}`}>
                   <td className="py-2 text-xs font-medium">{d.tax_label}</td>
                   <td className="py-2">
                     <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${CATEGORY_COLOR[d.category] || ''}`}>
@@ -81,7 +66,7 @@ export default function TaxCalendarMonth({ month, year, items, monthLabel }) {
                     )}
                   </td>
                   <td className="py-2 text-[10px] text-muted-foreground hidden md:table-cell">
-                    {d.was_shifted ? <span className="text-amber-600">⚠ {d.shift_reason} (เดิม: วันที่ {d.original_day})</span> : ''}
+                    {d.was_shifted ? <span className="text-amber-600">⚠ {d.shift_reason}</span> : d.notes || ''}
                   </td>
                 </tr>
               );
