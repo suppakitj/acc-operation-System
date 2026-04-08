@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import TablePagination, { paginateData } from '@/components/shared/TablePagination';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
@@ -28,15 +27,6 @@ const SERVICE_MAP = {
 };
 
 export default function CustomerTaskList({ tasks }) {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  useEffect(() => {
-    setPage(1);
-  }, [tasks]);
-
-    const pagedTasks = paginateData(tasks, page, pageSize);
-
   if (tasks.length === 0) {
     return <p className="text-sm text-muted-foreground text-center py-8">ไม่มีข้อมูล Task</p>;
   }
@@ -55,7 +45,7 @@ export default function CustomerTaskList({ tasks }) {
           </tr>
         </thead>
         <tbody>
-                    {pagedTasks.map(task => {
+          {tasks.map(task => {
             const st = STATUS_MAP[task.status] || { label: task.status, color: 'bg-muted' };
             const pr = PRIORITY_MAP[task.priority] || {};
             const isOverdue = task.due_date && task.status !== 'completed' && task.status !== 'cancelled' && new Date(task.due_date) < new Date();
@@ -85,8 +75,7 @@ export default function CustomerTaskList({ tasks }) {
             );
           })}
         </tbody>
-              </table>
-      </div>
-      {tasks.length > pageSize && <TablePagination totalItems={tasks.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />}
+      </table>
+    </div>
   );
 }

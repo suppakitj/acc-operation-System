@@ -1,5 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import TablePagination, { paginateData } from '@/components/shared/TablePagination';
+import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
@@ -58,13 +57,7 @@ export default function CostEfficiencyTable({ entries }) {
     });
   }, [completed, customers]);
 
-    const { sorted, sortKey, sortDir, handleSort } = useSortableTable(rows, 'totalMinutes', 'desc');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  useEffect(() => { setPage(1); }, [entries]);
-
-    const paged = paginateData(sorted, page, pageSize);
+  const { sorted, sortKey, sortDir, handleSort } = useSortableTable(rows, 'totalMinutes', 'desc');
 
   if (rows.length === 0) {
     return <div className="text-center py-6 text-muted-foreground text-sm">ไม่มีข้อมูล</div>;
@@ -97,7 +90,7 @@ export default function CostEfficiencyTable({ entries }) {
             </tr>
           </thead>
           <tbody>
-                        {paged.map(row => {
+            {sorted.map(row => {
               let effLevel = 'neutral';
               let EffIcon = Minus;
               if (row.monthlyFee > 0 && row.costPerHour > 0) {
@@ -152,7 +145,6 @@ export default function CostEfficiencyTable({ entries }) {
           </tbody>
         </table>
       </div>
-      {sorted.length > pageSize && <TablePagination totalItems={sorted.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />}
     </div>
   );
 }

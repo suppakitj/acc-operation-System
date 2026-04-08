@@ -12,7 +12,6 @@ import { usePermissionMatrix, getPerm } from '@/hooks/usePermissionMatrix';
 import CustomerProfileStats from '@/components/customer-profile/CustomerProfileStats';
 import CustomerTaskList from '@/components/customer-profile/CustomerTaskList';
 import CustomerTimeBreakdown from '@/components/customer-profile/CustomerTimeBreakdown';
-import TablePagination, { paginateData } from '@/components/shared/TablePagination';
 
 export default function CustomerProfile() {
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
@@ -24,8 +23,6 @@ export default function CustomerProfile() {
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState('totalTasks');
   const [sortDir, setSortDir] = useState('desc');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
@@ -99,14 +96,8 @@ export default function CustomerProfile() {
       bVal = b[sortKey] || 0;
       return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
     });
-        return sorted;
+    return sorted;
   }, [customerOverview, sortKey, sortDir]);
-
-  React.useEffect(() => {
-    setPage(1);
-  }, [search, sortKey, sortDir]);
-
-  const pagedOverview = paginateData(sortedOverview, page, pageSize);
 
   const handleSort = (key) => {
     if (sortKey === key) {
@@ -187,7 +178,7 @@ export default function CustomerProfile() {
                   </tr>
                 </thead>
                 <tbody>
-                                    {pagedOverview.map(c => (
+                  {sortedOverview.map(c => (
                     <tr
                       key={c.id}
                       className="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
@@ -210,15 +201,12 @@ export default function CustomerProfile() {
                       <td className="px-3 py-2.5 text-center text-xs text-muted-foreground hidden md:table-cell">{formatHours(c.totalMinutes)}</td>
                     </tr>
                   ))}
-                                    {pagedOverview.length === 0 && sortedOverview.length === 0 && (
+                  {sortedOverview.length === 0 && (
                     <tr><td colSpan={6} className="text-center py-8 text-sm text-muted-foreground">ไม่พบลูกค้า</td></tr>
                   )}
                 </tbody>
-                              </table>
-              </div>
-              {sortedOverview.length > pageSize && (
-                <TablePagination totalItems={sortedOverview.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
-              )}
+              </table>
+            </div>
           </CardContent>
         </Card>
       )}

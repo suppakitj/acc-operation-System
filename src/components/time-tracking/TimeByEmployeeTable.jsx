@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import TablePagination, { paginateData } from '@/components/shared/TablePagination';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 
 function formatHours(mins) {
@@ -22,24 +21,17 @@ export default function TimeByEmployeeTable({ entries }) {
     byEmployee[key].entryCount++;
   });
 
-    const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  useEffect(() => { setPage(1); }, [entries]);
-
   const rows = Object.entries(byEmployee)
     .map(([id, data]) => ({ id, ...data, taskCount: data.taskCount.size }))
     .sort((a, b) => b.totalMinutes - a.totalMinutes);
 
   const maxMinutes = rows.length > 0 ? rows[0].totalMinutes : 1;
 
-    if (rows.length === 0) return <div className="text-center py-6 text-muted-foreground text-sm">ไม่มีข้อมูล</div>;
-
-  const pagedRows = paginateData(rows, page, pageSize);
+  if (rows.length === 0) return <div className="text-center py-6 text-muted-foreground text-sm">ไม่มีข้อมูล</div>;
 
   return (
     <div className="space-y-2">
-      {pagedRows.map(row => (
+      {rows.map(row => (
         <div key={row.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors">
           <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             <span className="text-[10px] font-bold text-primary">{row.name[0]?.toUpperCase()}</span>
@@ -56,7 +48,6 @@ export default function TimeByEmployeeTable({ entries }) {
           <Badge variant="secondary" className="text-[10px] shrink-0">{formatHours(row.totalMinutes)}</Badge>
         </div>
       ))}
-      {rows.length > pageSize && <TablePagination totalItems={rows.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />}
     </div>
   );
 }

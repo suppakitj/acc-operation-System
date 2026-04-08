@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,6 @@ import UserTable from '../components/users/UserTable';
 import UserFormDialog from '../components/users/UserFormDialog';
 import { useAccessControl } from '../components/auth/useAccessControl';
 import { useUserList } from '../hooks/useUserList';
-import TablePagination, { paginateData } from '../components/shared/TablePagination';
 
 // Employee ID prefixes per department
 const DEPT_PREFIX = {
@@ -53,8 +52,6 @@ export default function UserManagement() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
@@ -120,9 +117,6 @@ export default function UserManagement() {
     setEditingUser(user);
     setShowForm(true);
   };
-
-  // Filter users
-    React.useEffect(() => { setPage(1); }, [search, deptFilter, roleFilter, statusFilter]);
 
   // Filter users
   const filtered = users.filter(u => {
@@ -215,17 +209,7 @@ export default function UserManagement() {
       </div>
 
       {/* Table */}
-      {filtered.length > 0 ? (
-        <>
-          <UserTable users={paginateData(filtered, page, pageSize)} onEdit={handleEdit} onToggleStatus={handleToggleStatus} />
-          {filtered.length > pageSize && <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />}
-        </>
-      ) : (
-        <div className="text-center py-16 text-muted-foreground">
-          <Users className="mx-auto w-10 h-10 mb-2" />
-          No users match the current filters.
-        </div>
-      )}
+      <UserTable users={filtered} onEdit={handleEdit} onToggleStatus={handleToggleStatus} />
 
       {/* Form Dialog */}
       <UserFormDialog

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAccessControl } from '@/components/auth/useAccessControl';
@@ -13,7 +13,6 @@ import moment from 'moment';
 
 import ArticleForm from '@/components/knowledge/ArticleForm';
 import RejectDialog from '@/components/knowledge/RejectDialog';
-import TablePagination, { paginateData } from '@/components/shared/TablePagination';
 
 const STATUS_BADGE = {
   draft: 'bg-gray-100 text-gray-600',
@@ -59,8 +58,6 @@ export default function KnowledgeManage() {
   const [editingArticle, setEditingArticle] = useState(null);
   const [saving, setSaving] = useState(false);
   const [rejectTarget, setRejectTarget] = useState(null);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
 
   const filtered = useMemo(() => {
     let result = visibleArticles;
@@ -72,8 +69,6 @@ export default function KnowledgeManage() {
     }
     return result;
   }, [visibleArticles, statusFilter, catFilter, search]);
-
-  React.useEffect(() => { setPage(1); }, [statusFilter, catFilter, search]);
 
   const pendingArticles = useMemo(() =>
     visibleArticles.filter(a => a.status === 'pending_review').sort((a, b) => new Date(a.updated_date) - new Date(b.updated_date)),
@@ -217,7 +212,7 @@ export default function KnowledgeManage() {
                 {filtered.length === 0 && (
                   <tr><td colSpan={6} className="text-center py-8 text-sm text-muted-foreground">ไม่มีบทความ</td></tr>
                 )}
-                {paginateData(filtered, page, pageSize).map(a => (
+                {filtered.map(a => (
                   <tr key={a.id} className="border-b last:border-b-0 hover:bg-muted/10">
                     <td className="px-3 py-2.5">
                       <p className="text-xs font-medium">{a.title}</p>
@@ -259,7 +254,6 @@ export default function KnowledgeManage() {
               </tbody>
             </table>
           </div>
-          {filtered.length > pageSize && <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />}
         </TabsContent>
 
         {isManager && (
