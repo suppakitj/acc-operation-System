@@ -63,8 +63,8 @@ export default function MyDay() {
 
   // Status change mutation
   const updateTaskStatus = useMutation({
-    mutationFn: ({ id, newStatus }) => {
-      const updateData = { status: newStatus };
+    mutationFn: ({ id, newStatus, extraData }) => {
+      const updateData = { status: newStatus, ...extraData };
       if (newStatus === 'review') {
         updateData.review_status = 'pending_review';
       }
@@ -80,6 +80,7 @@ export default function MyDay() {
   const handleStatusChange = (taskId, newStatus) => {
     const task = myTasks.find(t => t.id === taskId);
     const isStaff = currentUser?.role === 'staff';
+    const isReviewer = ['admin', 'management', 'manager', 'super_supervisor'].includes(currentUser?.role);
 
     // Staff ห้ามกด completed
     if (isStaff && newStatus === 'completed') {
@@ -87,17 +88,31 @@ export default function MyDay() {
       return;
     }
 
-    // เช็ค checklist ก่อนส่งตรวจ
-    if (newStatus === 'review' && task) {
+    // เช็ค checklist ก่อนส่งตรวจหรือปิดงาน
+    if ((newStatus === 'review' || newStatus === 'completed') && task) {
       const checklist = task.checklist || [];
       const allChecked = checklist.length === 0 || checklist.every(item => item.checked);
       if (!allChecked) {
-        toast.error('กรุณา check checklist ให้ครบก่อนส่งตรวจ');
+        toast.error('กรุณา check checklist ให้ครบก่อน');
         return;
       }
     }
 
-    updateTaskStatus.mutate({ id: taskId, newStatus });
+    // ถ้า reviewer ปิดงานตรง → set reviewer info
+    let extraData = {};
+    if (newStatus === 'completed' && isReviewer) {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      extraData = {
+        completed_date: today,
+        review_status: 'approved',
+        reviewer_email: currentUser.email,
+        reviewer_name: currentUser.full_name || currentUser.email,
+        reviewed_date: today,
+        review_note: task.status === 'review' ? '' : 'ปิดงานโดยหัวหน้างาน (ไม่ผ่าน review)',
+      };
+    }
+
+    updateTaskStatus.mutate({ id: taskId, newStatus, extraData });
   };
 
   if (isLoadingUser || isLoadingTasks) {

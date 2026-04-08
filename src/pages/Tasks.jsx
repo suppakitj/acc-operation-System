@@ -103,6 +103,17 @@ export default function Tasks() {
       data.review_status = 'pending_review';
     }
 
+    // ถ้า reviewer ปิดงานตรง (ไม่ผ่าน review) → set reviewer info ด้วย
+    if (data.status === 'completed' && isReviewer) {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      data.completed_date = today;
+      data.review_status = 'approved';
+      data.reviewer_email = currentUser.email;
+      data.reviewer_name = currentUser.full_name || currentUser.email;
+      data.reviewed_date = today;
+      if (!data.review_note) data.review_note = 'ปิดงานโดยหัวหน้างาน (ไม่ผ่าน review)';
+    }
+
     // Auto set completed_date when status changes to completed
     if (data.status === 'completed' && !data.completed_date) {
       data.completed_date = format(new Date(), 'yyyy-MM-dd');

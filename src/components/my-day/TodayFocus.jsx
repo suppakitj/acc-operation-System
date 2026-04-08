@@ -12,10 +12,16 @@ const STATUS_BADGES = {
   review: 'bg-amber-50 text-amber-700 border-amber-200',
 };
 
-function TaskCard({ task, onStatusChange, t }) {
+function TaskCard({ task, onStatusChange, t, currentUser }) {
+  const isStaffRole = currentUser?.role === 'staff';
   const nextAction = {
     pending: { label: 'เริ่มทำงาน', status: 'in_progress', color: 'bg-blue-600 hover:bg-blue-700 text-white' },
-    in_progress: { label: 'ส่งตรวจ', status: 'review', color: 'bg-amber-500 hover:bg-amber-600 text-white' },
+    in_progress: isStaffRole
+      ? { label: 'ส่งตรวจ', status: 'review', color: 'bg-amber-500 hover:bg-amber-600 text-white' }
+      : { label: 'เสร็จ', status: 'completed', color: 'bg-green-600 hover:bg-green-700 text-white' },
+    review: !isStaffRole
+      ? { label: 'Approve', status: 'completed', color: 'bg-green-600 hover:bg-green-700 text-white' }
+      : null,
   }[task.status];
 
   const checklist = task.checklist || [];
@@ -73,7 +79,7 @@ function TaskCard({ task, onStatusChange, t }) {
   );
 }
 
-export default function TodayFocus({ activeTasks, dueToday, overdue, onStatusChange }) {
+export default function TodayFocus({ activeTasks, dueToday, overdue, onStatusChange, currentUser }) {
   const { t } = useLanguage();
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
@@ -141,7 +147,7 @@ export default function TodayFocus({ activeTasks, dueToday, overdue, onStatusCha
         <div className="space-y-2">
           <p className="text-sm font-semibold">{t('my_day_today_focus')} ({dueToday.length})</p>
           {dueToday.map(task => (
-            <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} t={t} />
+            <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} t={t} currentUser={currentUser} />
           ))}
         </div>
       ) : (
