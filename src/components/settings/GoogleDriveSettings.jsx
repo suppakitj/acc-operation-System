@@ -64,6 +64,7 @@ export default function GoogleDriveSettings() {
   const [lineFilesRootId, setLineFilesRootId] = useState('');
   const [kbFolderId, setKbFolderId] = useState('');
   const [auditLogFolderId, setAuditLogFolderId] = useState('');
+  const [consultingVisitFolderId, setConsultingVisitFolderId] = useState('');
 
   useEffect(() => {
     setUploadFolderId(getVal('gdrive_upload_folder_id'));
@@ -71,6 +72,7 @@ export default function GoogleDriveSettings() {
     setLineFilesRootId(getVal('gdrive_line_files_root_id'));
     setKbFolderId(getVal('gdrive_kb_folder_id'));
     setAuditLogFolderId(getVal('gdrive_audit_log_folder_id'));
+    setConsultingVisitFolderId(getVal('gdrive_consulting_visit_folder_id'));
   }, [configs]);
 
   // Auto-extract folder ID from full Google Drive URL
@@ -91,6 +93,7 @@ export default function GoogleDriveSettings() {
       { key: 'gdrive_line_files_root_id', value: extractFolderId(lineFilesRootId), description: 'Google Drive Folder ID สำหรับ LINE Files Browser (root folder)' },
       { key: 'gdrive_kb_folder_id', value: extractFolderId(kbFolderId), description: 'Google Drive Folder ID สำหรับ Knowledge Base attachments' },
       { key: 'gdrive_audit_log_folder_id', value: extractFolderId(auditLogFolderId), description: 'Google Drive Folder ID สำหรับ export Audit Log (PDPA)' },
+      { key: 'gdrive_consulting_visit_folder_id', value: extractFolderId(consultingVisitFolderId), description: 'Google Drive Folder ID สำหรับ Consulting Visit (โครงสร้าง: ชื่อบริษัท/ปี/เดือน)' },
     ];
       for (const item of items) {
         const existingId = getId(item.key);
@@ -175,6 +178,21 @@ export default function GoogleDriveSettings() {
           />
           <p className="text-[11px] text-muted-foreground">
             Folder สำหรับเก็บไฟล์แนบจาก Knowledge Base — ถ้าไม่กรอกจะอัปโหลดไป root ของ Drive
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1.5">
+            <FolderOpen className="w-3.5 h-3.5" /> Consulting Visit Folder ID (ออกตรวจลูกค้า)
+          </Label>
+          <Input
+            value={consultingVisitFolderId}
+            onChange={e => setConsultingVisitFolderId(e.target.value)}
+            placeholder="เช่น 1aBcDeFgHiJkLmNoPqRsTuVwXyZ"
+            className="font-mono text-sm"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Root Folder สำหรับ Consulting Visit — ระบบจะสร้าง sub-folder อัตโนมัติเป็น: ชื่อบริษัท → ปี → เดือน
           </p>
         </div>
 
