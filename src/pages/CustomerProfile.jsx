@@ -31,15 +31,15 @@ export default function CustomerProfile() {
   });
 
   const { data: allTasks = [] } = useQuery({
-    queryKey: ['tasks', 'all'],
-    queryFn: () => base44.entities.Task.list('-created_date', 5000),
-    staleTime: 60_000,
+    queryKey: ['tasks-profile'],
+    queryFn: () => base44.entities.Task.list('-created_date', 2000),
+    staleTime: 3 * 60_000,
   });
 
   const { data: allTimeEntries = [] } = useQuery({
-    queryKey: ['timeEntries'],
-    queryFn: () => base44.entities.TimeEntry.list('-created_date', 5000),
-    staleTime: 60_000,
+    queryKey: ['timeEntries-profile'],
+    queryFn: () => base44.entities.TimeEntry.list('-created_date', 2000),
+    staleTime: 3 * 60_000,
   });
 
   const filteredCustomers = useMemo(() => {

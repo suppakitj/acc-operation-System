@@ -39,15 +39,15 @@ export default function CustomerMonthlySummary() {
   });
 
   const { data: allTasks = [], isLoading: loadingTasks } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date', 5000),
-    staleTime: 60_000,
+    queryKey: ['tasks-summary'],
+    queryFn: () => base44.entities.Task.list('-created_date', 3000),
+    staleTime: 3 * 60_000,
   });
 
   const { data: allTimeEntries = [] } = useQuery({
-    queryKey: ['timeEntries'],
-    queryFn: () => base44.entities.TimeEntry.list('-start_time', 5000),
-    staleTime: 120_000,
+    queryKey: ['timeEntries-summary'],
+    queryFn: () => base44.entities.TimeEntry.list('-start_time', 3000),
+    staleTime: 3 * 60_000,
   });
 
   const summaryData = useMemo(() => {

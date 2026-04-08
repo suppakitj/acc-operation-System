@@ -59,9 +59,9 @@ export default function ObligationDashboard() {
   });
 
   const { data: tasks = [], isLoading: loadingTasks } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date', 5000),
-    staleTime: 60_000,
+    queryKey: ['tasks-obligation'],
+    queryFn: () => base44.entities.Task.list('-created_date', 2000),
+    staleTime: 3 * 60_000,
   });
 
   // Build obligation matrix
