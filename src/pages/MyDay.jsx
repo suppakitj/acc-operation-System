@@ -186,6 +186,7 @@ export default function MyDay() {
         overdue={overdue}
         onStatusChange={handleStatusChange}
         currentUser={currentUser}
+        isUpdating={updateTaskStatus.isPending}
       />
       <ReviewQueue
         reviewTasks={reviewTasks}

@@ -155,10 +155,16 @@ export default function Tasks() {
     } catch (e) { console.warn('Reject notification error:', e.message); }
   };
 
+  const [submitting, setSubmitting] = useState(false);
+
   const handleSubmit = async (data) => {
+    if (submitting) return;
+    setSubmitting(true);
+
     // Staff ห้ามกด completed
     if (isStaff && data.status === 'completed') {
       toast.error('ไม่สามารถปิดงานเองได้ — ต้องส่งตรวจให้หัวหน้า approve');
+      setSubmitting(false);
       return;
     }
 
@@ -168,6 +174,7 @@ export default function Tasks() {
       const checkedCount = checklist.filter(item => item.checked).length;
       if (checklist.length > 0 && checkedCount !== checklist.length) {
         toast.error(`กรุณา check checklist ให้ครบก่อนส่งตรวจ (${checkedCount}/${checklist.length})`);
+        setSubmitting(false);
         return;
       }
       data.review_status = 'pending_review';
@@ -206,6 +213,7 @@ export default function Tasks() {
       const checkedCount = checklist.filter(item => item.checked).length;
       if (checklist.length > 0 && checkedCount !== checklist.length) {
         toast.error(`ไม่สามารถปิดงานได้ — checklist ยังไม่ครบ (${checkedCount}/${checklist.length})`);
+        setSubmitting(false);
         return;
       }
       const today = format(new Date(), 'yyyy-MM-dd');
@@ -249,8 +257,8 @@ export default function Tasks() {
       }];
     }
 
-    if (editingTask) updateMutation.mutate({ id: editingTask.id, data });
-    else createMutation.mutate(data);
+    if (editingTask) updateMutation.mutate({ id: editingTask.id, data }, { onSettled: () => setSubmitting(false) });
+    else createMutation.mutate(data, { onSettled: () => setSubmitting(false) });
   };
 
   // Clamp a Date to working hours (09:00–18:00) on the same day
@@ -403,7 +411,7 @@ export default function Tasks() {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingTask ? t('edit_task') : t('create_task')}</DialogTitle></DialogHeader>
-          <TaskForm task={editingTask} onSubmit={handleSubmit} isLoading={createMutation.isPending || updateMutation.isPending} permissions={ac} currentUser={currentUser} />
+          <TaskForm task={editingTask} onSubmit={handleSubmit} isLoading={submitting || createMutation.isPending || updateMutation.isPending} permissions={ac} currentUser={currentUser} />
         </DialogContent>
       </Dialog>
     </div>

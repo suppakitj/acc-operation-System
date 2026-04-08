@@ -12,7 +12,7 @@ const STATUS_BADGES = {
   review: 'bg-amber-50 text-amber-700 border-amber-200',
 };
 
-function TaskCard({ task, onStatusChange, t, currentUser }) {
+function TaskCard({ task, onStatusChange, t, currentUser, isUpdating }) {
   const isStaffRole = currentUser?.role === 'staff';
   const nextAction = {
     pending: { label: 'เริ่มทำงาน', status: 'in_progress', color: 'bg-blue-600 hover:bg-blue-700 text-white' },
@@ -66,6 +66,7 @@ function TaskCard({ task, onStatusChange, t, currentUser }) {
           size="sm"
           className={`shrink-0 text-xs h-8 ${nextAction.color}`}
           onClick={(e) => { e.stopPropagation(); onStatusChange(task.id, nextAction.status); }}
+          disabled={isUpdating}
         >
           {nextAction.label}
         </Button>
@@ -79,7 +80,7 @@ function TaskCard({ task, onStatusChange, t, currentUser }) {
   );
 }
 
-export default function TodayFocus({ activeTasks, dueToday, overdue, onStatusChange, currentUser }) {
+export default function TodayFocus({ activeTasks, dueToday, overdue, onStatusChange, currentUser, isUpdating }) {
   const { t } = useLanguage();
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
@@ -125,13 +126,13 @@ export default function TodayFocus({ activeTasks, dueToday, overdue, onStatusCha
                   </div>
                   {task.status === 'pending' && (
                     <Button size="sm" className="shrink-0 text-xs h-7 bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={() => onStatusChange(task.id, 'in_progress')}>
+                      onClick={() => onStatusChange(task.id, 'in_progress')} disabled={isUpdating}>
                       {t('my_day_start_work')}
                     </Button>
                   )}
                   {task.status === 'in_progress' && (
                     <Button size="sm" className="shrink-0 text-xs h-7 bg-amber-500 hover:bg-amber-600 text-white"
-                      onClick={() => onStatusChange(task.id, 'review')}>
+                      onClick={() => onStatusChange(task.id, 'review')} disabled={isUpdating}>
                       {t('my_day_send_review')}
                     </Button>
                   )}
@@ -147,7 +148,7 @@ export default function TodayFocus({ activeTasks, dueToday, overdue, onStatusCha
         <div className="space-y-2">
           <p className="text-sm font-semibold">{t('my_day_today_focus')} ({dueToday.length})</p>
           {dueToday.map(task => (
-            <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} t={t} currentUser={currentUser} />
+            <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} t={t} currentUser={currentUser} isUpdating={isUpdating} />
           ))}
         </div>
       ) : (
