@@ -161,8 +161,8 @@ export default function LineChat() {
   const [uploadingFile, setUploadingFile] = useState(false);
 
   const sendMutation = useMutation({
-    mutationFn: async ({ line_user_id, message, display_name, chat_type, file_url, file_type }) => {
-      const res = await base44.functions.invoke('lineSendMessage', { line_user_id, message, display_name, chat_type, file_url, file_type });
+    mutationFn: async ({ line_user_id, message, display_name, chat_type, file_url, file_type, mentions }) => {
+      const res = await base44.functions.invoke('lineSendMessage', { line_user_id, message, display_name, chat_type, file_url, file_type, mentions });
       if (res.data?.error) throw new Error(res.data.error);
       return res.data;
     },
