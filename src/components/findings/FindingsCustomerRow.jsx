@@ -81,6 +81,20 @@ export default function FindingsCustomerRow({ data: c, isExpanded, onToggle, sev
                             <span className="font-medium">{f.title}</span>
                             {f.description && <p className="text-[11px] text-muted-foreground mt-0.5">{f.description}</p>}
                             {f.recommendation && <p className="text-[11px] text-blue-700 bg-blue-50 rounded px-2 py-1 mt-1">💡 {f.recommendation}</p>}
+                            {(f.photos || []).length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                {f.photos.map((photo, pIdx) => (
+                                  <a key={pIdx} href={photo.drive_url} target="_blank" rel="noopener noreferrer"
+                                    className="block w-12 h-12 rounded border bg-white overflow-hidden hover:ring-2 hover:ring-primary transition-all">
+                                    {(photo.base44_url || photo.thumbnail_url) ? (
+                                      <img src={photo.base44_url || photo.thumbnail_url} alt={photo.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[8px]">📎</div>
+                                    )}
+                                  </a>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
