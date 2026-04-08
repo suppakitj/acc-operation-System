@@ -245,7 +245,11 @@ export default function LineChat() {
 
   const userList = Object.values(userGroups)
     .filter(u => !search || u.name.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => new Date(b.lastDate) - new Date(a.lastDate));
+    .sort((a, b) => {
+      if (a.unread > 0 && b.unread === 0) return -1;
+      if (a.unread === 0 && b.unread > 0) return 1;
+      return new Date(b.lastDate) - new Date(a.lastDate);
+    });
 
   const selectedUser = selectedUserId ? userGroups[selectedUserId] : null;
   const isGroupChat = selectedUser?.chatType === 'group';
@@ -447,6 +451,9 @@ export default function LineChat() {
                         <span className="text-white font-semibold text-sm">{u.name?.[0]?.toUpperCase() || '?'}</span>
                       )}
                     </div>
+                    {hasUnread && (
+                      <div className="absolute top-0 right-0 w-3 h-3 rounded-full bg-[#06C755] border-2 border-card" />
+                    )}
                     {u.chatType === 'group' && (
                       <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-blue-500 border-2 border-card flex items-center justify-center">
                         <Users className="w-2 h-2 text-white" />
