@@ -77,6 +77,21 @@ export default function Tasks() {
     });
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
     toast.success('✅ Approve เรียบร้อย — งานปิดแล้ว');
+
+    // แจ้งเตือน staff ว่างาน approved
+    try {
+      if (task?.assigned_to && task.assigned_to !== currentUser.email) {
+        base44.entities.Notification.create({
+          title: `✅ งาน Approved: ${task.title}`,
+          message: `${currentUser.full_name || currentUser.email} approve งาน "${task.title}" เรียบร้อย`,
+          type: 'task_completed',
+          target_user: task.assigned_to,
+          related_entity_type: 'Task',
+          related_entity_id: taskId,
+          customer_name: task.customer_name || '',
+        }).catch(e => console.warn('Approve notification failed:', e.message));
+      }
+    } catch (e) { console.warn('Approve notification error:', e.message); }
   };
 
   const handleReject = async (taskId) => {
@@ -92,6 +107,22 @@ export default function Tasks() {
     });
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
     toast.success('📤 ส่งกลับให้แก้ไขแล้ว');
+
+    // แจ้งเตือน staff ที่ถูก reject
+    try {
+      const task = tasks.find(t => t.id === taskId);
+      if (task?.assigned_to) {
+        base44.entities.Notification.create({
+          title: `⚠️ งานถูกส่งกลับ: ${task.title}`,
+          message: `${currentUser.full_name || currentUser.email} ส่งกลับงาน "${task.title}"${note ? ` — เหตุผล: ${note}` : ''} กรุณาแก้ไขแล้วส่งตรวจใหม่`,
+          type: 'task_assigned',
+          target_user: task.assigned_to,
+          related_entity_type: 'Task',
+          related_entity_id: taskId,
+          customer_name: task.customer_name || '',
+        }).catch(e => console.warn('Reject notification failed:', e.message));
+      }
+    } catch (e) { console.warn('Reject notification error:', e.message); }
   };
 
   const handleSubmit = async (data) => {
@@ -110,6 +141,30 @@ export default function Tasks() {
         return;
       }
       data.review_status = 'pending_review';
+
+      // แจ้งเตือน reviewer ว่ามีงานรอตรวจ
+      try {
+        const taskDept = data.department || editingTask?.department || '';
+        const reviewers = users.filter(u =>
+          ['admin', 'management', 'manager', 'super_supervisor'].includes(u.role) &&
+          u.email !== currentUser.email &&
+          (!taskDept || u.department === taskDept || u.role === 'admin' || u.role === 'management')
+        );
+        const staffName = currentUser.full_name || currentUser.email;
+        const taskTitle = data.title || editingTask?.title || '';
+        const customerName = data.customer_name || editingTask?.customer_name || '';
+        for (const reviewer of reviewers.slice(0, 5)) {
+          base44.entities.Notification.create({
+            title: `📋 งานรอตรวจ: ${taskTitle}`,
+            message: `${staffName} ส่งตรวจงาน "${taskTitle}"${customerName ? ` (${customerName})` : ''} — กรุณาตรวจสอบและ Approve`,
+            type: 'task_assigned',
+            target_user: reviewer.email,
+            related_entity_type: 'Task',
+            related_entity_id: editingTask?.id || '',
+            customer_name: customerName,
+          }).catch(e => console.warn('Notification failed:', e.message));
+        }
+      } catch (e) { console.warn('Review notification error:', e.message); }
     }
 
     // ถ้า reviewer ปิดงานตรง (ไม่ผ่าน review) → set reviewer info ด้วย
