@@ -111,6 +111,7 @@ const PERMISSION_GROUPS = [
     items: [
       { key: 'my_day', label: 'My Day (หน้าแรก)' },
       { key: 'my_skills', label: 'ทักษะของฉัน' },
+      { key: 'meeting_notes', label: 'Meeting Notes (สั่งงาน/บันทึกประชุม)' },
       { key: 'announcement_manage', label: 'สร้าง/จัดการข่าวสาร' },
       { key: 'shoutout', label: 'ส่ง Shout-out ชมเชย' },
     ],
@@ -165,6 +166,7 @@ const DEFAULT_PERMS = {
   my_skills:       { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   announcement_manage: { admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
   shoutout:        { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  meeting_notes:   { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
 };
 
 function PermValue({ value }) {
