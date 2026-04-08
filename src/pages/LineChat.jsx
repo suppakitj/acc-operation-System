@@ -93,12 +93,20 @@ export default function LineChat() {
   const queryClient = useQueryClient();
   const chatEndRef = useRef(null);
   const chatTopRef = useRef(null);
+  const chatScrollRef = useRef(null);
   const prevMessageCount = useRef(0);
 
   const scrollToBottom = useCallback((behavior = 'smooth') => {
     setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior });
-    }, 100);
+      const viewport = chatScrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        if (behavior === 'instant') {
+          viewport.scrollTop = viewport.scrollHeight;
+        } else {
+          viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+        }
+      }
+    }, 150);
   }, []);
   const [activeMentions, setActiveMentions] = useState([]);
   const [triggerMentionName, setTriggerMentionName] = useState(null);
@@ -275,7 +283,7 @@ export default function LineChat() {
 
   useEffect(() => {
     if (selectedUserId) {
-      scrollToBottom('smooth');
+      scrollToBottom('instant');
     }
     if (selectedUser) {
       const unreadIds = selectedUser.messages.filter(m => !m.is_read && m.direction === 'incoming').map(m => m.id);
@@ -529,7 +537,7 @@ export default function LineChat() {
               />
 
               {/* Messages */}
-              <ScrollArea className="flex-1">
+              <ScrollArea className="flex-1" ref={chatScrollRef}>
                 <div className="px-4 py-3 space-y-1">
                   {(hasOlderMessages || hasMoreOnServer) && (
                     <div className="flex justify-center py-2">
