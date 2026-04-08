@@ -97,19 +97,14 @@ export default function LineChat() {
   const prevMessageCount = useRef(0);
 
   const scrollToBottom = useCallback((behavior = 'smooth') => {
-    // Use multiple attempts to ensure DOM is fully rendered
     const doScroll = () => {
-      const viewport = chatScrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight;
-        if (behavior === 'smooth') {
-          viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
-        }
+      if (chatScrollRef.current) {
+        chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
       }
     };
-    doScroll();
-    setTimeout(doScroll, 100);
-    setTimeout(doScroll, 300);
+    requestAnimationFrame(doScroll);
+    setTimeout(doScroll, 50);
+    setTimeout(doScroll, 200);
   }, []);
   const [activeMentions, setActiveMentions] = useState([]);
   const [triggerMentionName, setTriggerMentionName] = useState(null);
@@ -554,7 +549,7 @@ export default function LineChat() {
               />
 
               {/* Messages */}
-              <ScrollArea className="flex-1" ref={chatScrollRef}>
+              <div className="flex-1 overflow-y-auto" ref={chatScrollRef}>
                 <div className="px-4 py-3 space-y-1">
                   {(hasOlderMessages || hasMoreOnServer) && (
                     <div className="flex justify-center py-2">
@@ -601,7 +596,7 @@ export default function LineChat() {
                   })}
                   <div ref={chatEndRef} />
                 </div>
-              </ScrollArea>
+              </div>
 
               {/* Reply Preview */}
               {replyTo && (
