@@ -44,6 +44,28 @@ export default function Tasks() {
   const customers = allCustomers.filter(c => c.status === 'active');
   const { data: users = [] } = useUserList();
 
+  // ดึง LINE group ID สำหรับแจ้งเตือน
+  const { data: lineConfigs = [] } = useQuery({
+    queryKey: ['appConfig', 'line_accounting'],
+    queryFn: () => base44.entities.AppConfig.list(),
+    staleTime: 300_000,
+  });
+  const getLineConfig = (key) => lineConfigs.find(c => c.key === key)?.value || '';
+
+  // ส่ง LINE ไปกลุ่มบัญชี (non-blocking)
+  const sendLineToAccounting = (message) => {
+    try {
+      const groupId = getLineConfig('line_group_dept_accounting') || getLineConfig('line_group_id');
+      if (!groupId) return;
+      base44.functions.invoke('lineSendMessage', {
+        line_user_id: groupId,
+        message,
+        display_name: 'ACC Precision Hub',
+        chat_type: 'group',
+      }).catch(e => console.warn('LINE send failed:', e.message));
+    } catch (e) { console.warn('LINE config error:', e.message); }
+  };
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Task.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tasks'] }); setShowForm(false); },
@@ -80,10 +102,11 @@ export default function Tasks() {
 
     // แจ้งเตือน staff ว่างาน approved
     try {
+      const reviewerName = currentUser.full_name || currentUser.email;
       if (task?.assigned_to && task.assigned_to !== currentUser.email) {
         base44.entities.Notification.create({
           title: `✅ งาน Approved: ${task.title}`,
-          message: `${currentUser.full_name || currentUser.email} approve งาน "${task.title}" เรียบร้อย`,
+          message: `${reviewerName} approve งาน "${task.title}" เรียบร้อย`,
           type: 'task_completed',
           target_user: task.assigned_to,
           related_entity_type: 'Task',
@@ -91,6 +114,9 @@ export default function Tasks() {
           customer_name: task.customer_name || '',
         }).catch(e => console.warn('Approve notification failed:', e.message));
       }
+      sendLineToAccounting(
+        `✅ งาน Approved\n━━━━━━━━━━━━━━━━\n📄 ${task?.title || ''}\n🏢 ${task?.customer_name || '-'}\n👤 ผู้รับผิดชอบ: ${task?.assigned_name || '-'}\n🔍 Approved โดย: ${reviewerName}\n━━━━━━━━━━━━━━━━`
+      );
     } catch (e) { console.warn('Approve notification error:', e.message); }
   };
 
@@ -111,10 +137,11 @@ export default function Tasks() {
     // แจ้งเตือน staff ที่ถูก reject
     try {
       const task = tasks.find(t => t.id === taskId);
+      const reviewerName = currentUser.full_name || currentUser.email;
       if (task?.assigned_to) {
         base44.entities.Notification.create({
           title: `⚠️ งานถูกส่งกลับ: ${task.title}`,
-          message: `${currentUser.full_name || currentUser.email} ส่งกลับงาน "${task.title}"${note ? ` — เหตุผล: ${note}` : ''} กรุณาแก้ไขแล้วส่งตรวจใหม่`,
+          message: `${reviewerName} ส่งกลับงาน "${task.title}"${note ? ` — เหตุผล: ${note}` : ''} กรุณาแก้ไขแล้วส่งตรวจใหม่`,
           type: 'task_assigned',
           target_user: task.assigned_to,
           related_entity_type: 'Task',
@@ -122,6 +149,9 @@ export default function Tasks() {
           customer_name: task.customer_name || '',
         }).catch(e => console.warn('Reject notification failed:', e.message));
       }
+      sendLineToAccounting(
+        `⚠️ งานถูกส่งกลับ\n━━━━━━━━━━━━━━━━\n📄 ${task?.title || ''}\n🏢 ${task?.customer_name || '-'}\n👤 ผู้รับผิดชอบ: ${task?.assigned_name || '-'}\n🔍 ส่งกลับโดย: ${reviewerName}\n📝 เหตุผล: ${note || '-'}\n━━━━━━━━━━━━━━━━\n💡 กรุณาแก้ไขแล้วส่งตรวจใหม่`
+      );
     } catch (e) { console.warn('Reject notification error:', e.message); }
   };
 
@@ -164,6 +194,9 @@ export default function Tasks() {
             customer_name: customerName,
           }).catch(e => console.warn('Notification failed:', e.message));
         }
+        sendLineToAccounting(
+          `📋 งานรอตรวจ\n━━━━━━━━━━━━━━━━\n📄 ${taskTitle}${customerName ? `\n🏢 ${customerName}` : ''}\n👤 ส่งโดย: ${staffName}\n📌 สถานะ: รอตรวจสอบ\n━━━━━━━━━━━━━━━━\n💡 เปิด ACC Precision Hub → Tasks เพื่อ Approve`
+        );
       } catch (e) { console.warn('Review notification error:', e.message); }
     }
 
