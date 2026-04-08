@@ -57,6 +57,15 @@ export default function Tasks() {
   const isStaff = currentUser?.role === 'staff';
 
   const handleApprove = async (taskId) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      const checklist = task.checklist || [];
+      const checkedCount = checklist.filter(item => item.checked).length;
+      if (checklist.length > 0 && checkedCount !== checklist.length) {
+        toast.error(`ไม่สามารถ Approve ได้ — checklist ยังไม่ครบ (${checkedCount}/${checklist.length}) กรุณาส่งกลับให้ staff ทำให้ครบก่อน`);
+        return;
+      }
+    }
     const today = format(new Date(), 'yyyy-MM-dd');
     await base44.entities.Task.update(taskId, {
       status: 'completed',
@@ -95,9 +104,9 @@ export default function Tasks() {
     // เช็ค checklist ก่อนส่งตรวจ
     if (data.status === 'review') {
       const checklist = data.checklist || [];
-      const allChecked = checklist.length === 0 || checklist.every(item => item.checked);
-      if (!allChecked) {
-        toast.error('กรุณา check checklist ให้ครบก่อนส่งตรวจ');
+      const checkedCount = checklist.filter(item => item.checked).length;
+      if (checklist.length > 0 && checkedCount !== checklist.length) {
+        toast.error(`กรุณา check checklist ให้ครบก่อนส่งตรวจ (${checkedCount}/${checklist.length})`);
         return;
       }
       data.review_status = 'pending_review';
@@ -105,6 +114,12 @@ export default function Tasks() {
 
     // ถ้า reviewer ปิดงานตรง (ไม่ผ่าน review) → set reviewer info ด้วย
     if (data.status === 'completed' && isReviewer) {
+      const checklist = data.checklist || editingTask?.checklist || [];
+      const checkedCount = checklist.filter(item => item.checked).length;
+      if (checklist.length > 0 && checkedCount !== checklist.length) {
+        toast.error(`ไม่สามารถปิดงานได้ — checklist ยังไม่ครบ (${checkedCount}/${checklist.length})`);
+        return;
+      }
       const today = format(new Date(), 'yyyy-MM-dd');
       data.completed_date = today;
       data.review_status = 'approved';
