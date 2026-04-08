@@ -214,6 +214,13 @@ export default function LineChat() {
     mutationFn: async (messageIds) => {
       await base44.functions.invoke('markLineMessagesRead', { messageIds });
     },
+    onMutate: async (messageIds) => {
+      await queryClient.cancelQueries({ queryKey: ['lineMessages'] });
+      const idSet = new Set(messageIds);
+      queryClient.setQueriesData({ queryKey: ['lineMessages'] }, (old) =>
+        old ? old.map(m => idSet.has(m.id) ? { ...m, is_read: true } : m) : old
+      );
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lineMessages'] }),
   });
 
