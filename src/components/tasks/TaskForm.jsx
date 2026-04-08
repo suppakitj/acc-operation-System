@@ -36,14 +36,19 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
   const [newCheckItem, setNewCheckItem] = useState('');
   const [showFindingForm, setShowFindingForm] = useState(false);
   const [newFinding, setNewFinding] = useState({ title: '', description: '', severity: 'medium', recommendation: '' });
+  const [pendingPhotos, setPendingPhotos] = useState([]);
+  const [uploadingPending, setUploadingPending] = useState(false);
   const [uploadingFindingIdx, setUploadingFindingIdx] = useState(null);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const newFindingFileRef = useRef(null);
+  const newFindingCameraRef = useRef(null);
 
   const addFinding = () => {
     if (!newFinding.title.trim()) return;
-    update('findings', [...(form.findings || []), { ...newFinding, id: Date.now(), photos: [] }]);
+    update('findings', [...(form.findings || []), { ...newFinding, id: Date.now(), photos: [...pendingPhotos] }]);
     setNewFinding({ title: '', description: '', severity: 'medium', recommendation: '' });
+    setPendingPhotos([]);
     setShowFindingForm(false);
   };
 
@@ -84,6 +89,36 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
       toast.error('เกิดข้อผิดพลาดในการอัปโหลด');
     } finally {
       setUploadingFindingIdx(null);
+    }
+  };
+
+  // Upload for the new finding form (pending)
+  const handlePendingFileUpload = async (files) => {
+    if (!files || files.length === 0) return;
+    setUploadingPending(true);
+    try {
+      for (const file of Array.from(files)) {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        const res = await base44.functions.invoke('uploadFindingFile', {
+          file_url, file_name: file.name, file_size: file.size,
+          customer_name: form.customer_name || 'ไม่ระบุลูกค้า',
+        });
+        if (res.data?.success) {
+          setPendingPhotos(prev => [...prev, {
+            name: res.data.name, drive_url: res.data.drive_url,
+            drive_file_id: res.data.drive_file_id, thumbnail_url: res.data.thumbnail_url,
+            base44_url: file_url, size: res.data.size || file.size,
+          }]);
+          toast.success(`อัปโหลด "${file.name}" สำเร็จ`);
+        } else {
+          toast.error(res.data?.error || 'อัปโหลดไม่สำเร็จ');
+        }
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error('เกิดข้อผิดพลาดในการอัปโหลด');
+    } finally {
+      setUploadingPending(false);
     }
   };
 
@@ -375,11 +410,50 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
               </Select>
               <Input value={newFinding.recommendation} onChange={e => setNewFinding(p => ({ ...p, recommendation: e.target.value }))} placeholder="คำแนะนำ เช่น ควรบันทึกในเดือนที่ออกใบกำกับ" className="text-xs h-8" />
             </div>
+            {/* Pending Photo Upload */}
+            {pendingPhotos.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {pendingPhotos.map((photo, pIdx) => (
+                  <div key={pIdx} className="relative group">
+                    <a href={photo.drive_url} target="_blank" rel="noopener noreferrer" className="block">
+                      <div className="w-14 h-14 rounded-lg border bg-white overflow-hidden flex items-center justify-center hover:ring-2 hover:ring-primary transition-all">
+                        {(photo.base44_url || photo.thumbnail_url) ? (
+                          <img src={photo.base44_url || photo.thumbnail_url} alt={photo.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-muted-foreground">
+                            <ImageIcon className="w-4 h-4" /><span className="text-[7px] truncate max-w-[48px]">{photo.name}</span>
+                          </div>
+                        )}
+                      </div>
+                    </a>
+                    <button onClick={() => setPendingPhotos(prev => prev.filter((_, i) => i !== pIdx))}
+                      className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <Button variant="outline" size="sm" className="text-[10px] h-6 gap-1 px-2" disabled={uploadingPending}
+                onClick={() => newFindingCameraRef.current.click()}>
+                {uploadingPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />} ถ่ายรูป
+              </Button>
+              <Button variant="outline" size="sm" className="text-[10px] h-6 gap-1 px-2" disabled={uploadingPending}
+                onClick={() => newFindingFileRef.current.click()}>
+                {uploadingPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Paperclip className="w-3 h-3" />} แนบไฟล์
+              </Button>
+              {pendingPhotos.length > 0 && <span className="text-[9px] text-muted-foreground">📎 {pendingPhotos.length} ไฟล์</span>}
+            </div>
+            <input ref={newFindingCameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+              onChange={(e) => { handlePendingFileUpload(e.target.files); e.target.value = ''; }} />
+            <input ref={newFindingFileRef} type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple className="hidden"
+              onChange={(e) => { handlePendingFileUpload(e.target.files); e.target.value = ''; }} />
             <div className="flex gap-2 pt-1">
               <Button size="sm" className="text-xs h-7 gap-1" onClick={addFinding} disabled={!newFinding.title.trim()}>
                 <Plus className="w-3 h-3" /> เพิ่ม
               </Button>
-              <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => { setShowFindingForm(false); setNewFinding({ title: '', description: '', severity: 'medium', recommendation: '' }); }}>
+              <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => { setShowFindingForm(false); setNewFinding({ title: '', description: '', severity: 'medium', recommendation: '' }); setPendingPhotos([]); }}>
                 ยกเลิก
               </Button>
             </div>
