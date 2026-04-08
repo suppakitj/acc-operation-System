@@ -33,9 +33,11 @@ const OBLIGATIONS = [
   { value: 'pnd90_director', label: 'ภงด.90 กรรมการ', desc: 'ภาษีบุคคลธรรมดา (มีรายได้อื่น) ยื่นภายใน มี.ค.' },
   { value: 'pnd91_director', label: 'ภงด.91 กรรมการ', desc: 'ภาษีบุคคลธรรมดา (เงินเดือนอย่างเดียว) ยื่นภายใน มี.ค.' },
   { value: 'pnd50_half', label: 'ภงด.50 ครึ่งปี', desc: 'ภาษีนิติบุคคลครึ่งปี ยื่นภายใน 2 เดือนหลังครบ 6 เดือน' },
+  { value: 'pnd51_half', label: 'ภงด.51 ครึ่งปี', desc: 'ภาษีนิติบุคคลครึ่งปี (แบบประมาณการ) ยื่นภายใน 2 เดือนหลังครบ 6 เดือนของรอบบัญชี' },
   { value: 'pnd50_annual', label: 'ภงด.50 ประจำปี', desc: 'ภาษีนิติบุคคลประจำปี ยื่นภายใน 150 วันหลังสิ้นรอบบัญชี' },
   { value: 'audit_annual', label: 'ตรวจสอบงบการเงิน', desc: 'ปีละครั้ง' },
   { value: 'dbd_filing', label: 'ยื่นงบ กรมพัฒนาธุรกิจ', desc: 'ภายใน 5 เดือนหลังสิ้นรอบบัญชี' },
+  { value: 'disclosure_form', label: 'Disclosure Form', desc: 'แบบนำส่งงบการเงิน (สบช.3) ยื่นภายใน 150 วันหลังสิ้นรอบบัญชี พร้อมกับ ภงด.50' },
   { value: 'boj5_annual', label: 'บอจ.5 บัญชีรายชื่อผู้ถือหุ้น', desc: 'ยื่นภายใน 14 วันหลังประชุมผู้ถือหุ้น (ประชุมภายใน 4 เดือนหลังสิ้นรอบบัญชี)' },
 ];
 
@@ -106,7 +108,7 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
     customer_group: 'sme', work_group: '', departments: [],
     supervisor: '', supervisor_name: '', primary_officer: '', primary_officer_name: '',
     contact_person: '', contact_email: '', contact_phone: '', line_id: '',
-    services: [], obligations: [], peak_package: 'none', peak_license_start: '', peak_license_end: '',
+    services: [], obligations: [], fiscal_year_end: '12-31', peak_package: 'none', peak_license_start: '', peak_license_end: '',
     credit_term: 30, monthly_fee: null, yearly_fee: null,
     billing_profile: { billing_name: '', billing_address: '', billing_tax_id: '', billing_email: '', payment_method: 'transfer' },
     status: 'active', notes: '',
@@ -305,6 +307,20 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
       <div className="bg-card rounded-xl border p-4 md:p-5">
         <SectionHeader icon={ClipboardCheck} title="ภาระผูกพัน (Obligations)" />
         <p className="text-xs text-muted-foreground mb-3">เลือกภาระที่ ACC ต้องดำเนินการให้ลูกค้ารายนี้</p>
+        <div className="mb-4">
+          <FieldWrapper label="วันสิ้นรอบบัญชี">
+            <Select value={form.fiscal_year_end || '12-31'} onValueChange={v => update('fiscal_year_end', v)} disabled={readOnly}>
+              <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="12-31">31 ธันวาคม (default)</SelectItem>
+                <SelectItem value="03-31">31 มีนาคม</SelectItem>
+                <SelectItem value="06-30">30 มิถุนายน</SelectItem>
+                <SelectItem value="09-30">30 กันยายน</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground mt-1">ลูกค้า 99% สิ้นรอบ 31 ธ.ค. — เปลี่ยนเฉพาะรายที่ต่างจากปกติ</p>
+          </FieldWrapper>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {OBLIGATIONS.map(ob => (
             <div
