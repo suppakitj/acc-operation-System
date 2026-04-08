@@ -51,6 +51,7 @@ import ObligationDashboard from './pages/ObligationDashboard';
 import TaxCalendar from './pages/TaxCalendar';
 import CustomerMonthlySummary from './pages/CustomerMonthlySummary';
 import MySkills from './pages/MySkills';
+import Notifications from './pages/Notifications';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -121,6 +122,7 @@ const AuthenticatedApp = () => {
         <Route path="/TaxCalendar" element={<TaxCalendar />} />
         <Route path="/CustomerMonthlySummary" element={<CustomerMonthlySummary />} />
         <Route path="/MySkills" element={<MySkills />} />
+        <Route path="/Notifications" element={<Notifications />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
