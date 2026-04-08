@@ -9,7 +9,7 @@ import {
 import { toast } from 'sonner';
 import { replaceLineEmojis } from './lineEmojiMap';
 
-export default function ChatBubble({ message, onCreateTask, onReply, onPin, pinnedIds = [], onQuoteClick }) {
+export default function ChatBubble({ message, onCreateTask, onReply, onPin, pinnedIds = [], onQuoteClick, onMentionClick }) {
   const isOutgoing = message.direction === 'outgoing';
   const [imgError, setImgError] = useState(false);
   const isPinned = pinnedIds.includes(message.id);
@@ -127,7 +127,13 @@ export default function ChatBubble({ message, onCreateTask, onReply, onPin, pinn
           : 'bg-white border border-border/60 shadow-sm'}`}
         >
           {showSenderName && (
-            <p className="text-[11px] font-semibold text-primary mb-1">{message.sender_name}</p>
+            <p
+              className="text-[11px] font-semibold text-primary mb-1 cursor-pointer hover:underline"
+              onClick={() => onMentionClick?.(message.sender_name)}
+              title={`คลิกเพื่อ @${message.sender_name}`}
+            >
+              {message.sender_name}
+            </p>
           )}
           {renderReplyQuote()}
           {renderContent()}

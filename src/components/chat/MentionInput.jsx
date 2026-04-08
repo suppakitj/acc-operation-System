@@ -12,7 +12,8 @@ import { AtSign, Users } from 'lucide-react';
  */
 export default function MentionInput({
   value, onChange, onKeyDown, placeholder, disabled,
-  users = [], lineMembers = [], chatType = 'user', onMentionsChange
+  users = [], lineMembers = [], chatType = 'user', onMentionsChange,
+  triggerMentionName
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const [menuFilter, setMenuFilter] = useState('');
@@ -169,6 +170,31 @@ export default function MentionInput({
       onMentionsChange?.([]);
     }
   }, [value]);
+
+  // External trigger: when triggerMentionName changes, insert @name into input
+  useEffect(() => {
+    if (!triggerMentionName) return;
+    const items = buildItems();
+    const match = items.find(item => item.display_name === triggerMentionName && item.isLineMember);
+    if (match) {
+      const newVal = value ? `${value} @${match.display_name} ` : `@${match.display_name} `;
+      onChange({ target: { value: newVal } });
+      if (match.line_user_id) {
+        const newMentions = [...activeMentions.filter(m => m.line_user_id !== match.line_user_id), {
+          line_user_id: match.line_user_id,
+          display_name: match.display_name,
+          isAll: match.isAll || false,
+        }];
+        setActiveMentions(newMentions);
+        onMentionsChange?.(newMentions);
+      }
+      setTimeout(() => inputRef.current?.focus(), 0);
+    } else {
+      const newVal = value ? `${value} @${triggerMentionName} ` : `@${triggerMentionName} `;
+      onChange({ target: { value: newVal } });
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }, [triggerMentionName]);
 
   // Close on outside click
   useEffect(() => {

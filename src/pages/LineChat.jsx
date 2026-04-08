@@ -94,6 +94,7 @@ export default function LineChat() {
   const chatEndRef = useRef(null);
   const chatTopRef = useRef(null);
   const [activeMentions, setActiveMentions] = useState([]);
+  const [triggerMentionName, setTriggerMentionName] = useState(null);
 
   const { data: configs = [] } = useQuery({
     queryKey: ['appConfig', 'line_oa'],
@@ -306,6 +307,10 @@ export default function LineChat() {
   };
 
   const handleReply = (msg) => setReplyTo(msg);
+  const handleMentionClick = (senderName) => {
+    setTriggerMentionName(null);
+    setTimeout(() => setTriggerMentionName(senderName), 0);
+  };
   const handlePin = (msg) => {
     setPinnedIds(prev => {
       const newIds = prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id];
@@ -531,6 +536,7 @@ export default function LineChat() {
                           message={m}
                           onCreateTask={(msg) => { setTaskMessage(msg); setTaskDialogOpen(true); }}
                           onReply={handleReply}
+                          onMentionClick={handleMentionClick}
                           onPin={handlePin}
                           pinnedIds={pinnedIds}
                           onQuoteClick={(msgId) => {
@@ -606,6 +612,7 @@ export default function LineChat() {
                       lineMembers={lineMembers}
                       chatType={selectedUser?.chatType || 'user'}
                       onMentionsChange={setActiveMentions}
+                      triggerMentionName={triggerMentionName}
                     />
                   </div>
                   <Button
