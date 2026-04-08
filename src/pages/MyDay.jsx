@@ -12,6 +12,7 @@ import QuickTimer from '../components/my-day/QuickTimer';
 import CompanyFeed from '../components/my-day/CompanyFeed';
 import IdeaBox from '../components/my-day/IdeaBox';
 import AppLauncher from '../components/my-day/AppLauncher';
+import MyTodoList from '../components/my-day/MyTodoList';
 
 export default function MyDay() {
   const queryClient = useQueryClient();
@@ -100,6 +101,7 @@ export default function MyDay() {
         overdue={overdue}
         onStatusChange={handleStatusChange}
       />
+      <MyTodoList currentUser={currentUser} />
       <MyStats myTasks={myTasks} myTimeEntries={myTimeEntries} />
       <CompanyFeed currentUser={currentUser} />
       <PulseSurvey currentUser={currentUser} />
