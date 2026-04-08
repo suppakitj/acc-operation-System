@@ -13,50 +13,98 @@ const TAX_RULES = [
 ];
 
 const ANNUAL_RULES = [
+  // ── ภาษีเงินได้บุคคลธรรมดา ──
+  {
+    type: 'pnd90',
+    label: 'ภ.ง.ด.90 (บุคคลธรรมดา-มีรายได้อื่น)',
+    category: 'annual_cit',
+    calcDeadline: (fiscalYear) => {
+      return { filingYear: fiscalYear + 1, month: 4, day: 8 };
+    },
+  },
+  {
+    type: 'pnd91',
+    label: 'ภ.ง.ด.91 (เงินเดือนอย่างเดียว)',
+    category: 'annual_cit',
+    calcDeadline: (fiscalYear) => {
+      return { filingYear: fiscalYear + 1, month: 4, day: 8 };
+    },
+  },
+  {
+    type: 'pnd95',
+    label: 'ภ.ง.ด.95',
+    category: 'annual_cit',
+    calcDeadline: (fiscalYear) => {
+      return { filingYear: fiscalYear + 1, month: 4, day: 8 };
+    },
+  },
+  {
+    type: 'pnd94',
+    label: 'ภ.ง.ด.94 (ครึ่งปีบุคคลธรรมดา)',
+    category: 'annual_cit',
+    calcDeadline: (fiscalYear) => {
+      return { filingYear: fiscalYear + 1, month: 10, day: 8 };
+    },
+  },
+  // ── ภาษีเงินได้นิติบุคคล ──
   {
     type: 'pnd50',
-    label: 'ภ.ง.ด.50 (ประจำปี)',
+    label: 'ภ.ง.ด.50 (นิติบุคคลประจำปี)',
     category: 'annual_cit',
-    calcDeadline: (year) => {
-      const yearEnd = new Date(year, 11, 31);
+    calcDeadline: (fiscalYear) => {
+      const yearEnd = new Date(fiscalYear, 11, 31);
       const deadline = new Date(yearEnd);
-      deadline.setDate(deadline.getDate() + 150);
+      deadline.setDate(deadline.getDate() + 158);
       return { filingYear: deadline.getFullYear(), month: deadline.getMonth() + 1, day: deadline.getDate() };
     },
   },
   {
     type: 'pnd51',
-    label: 'ภ.ง.ด.51 (ครึ่งปี)',
+    label: 'ภ.ง.ด.51 (นิติบุคคลครึ่งปี)',
     category: 'annual_cit',
-    calcDeadline: (year) => {
-      return { filingYear: year, month: 8, day: 31 };
+    calcDeadline: (fiscalYear) => {
+      const halfYear = new Date(fiscalYear + 1, 5, 30);
+      const deadline = new Date(halfYear);
+      deadline.setMonth(deadline.getMonth() + 2);
+      deadline.setDate(deadline.getDate() + 8);
+      return { filingYear: deadline.getFullYear(), month: deadline.getMonth() + 1, day: deadline.getDate() };
+    },
+  },
+  // ── สรุปหัก ณ ที่จ่ายสิ้นปี ──
+  {
+    type: 'pnd1k',
+    label: 'ภ.ง.ด.1ก (สรุปสิ้นปี)',
+    category: 'annual_filing',
+    calcDeadline: (fiscalYear) => {
+      return { filingYear: fiscalYear + 1, month: 3, day: 8 };
+    },
+  },
+  // ── งานยื่นรายปี ──
+  {
+    type: 'disclosure_form',
+    label: 'Disclosure Form (สบช.3)',
+    category: 'annual_filing',
+    calcDeadline: (fiscalYear) => {
+      const yearEnd = new Date(fiscalYear, 11, 31);
+      const deadline = new Date(yearEnd);
+      deadline.setDate(deadline.getDate() + 158);
+      return { filingYear: deadline.getFullYear(), month: deadline.getMonth() + 1, day: deadline.getDate() };
     },
   },
   {
     type: 'dbd_filing',
     label: 'ยื่นงบ DBD',
     category: 'annual_filing',
-    calcDeadline: (year) => {
-      return { filingYear: year + 1, month: 5, day: 31 };
+    calcDeadline: (fiscalYear) => {
+      return { filingYear: fiscalYear + 1, month: 5, day: 31 };
     },
   },
   {
     type: 'boj5',
     label: 'บอจ.5 (บัญชีผู้ถือหุ้น)',
     category: 'annual_filing',
-    calcDeadline: (year) => {
-      return { filingYear: year + 1, month: 5, day: 14 };
-    },
-  },
-  {
-    type: 'disclosure_form',
-    label: 'Disclosure Form (สบช.3)',
-    category: 'annual_filing',
-    calcDeadline: (year) => {
-      const yearEnd = new Date(year, 11, 31);
-      const deadline = new Date(yearEnd);
-      deadline.setDate(deadline.getDate() + 150);
-      return { filingYear: deadline.getFullYear(), month: deadline.getMonth() + 1, day: deadline.getDate() };
+    calcDeadline: (fiscalYear) => {
+      return { filingYear: fiscalYear + 1, month: 5, day: 14 };
     },
   },
 ];
