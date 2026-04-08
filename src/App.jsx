@@ -49,6 +49,7 @@ import EngagementInsights from './pages/EngagementInsights';
 import DirectorVault from './pages/DirectorVault';
 import ObligationDashboard from './pages/ObligationDashboard';
 import TaxCalendar from './pages/TaxCalendar';
+import CustomerMonthlySummary from './pages/CustomerMonthlySummary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -117,6 +118,7 @@ const AuthenticatedApp = () => {
         <Route path="/DirectorVault" element={<DirectorVault />} />
         <Route path="/ObligationDashboard" element={<ObligationDashboard />} />
         <Route path="/TaxCalendar" element={<TaxCalendar />} />
+        <Route path="/CustomerMonthlySummary" element={<CustomerMonthlySummary />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

@@ -168,6 +168,9 @@ export function useAccessControl(user) {
       // Tax Calendar
       if (p('tax_calendar') !== 'no') menus.push('tax_calendar');
 
+      // Customer Summary
+      if (p('customer_summary') !== 'no') menus.push('customer_summary');
+
       // My Day
       if (p('my_day') !== 'no') menus.push('my_day');
 
@@ -195,6 +198,7 @@ export function useAccessControl(user) {
       canViewEngagementInsights: p('engagement_insights') !== 'no',
       canViewDirectorVault: p('director_vault') !== 'no',
       canViewObligationDashboard: p('obligation_dashboard') !== 'no',
+    canViewCustomerSummary: p('customer_summary') !== 'no',
     };
   }, [user, matrix]);
 }
@@ -220,5 +224,6 @@ function empty() {
     canViewEngagementInsights: false,
     canViewDirectorVault: false,
     canViewObligationDashboard: false,
+    canViewCustomerSummary: false,
   };
 }
