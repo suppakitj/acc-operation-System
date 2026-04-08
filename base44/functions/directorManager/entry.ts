@@ -71,6 +71,23 @@ async function deleteOtp(base44, recordId) {
   await base44.asServiceRole.entities.AppConfig.delete(recordId);
 }
 
+async function logPdpaAccess(base44, { action, entity_type, entity_id, entity_label, user_email, user_name, details }) {
+  try {
+    await base44.asServiceRole.entities.AuditLog.create({
+      action: action,
+      entity_type: 'pdpa_access',
+      entity_name: entity_type,
+      entity_id: entity_id || '',
+      user_email: user_email,
+      user_name: user_name || user_email,
+      details: details || '',
+      category: 'pdpa',
+    });
+  } catch (e) {
+    console.warn('Failed to log PDPA access:', e.message);
+  }
+}
+
 // ─── Main handler ──────────────────────────────────────────────────
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -109,9 +126,27 @@ Deno.serve(async (req) => {
 
     if (director_id) {
       await base44.entities.DirectorInfo.update(director_id, data);
+      await logPdpaAccess(base44, {
+        action: 'update',
+        entity_type: 'DirectorInfo',
+        entity_id: director_id,
+        entity_label: customer_name,
+        user_email: user.email,
+        user_name: user.full_name || user.email,
+        details: `แก้ไขข้อมูลกรรมการ ${customer_name}`,
+      });
       return Response.json({ success: true, message: 'updated' });
     } else {
       const created = await base44.entities.DirectorInfo.create(data);
+      await logPdpaAccess(base44, {
+        action: 'create',
+        entity_type: 'DirectorInfo',
+        entity_id: created.id,
+        entity_label: customer_name,
+        user_email: user.email,
+        user_name: user.full_name || user.email,
+        details: `เพิ่มกรรมการใหม่ ${customer_name}`,
+      });
       return Response.json({ success: true, id: created.id });
     }
   }
@@ -155,6 +190,16 @@ Deno.serve(async (req) => {
     const dir = dirs?.[0];
     if (!dir) return Response.json({ error: 'ไม่พบข้อมูลกรรมการ' }, { status: 404 });
 
+    await logPdpaAccess(base44, {
+      action: 'view',
+      entity_type: 'DirectorInfo',
+      entity_id: director_id,
+      entity_label: dir.customer_name + ' - ' + (dir.position || 'กรรมการ'),
+      user_email: user.email,
+      user_name: user.full_name || user.email,
+      details: `ดูข้อมูลกรรมการ ${dir.customer_name} (${dir.position || 'กรรมการ'})`,
+    });
+
     return Response.json({
       success: true,
       full_name: dir.full_name_encrypted ? await decrypt(dir.full_name_encrypted, encryptionKey) : '',
@@ -168,6 +213,14 @@ Deno.serve(async (req) => {
   if (action === 'delete') {
     const { director_id } = body;
     await base44.entities.DirectorInfo.delete(director_id);
+    await logPdpaAccess(base44, {
+      action: 'delete',
+      entity_type: 'DirectorInfo',
+      entity_id: director_id,
+      user_email: user.email,
+      user_name: user.full_name || user.email,
+      details: `ลบข้อมูลกรรมการ ID: ${director_id}`,
+    });
     return Response.json({ success: true });
   }
 

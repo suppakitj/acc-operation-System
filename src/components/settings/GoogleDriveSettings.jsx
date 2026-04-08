@@ -63,12 +63,14 @@ export default function GoogleDriveSettings() {
   const [outputFolderId, setOutputFolderId] = useState('');
   const [lineFilesRootId, setLineFilesRootId] = useState('');
   const [kbFolderId, setKbFolderId] = useState('');
+  const [auditLogFolderId, setAuditLogFolderId] = useState('');
 
   useEffect(() => {
     setUploadFolderId(getVal('gdrive_upload_folder_id'));
     setOutputFolderId(getVal('gdrive_output_folder_id'));
     setLineFilesRootId(getVal('gdrive_line_files_root_id'));
     setKbFolderId(getVal('gdrive_kb_folder_id'));
+    setAuditLogFolderId(getVal('gdrive_audit_log_folder_id'));
   }, [configs]);
 
   // Auto-extract folder ID from full Google Drive URL
@@ -88,6 +90,7 @@ export default function GoogleDriveSettings() {
       { key: 'gdrive_output_folder_id', value: extractFolderId(outputFolderId), description: 'Google Drive Folder ID สำหรับเก็บผลลัพธ์จาก Manus' },
       { key: 'gdrive_line_files_root_id', value: extractFolderId(lineFilesRootId), description: 'Google Drive Folder ID สำหรับ LINE Files Browser (root folder)' },
       { key: 'gdrive_kb_folder_id', value: extractFolderId(kbFolderId), description: 'Google Drive Folder ID สำหรับ Knowledge Base attachments' },
+      { key: 'gdrive_audit_log_folder_id', value: extractFolderId(auditLogFolderId), description: 'Google Drive Folder ID สำหรับ export Audit Log (PDPA)' },
     ];
       for (const item of items) {
         const existingId = getId(item.key);
@@ -172,6 +175,21 @@ export default function GoogleDriveSettings() {
           />
           <p className="text-[11px] text-muted-foreground">
             Folder สำหรับเก็บไฟล์แนบจาก Knowledge Base — ถ้าไม่กรอกจะอัปโหลดไป root ของ Drive
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1.5">
+            <FolderOpen className="w-3.5 h-3.5" /> Audit Log Export Folder ID (PDPA)
+          </Label>
+          <Input
+            value={auditLogFolderId}
+            onChange={e => setAuditLogFolderId(e.target.value)}
+            placeholder="เช่น 1aBcDeFgHiJkLmNoPqRsTuVwXyZ"
+            className="font-mono text-sm"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Folder สำหรับ export Audit Log อัตโนมัติ (ข้อมูลเก่า 30 วัน) — แนะนำให้สร้าง Folder แยกเพื่อความปลอดภัย
           </p>
         </div>
 

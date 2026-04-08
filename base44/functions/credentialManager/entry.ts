@@ -73,6 +73,23 @@ async function deleteOtp(base44, recordId) {
   await base44.asServiceRole.entities.AppConfig.delete(recordId);
 }
 
+async function logPdpaAccess(base44, { action, entity_type, entity_id, entity_label, user_email, user_name, details }) {
+  try {
+    await base44.asServiceRole.entities.AuditLog.create({
+      action: action,
+      entity_type: 'pdpa_access',
+      entity_name: entity_type,
+      entity_id: entity_id || '',
+      user_email: user_email,
+      user_name: user_name || user_email,
+      details: details || '',
+      category: 'pdpa',
+    });
+  } catch (e) {
+    console.warn('Failed to log PDPA access:', e.message);
+  }
+}
+
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   const user = await base44.auth.me();
@@ -145,6 +162,15 @@ Deno.serve(async (req) => {
       data.change_history = history;
 
       await base44.entities.CustomerCredential.update(credential_id, data);
+      await logPdpaAccess(base44, {
+        action: 'update',
+        entity_type: 'CustomerCredential',
+        entity_id: credential_id,
+        entity_label: customer_name,
+        user_email: user.email,
+        user_name: user.full_name || user.email,
+        details: `แก้ไข credential ของ ${customer_name} (เปลี่ยน: ${fieldsChanged.join(', ')})`,
+      });
       return Response.json({ success: true, message: 'updated', fields_changed: fieldsChanged });
     } else {
       data.change_history = [{
@@ -154,6 +180,15 @@ Deno.serve(async (req) => {
         fields_changed: ['created'],
       }];
       const created = await base44.entities.CustomerCredential.create(data);
+      await logPdpaAccess(base44, {
+        action: 'create',
+        entity_type: 'CustomerCredential',
+        entity_id: created.id,
+        entity_label: customer_name,
+        user_email: user.email,
+        user_name: user.full_name || user.email,
+        details: `สร้าง credential ใหม่ของ ${customer_name}`,
+      });
       return Response.json({ success: true, id: created.id });
     }
   }
@@ -210,6 +245,16 @@ Deno.serve(async (req) => {
     const decryptedUsername = await decrypt(cred.username, encryptionKey);
     const decryptedPassword = await decrypt(cred.password_encrypted, encryptionKey);
 
+    await logPdpaAccess(base44, {
+      action: 'view',
+      entity_type: 'CustomerCredential',
+      entity_id: credential_id,
+      entity_label: cred.customer_name + ' - ' + (cred.service_name || ''),
+      user_email: user.email,
+      user_name: user.full_name || user.email,
+      details: `ดู credential ของ ${cred.customer_name} (${cred.service_name || 'N/A'})`,
+    });
+
     return Response.json({ success: true, username: decryptedUsername, password: decryptedPassword });
   }
 
@@ -217,6 +262,14 @@ Deno.serve(async (req) => {
   if (action === 'delete') {
     const { credential_id } = body;
     await base44.entities.CustomerCredential.delete(credential_id);
+    await logPdpaAccess(base44, {
+      action: 'delete',
+      entity_type: 'CustomerCredential',
+      entity_id: credential_id,
+      user_email: user.email,
+      user_name: user.full_name || user.email,
+      details: `ลบ credential ID: ${credential_id}`,
+    });
     return Response.json({ success: true });
   }
 
