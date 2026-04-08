@@ -113,13 +113,25 @@ export default function KnowledgeBase() {
   // Article detail view
   if (selectedArticle) {
     return (
-      <ArticleView
-        article={selectedArticle}
-        categories={categories}
-        onBack={() => setSelectedArticle(null)}
-        onEdit={(article) => { setEditingArticle(article); setShowEditForm(true); }}
-        canEdit={isManager || selectedArticle?.author_email === currentUser?.email}
-      />
+      <>
+        <ArticleView
+          article={selectedArticle}
+          categories={categories}
+          onBack={() => setSelectedArticle(null)}
+          onEdit={(article) => { setEditingArticle(article); setShowEditForm(true); }}
+          canEdit={isManager || selectedArticle?.author_email === currentUser?.email}
+        />
+        <ArticleForm
+          open={showEditForm}
+          onOpenChange={(open) => { if (!open) { setShowEditForm(false); setEditingArticle(null); } }}
+          article={editingArticle}
+          categories={categories}
+          currentUser={currentUser}
+          isManager={isManager}
+          onSave={handleEditSave}
+          saving={saving}
+        />
+      </>
     );
   }
 
