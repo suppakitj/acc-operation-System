@@ -2,58 +2,66 @@ import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import React, { lazy, Suspense } from 'react';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { LanguageProvider } from './components/LanguageContext';
 import { PermissionMatrixProvider } from './hooks/usePermissionMatrix';
-
 import AppLayout from './components/layout/AppLayout';
+
+// ─── Eager load: landing + most used ───
+import MyDay from './pages/MyDay';
 import Dashboard from './pages/Dashboard';
 import Tasks from './pages/Tasks';
-import Schedule from './pages/Schedule';
-import Customers from './pages/Customers';
-import TaskTemplates from './pages/TaskTemplates';
-import PeakAccount from './pages/PeakAccount';
-import Billing from './pages/Billing';
-
-import LineChat from './pages/LineChat';
-
-import UserManagement from './pages/UserManagement';
-import RoleManagement from './pages/RoleManagement';
-import AuditLog from './pages/AuditLog';
-import AppSettings from './pages/AppSettings';
-import DatabaseBackup from './pages/DatabaseBackup';
-import ServiceMaster from './pages/ServiceMaster';
-import HolidayMaster from './pages/HolidayMaster';
-import TeamAnalytics from './pages/TeamAnalytics';
-import StaffDashboard from './pages/StaffDashboard';
-import TaskCalendar from './pages/TaskCalendar';
-import OcrProcessing from './pages/OcrProcessing';
-import LineFiles from './pages/LineFiles';
-import ReferralCommission from './pages/ReferralCommission';
-import TaskGeneration from './pages/TaskGeneration';
-import TimeTracking from './pages/TimeTracking';
-import WorkloadBalancer from './pages/WorkloadBalancer';
-import CustomerProfile from './pages/CustomerProfile';
-import StaffCostReport from './pages/StaffCostReport';
-import KpiDashboard from './pages/KpiDashboard';
-import ForecastRisk from './pages/ForecastRisk';
-import CustomerHealthScore from './pages/CustomerHealthScore';
-import CustomerCredentials from './pages/CustomerCredentials';
-import ExternalServiceMaster from './pages/ExternalServiceMaster';
-import KnowledgeBase from './pages/KnowledgeBase';
-import KnowledgeManage from './pages/KnowledgeManage';
-import MyDay from './pages/MyDay';
-import EngagementInsights from './pages/EngagementInsights';
-import DirectorVault from './pages/DirectorVault';
-import ObligationDashboard from './pages/ObligationDashboard';
-import TaxCalendar from './pages/TaxCalendar';
-import CustomerMonthlySummary from './pages/CustomerMonthlySummary';
-import MySkills from './pages/MySkills';
 import Notifications from './pages/Notifications';
-import MeetingNotes from './pages/MeetingNotes';
-import FindingsDashboard from './pages/FindingsDashboard';
+
+// ─── Lazy load: everything else ───
+const Schedule = lazy(() => import('./pages/Schedule'));
+const Customers = lazy(() => import('./pages/Customers'));
+const TaskTemplates = lazy(() => import('./pages/TaskTemplates'));
+const PeakAccount = lazy(() => import('./pages/PeakAccount'));
+const Billing = lazy(() => import('./pages/Billing'));
+const LineChat = lazy(() => import('./pages/LineChat'));
+const UserManagement = lazy(() => import('./pages/UserManagement'));
+const RoleManagement = lazy(() => import('./pages/RoleManagement'));
+const AuditLog = lazy(() => import('./pages/AuditLog'));
+const AppSettings = lazy(() => import('./pages/AppSettings'));
+const DatabaseBackup = lazy(() => import('./pages/DatabaseBackup'));
+const ServiceMaster = lazy(() => import('./pages/ServiceMaster'));
+const HolidayMaster = lazy(() => import('./pages/HolidayMaster'));
+const TeamAnalytics = lazy(() => import('./pages/TeamAnalytics'));
+const StaffDashboard = lazy(() => import('./pages/StaffDashboard'));
+const TaskCalendar = lazy(() => import('./pages/TaskCalendar'));
+const OcrProcessing = lazy(() => import('./pages/OcrProcessing'));
+const LineFiles = lazy(() => import('./pages/LineFiles'));
+const ReferralCommission = lazy(() => import('./pages/ReferralCommission'));
+const TaskGeneration = lazy(() => import('./pages/TaskGeneration'));
+const TimeTracking = lazy(() => import('./pages/TimeTracking'));
+const WorkloadBalancer = lazy(() => import('./pages/WorkloadBalancer'));
+const CustomerProfile = lazy(() => import('./pages/CustomerProfile'));
+const StaffCostReport = lazy(() => import('./pages/StaffCostReport'));
+const KpiDashboard = lazy(() => import('./pages/KpiDashboard'));
+const ForecastRisk = lazy(() => import('./pages/ForecastRisk'));
+const CustomerHealthScore = lazy(() => import('./pages/CustomerHealthScore'));
+const CustomerCredentials = lazy(() => import('./pages/CustomerCredentials'));
+const ExternalServiceMaster = lazy(() => import('./pages/ExternalServiceMaster'));
+const KnowledgeBase = lazy(() => import('./pages/KnowledgeBase'));
+const KnowledgeManage = lazy(() => import('./pages/KnowledgeManage'));
+const EngagementInsights = lazy(() => import('./pages/EngagementInsights'));
+const DirectorVault = lazy(() => import('./pages/DirectorVault'));
+const ObligationDashboard = lazy(() => import('./pages/ObligationDashboard'));
+const TaxCalendar = lazy(() => import('./pages/TaxCalendar'));
+const CustomerMonthlySummary = lazy(() => import('./pages/CustomerMonthlySummary'));
+const MySkills = lazy(() => import('./pages/MySkills'));
+const MeetingNotes = lazy(() => import('./pages/MeetingNotes'));
+const FindingsDashboard = lazy(() => import('./pages/FindingsDashboard'));
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center py-20">
+    <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+  </div>
+);
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -79,57 +87,60 @@ const AuthenticatedApp = () => {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/MyDay" replace />} />
-      <Route element={<AppLayout />}>
-        <Route path="/MyDay" element={<MyDay />} />
-        <Route path="/Dashboard" element={<Dashboard />} />
-        <Route path="/Tasks" element={<Tasks />} />
-        <Route path="/Schedule" element={<Schedule />} />
-        <Route path="/Customers" element={<Customers />} />
-        <Route path="/TaskTemplates" element={<TaskTemplates />} />
-        <Route path="/PeakAccount" element={<PeakAccount />} />
-        <Route path="/Billing" element={<Billing />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/" element={<Navigate to="/MyDay" replace />} />
+        <Route element={<AppLayout />}>
+          {/* Eager loaded */}
+          <Route path="/MyDay" element={<MyDay />} />
+          <Route path="/Dashboard" element={<Dashboard />} />
+          <Route path="/Tasks" element={<Tasks />} />
+          <Route path="/Notifications" element={<Notifications />} />
 
-        <Route path="/LineChat" element={<LineChat />} />
-
-        <Route path="/UserManagement" element={<UserManagement />} />
-        <Route path="/RoleManagement" element={<RoleManagement />} />
-        <Route path="/AuditLog" element={<AuditLog />} />
-        <Route path="/AppSettings" element={<AppSettings />} />
-        <Route path="/ServiceMaster" element={<ServiceMaster />} />
-        <Route path="/HolidayMaster" element={<HolidayMaster />} />
-        <Route path="/TeamAnalytics" element={<TeamAnalytics />} />
-        <Route path="/StaffDashboard" element={<StaffDashboard />} />
-        <Route path="/TaskCalendar" element={<TaskCalendar />} />
-        <Route path="/DatabaseBackup" element={<DatabaseBackup />} />
-        <Route path="/OcrProcessing" element={<OcrProcessing />} />
-        <Route path="/LineFiles" element={<LineFiles />} />
-        <Route path="/ReferralCommission" element={<ReferralCommission />} />
-        <Route path="/TaskGeneration" element={<TaskGeneration />} />
-        <Route path="/TimeTracking" element={<TimeTracking />} />
-        <Route path="/WorkloadBalancer" element={<WorkloadBalancer />} />
-        <Route path="/CustomerProfile" element={<CustomerProfile />} />
-        <Route path="/StaffCostReport" element={<StaffCostReport />} />
-        <Route path="/KpiDashboard" element={<KpiDashboard />} />
-        <Route path="/ForecastRisk" element={<ForecastRisk />} />
-        <Route path="/CustomerHealthScore" element={<CustomerHealthScore />} />
-        <Route path="/CustomerCredentials" element={<CustomerCredentials />} />
-        <Route path="/ExternalServiceMaster" element={<ExternalServiceMaster />} />
-        <Route path="/KnowledgeBase" element={<KnowledgeBase />} />
-        <Route path="/KnowledgeManage" element={<KnowledgeManage />} />
-        <Route path="/EngagementInsights" element={<EngagementInsights />} />
-        <Route path="/DirectorVault" element={<DirectorVault />} />
-        <Route path="/ObligationDashboard" element={<ObligationDashboard />} />
-        <Route path="/TaxCalendar" element={<TaxCalendar />} />
-        <Route path="/CustomerMonthlySummary" element={<CustomerMonthlySummary />} />
-        <Route path="/MySkills" element={<MySkills />} />
-        <Route path="/Notifications" element={<Notifications />} />
-        <Route path="/MeetingNotes" element={<MeetingNotes />} />
-        <Route path="/FindingsDashboard" element={<FindingsDashboard />} />
-      </Route>
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
+          {/* Lazy loaded */}
+          <Route path="/Schedule" element={<Schedule />} />
+          <Route path="/Customers" element={<Customers />} />
+          <Route path="/TaskTemplates" element={<TaskTemplates />} />
+          <Route path="/PeakAccount" element={<PeakAccount />} />
+          <Route path="/Billing" element={<Billing />} />
+          <Route path="/LineChat" element={<LineChat />} />
+          <Route path="/UserManagement" element={<UserManagement />} />
+          <Route path="/RoleManagement" element={<RoleManagement />} />
+          <Route path="/AuditLog" element={<AuditLog />} />
+          <Route path="/AppSettings" element={<AppSettings />} />
+          <Route path="/ServiceMaster" element={<ServiceMaster />} />
+          <Route path="/HolidayMaster" element={<HolidayMaster />} />
+          <Route path="/TeamAnalytics" element={<TeamAnalytics />} />
+          <Route path="/StaffDashboard" element={<StaffDashboard />} />
+          <Route path="/TaskCalendar" element={<TaskCalendar />} />
+          <Route path="/DatabaseBackup" element={<DatabaseBackup />} />
+          <Route path="/OcrProcessing" element={<OcrProcessing />} />
+          <Route path="/LineFiles" element={<LineFiles />} />
+          <Route path="/ReferralCommission" element={<ReferralCommission />} />
+          <Route path="/TaskGeneration" element={<TaskGeneration />} />
+          <Route path="/TimeTracking" element={<TimeTracking />} />
+          <Route path="/WorkloadBalancer" element={<WorkloadBalancer />} />
+          <Route path="/CustomerProfile" element={<CustomerProfile />} />
+          <Route path="/StaffCostReport" element={<StaffCostReport />} />
+          <Route path="/KpiDashboard" element={<KpiDashboard />} />
+          <Route path="/ForecastRisk" element={<ForecastRisk />} />
+          <Route path="/CustomerHealthScore" element={<CustomerHealthScore />} />
+          <Route path="/CustomerCredentials" element={<CustomerCredentials />} />
+          <Route path="/ExternalServiceMaster" element={<ExternalServiceMaster />} />
+          <Route path="/KnowledgeBase" element={<KnowledgeBase />} />
+          <Route path="/KnowledgeManage" element={<KnowledgeManage />} />
+          <Route path="/EngagementInsights" element={<EngagementInsights />} />
+          <Route path="/DirectorVault" element={<DirectorVault />} />
+          <Route path="/ObligationDashboard" element={<ObligationDashboard />} />
+          <Route path="/TaxCalendar" element={<TaxCalendar />} />
+          <Route path="/CustomerMonthlySummary" element={<CustomerMonthlySummary />} />
+          <Route path="/MySkills" element={<MySkills />} />
+          <Route path="/MeetingNotes" element={<MeetingNotes />} />
+          <Route path="/FindingsDashboard" element={<FindingsDashboard />} />
+        </Route>
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 
