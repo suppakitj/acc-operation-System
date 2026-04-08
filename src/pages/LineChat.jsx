@@ -97,16 +97,19 @@ export default function LineChat() {
   const prevMessageCount = useRef(0);
 
   const scrollToBottom = useCallback((behavior = 'smooth') => {
-    setTimeout(() => {
+    // Use multiple attempts to ensure DOM is fully rendered
+    const doScroll = () => {
       const viewport = chatScrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
       if (viewport) {
-        if (behavior === 'instant') {
-          viewport.scrollTop = viewport.scrollHeight;
-        } else {
+        viewport.scrollTop = viewport.scrollHeight;
+        if (behavior === 'smooth') {
           viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
         }
       }
-    }, 150);
+    };
+    doScroll();
+    setTimeout(doScroll, 100);
+    setTimeout(doScroll, 300);
   }, []);
   const [activeMentions, setActiveMentions] = useState([]);
   const [triggerMentionName, setTriggerMentionName] = useState(null);
