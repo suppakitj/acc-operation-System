@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, ClipboardList } from 'lucide-react';
+import { Plus, Trash2, ClipboardList, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import TaskTimeTracker from '../time-tracking/TaskTimeTracker';
 import DueDateChangeHistory from './DueDateChangeHistory';
@@ -24,7 +24,7 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
     title: '', description: '', customer_id: '', customer_name: '',
     service_type: '', assigned_to: '', assigned_name: '', department: '',
     priority: 'medium', status: 'pending', due_date: '', start_date: '',
-    checklist: [], is_recurring: false, recurring_type: '', template_id: '', ...task,
+    checklist: [], findings: [], is_recurring: false, recurring_type: '', template_id: '', ...task,
   });
 
   const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list() });
@@ -33,6 +33,25 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
   const { data: templates = [] } = useQuery({ queryKey: ['taskTemplates'], queryFn: () => base44.entities.TaskTemplate.list() });
   const activeTemplates = templates.filter(t => t.status !== 'inactive');
   const [newCheckItem, setNewCheckItem] = useState('');
+  const [showFindingForm, setShowFindingForm] = useState(false);
+  const [newFinding, setNewFinding] = useState({ title: '', description: '', severity: 'medium', recommendation: '' });
+
+  const addFinding = () => {
+    if (!newFinding.title.trim()) return;
+    update('findings', [...(form.findings || []), { ...newFinding, id: Date.now() }]);
+    setNewFinding({ title: '', description: '', severity: 'medium', recommendation: '' });
+    setShowFindingForm(false);
+  };
+
+  const removeFinding = (idx) => {
+    update('findings', (form.findings || []).filter((_, i) => i !== idx));
+  };
+
+  const SEVERITY_CONFIG = {
+    critical: { label: 'ร้ายแรง', emoji: '🔴', color: 'bg-red-100 text-red-700 border-red-200' },
+    medium: { label: 'ปานกลาง', emoji: '🟡', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+    low: { label: 'เล็กน้อย', emoji: '🟢', color: 'bg-green-100 text-green-700 border-green-200' },
+  };
 
   const applyTemplate = (templateId) => {
     if (!templateId || templateId === '_none') {
@@ -187,6 +206,95 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
             <Button variant="outline" size="icon" onClick={addChecklistItem}><Plus className="w-4 h-4" /></Button>
           </div>
         </div>
+      </div>
+
+      {/* ═══ Findings — ปัญหาที่เจอ ═══ */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="flex items-center gap-1.5">
+            <AlertTriangle className="w-3.5 h-3.5 text-orange-500" />
+            ปัญหาที่เจอ (Findings)
+            {(form.findings || []).length > 0 && (
+              <span className="text-[10px] text-muted-foreground ml-1">({(form.findings || []).length} รายการ)</span>
+            )}
+          </Label>
+          {!showFindingForm && (
+            <Button variant="outline" size="sm" className="text-xs h-7 gap-1" onClick={() => setShowFindingForm(true)}>
+              <Plus className="w-3 h-3" /> เพิ่มปัญหา
+            </Button>
+          )}
+        </div>
+
+        {(form.findings || []).length > 0 && (() => {
+          const counts = { critical: 0, medium: 0, low: 0 };
+          (form.findings || []).forEach(f => { if (counts[f.severity] !== undefined) counts[f.severity]++; });
+          return (
+            <div className="flex gap-2">
+              {counts.critical > 0 && <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200">🔴 {counts.critical} ร้ายแรง</Badge>}
+              {counts.medium > 0 && <Badge variant="outline" className="text-[10px] bg-yellow-50 text-yellow-700 border-yellow-200">🟡 {counts.medium} ปานกลาง</Badge>}
+              {counts.low > 0 && <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">🟢 {counts.low} เล็กน้อย</Badge>}
+            </div>
+          );
+        })()}
+
+        {(form.findings || []).map((f, idx) => {
+          const sev = SEVERITY_CONFIG[f.severity] || SEVERITY_CONFIG.medium;
+          return (
+            <div key={f.id || idx} className={`rounded-lg border p-3 ${sev.color.split(' ')[0]} border-l-4`}
+              style={{ borderLeftColor: f.severity === 'critical' ? '#dc2626' : f.severity === 'medium' ? '#d97706' : '#16a34a' }}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${sev.color}`}>{sev.emoji} {sev.label}</Badge>
+                    <span className="text-xs font-semibold">{f.title}</span>
+                  </div>
+                  {f.description && <p className="text-[11px] text-muted-foreground mb-1">{f.description}</p>}
+                  {f.recommendation && (
+                    <p className="text-[11px] text-blue-700 bg-blue-50 rounded px-2 py-1 mt-1">💡 แนะนำ: {f.recommendation}</p>
+                  )}
+                </div>
+                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeFinding(idx)}>
+                  <Trash2 className="w-3 h-3 text-muted-foreground" />
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+
+        {showFindingForm && (
+          <div className="rounded-lg border border-dashed border-orange-300 bg-orange-50/50 p-3 space-y-2">
+            <p className="text-xs font-semibold text-orange-700">เพิ่มปัญหาที่เจอ</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="sm:col-span-2">
+                <Input value={newFinding.title} onChange={e => setNewFinding(p => ({ ...p, title: e.target.value }))} placeholder="หัวข้อปัญหา เช่น ภาษีซื้อบันทึกผิดงวด" className="text-xs h-8" />
+              </div>
+              <div className="sm:col-span-2">
+                <Textarea value={newFinding.description} onChange={e => setNewFinding(p => ({ ...p, description: e.target.value }))} placeholder="รายละเอียด..." rows={2} className="text-xs" />
+              </div>
+              <Select value={newFinding.severity} onValueChange={v => setNewFinding(p => ({ ...p, severity: v }))}>
+                <SelectTrigger className="text-xs h-8"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="critical">🔴 ร้ายแรง</SelectItem>
+                  <SelectItem value="medium">🟡 ปานกลาง</SelectItem>
+                  <SelectItem value="low">🟢 เล็กน้อย</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input value={newFinding.recommendation} onChange={e => setNewFinding(p => ({ ...p, recommendation: e.target.value }))} placeholder="คำแนะนำ เช่น ควรบันทึกในเดือนที่ออกใบกำกับ" className="text-xs h-8" />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button size="sm" className="text-xs h-7 gap-1" onClick={addFinding} disabled={!newFinding.title.trim()}>
+                <Plus className="w-3 h-3" /> เพิ่ม
+              </Button>
+              <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => { setShowFindingForm(false); setNewFinding({ title: '', description: '', severity: 'medium', recommendation: '' }); }}>
+                ยกเลิก
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {(form.findings || []).length === 0 && !showFindingForm && (
+          <p className="text-[10px] text-muted-foreground">ยังไม่มี — กด "เพิ่มปัญหา" เมื่อเจอปัญหาระหว่างตรวจ</p>
+        )}
       </div>
 
       {/* Due Date Change History */}
