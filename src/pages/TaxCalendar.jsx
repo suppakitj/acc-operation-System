@@ -69,7 +69,7 @@ export default function TaxCalendar() {
   const byMonth = useMemo(() => {
     const map = {};
     for (let m = 1; m <= 12; m++) map[m] = [];
-    deadlines.forEach(d => { if (d.for_month > 0 && map[d.for_month]) map[d.for_month].push(d); });
+    deadlines.forEach(d => { const m = Number(d.for_month); if (m > 0 && map[m]) map[m].push(d); });
     return map;
   }, [deadlines]);
 
@@ -197,7 +197,7 @@ export default function TaxCalendar() {
       {/* Annual deadlines */}
       {!isLoading && deadlines.length > 0 && (
         <TaxCalendarAnnual
-          items={deadlines.filter(d => d.for_month === 0)}
+          items={deadlines.filter(d => Number(d.for_month) === 0)}
           selectedYear={selectedYear}
         />
       )}
