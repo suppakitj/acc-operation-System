@@ -175,6 +175,7 @@ export function useAccessControl(user) {
       if (p('my_day') !== 'no') menus.push('my_day');
       if (p('my_skills') !== 'no') menus.push('my_skills');
       if (p('meeting_notes') !== 'no') menus.push('meeting_notes');
+      if (p('findings_dashboard') !== 'no') menus.push('findings_dashboard');
 
       return menus;
     };
@@ -201,6 +202,7 @@ export function useAccessControl(user) {
       canViewDirectorVault: p('director_vault') !== 'no',
       canViewObligationDashboard: p('obligation_dashboard') !== 'no',
     canViewCustomerSummary: p('customer_summary') !== 'no',
+    canViewFindingsDashboard: p('findings_dashboard') !== 'no',
     };
   }, [user, matrix]);
 }
@@ -227,5 +229,6 @@ function empty() {
     canViewDirectorVault: false,
     canViewObligationDashboard: false,
     canViewCustomerSummary: false,
+    canViewFindingsDashboard: false,
   };
 }

@@ -53,6 +53,7 @@ import CustomerMonthlySummary from './pages/CustomerMonthlySummary';
 import MySkills from './pages/MySkills';
 import Notifications from './pages/Notifications';
 import MeetingNotes from './pages/MeetingNotes';
+import FindingsDashboard from './pages/FindingsDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -125,6 +126,7 @@ const AuthenticatedApp = () => {
         <Route path="/MySkills" element={<MySkills />} />
         <Route path="/Notifications" element={<Notifications />} />
         <Route path="/MeetingNotes" element={<MeetingNotes />} />
+        <Route path="/FindingsDashboard" element={<FindingsDashboard />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
