@@ -159,7 +159,9 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
               <SelectItem value="pending">{t('status_pending')}</SelectItem>
               <SelectItem value="in_progress">{t('status_in_progress')}</SelectItem>
               <SelectItem value="review">{t('status_review')}</SelectItem>
-              <SelectItem value="completed">{t('status_completed')}</SelectItem>
+              {currentUser?.role !== 'staff' && (
+                <SelectItem value="completed">{t('status_completed')}</SelectItem>
+              )}
               <SelectItem value="cancelled">{t('status_cancelled')}</SelectItem>
             </SelectContent>
           </Select>

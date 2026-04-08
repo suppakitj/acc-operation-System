@@ -5,7 +5,8 @@ import { format } from 'date-fns';
 import { useUserList } from '@/hooks/useUserList';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Download } from 'lucide-react';
+import { Plus, Download, Check, X } from 'lucide-react';
+import { toast } from 'sonner';
 import TaskForm from '../components/tasks/TaskForm';
 import TaskStatsRow from '../components/tasks/TaskStatsRow';
 import TaskDeptTabs from '../components/tasks/TaskDeptTabs';
@@ -52,7 +53,56 @@ export default function Tasks() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tasks'] }); setShowForm(false); setEditingTask(null); },
   });
 
+  const isReviewer = ['admin', 'management', 'manager', 'super_supervisor'].includes(currentUser?.role);
+  const isStaff = currentUser?.role === 'staff';
+
+  const handleApprove = async (taskId) => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    await base44.entities.Task.update(taskId, {
+      status: 'completed',
+      completed_date: today,
+      review_status: 'approved',
+      reviewer_email: currentUser.email,
+      reviewer_name: currentUser.full_name || currentUser.email,
+      reviewed_date: today,
+    });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    toast.success('✅ Approve เรียบร้อย — งานปิดแล้ว');
+  };
+
+  const handleReject = async (taskId) => {
+    const note = prompt('เหตุผลที่ส่งกลับ:');
+    if (note === null) return;
+    await base44.entities.Task.update(taskId, {
+      status: 'in_progress',
+      review_status: 'rejected',
+      reviewer_email: currentUser.email,
+      reviewer_name: currentUser.full_name || currentUser.email,
+      reviewed_date: format(new Date(), 'yyyy-MM-dd'),
+      review_note: note || '',
+    });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    toast.success('📤 ส่งกลับให้แก้ไขแล้ว');
+  };
+
   const handleSubmit = async (data) => {
+    // Staff ห้ามกด completed
+    if (isStaff && data.status === 'completed') {
+      toast.error('ไม่สามารถปิดงานเองได้ — ต้องส่งตรวจให้หัวหน้า approve');
+      return;
+    }
+
+    // เช็ค checklist ก่อนส่งตรวจ
+    if (data.status === 'review') {
+      const checklist = data.checklist || [];
+      const allChecked = checklist.length === 0 || checklist.every(item => item.checked);
+      if (!allChecked) {
+        toast.error('กรุณา check checklist ให้ครบก่อนส่งตรวจ');
+        return;
+      }
+      data.review_status = 'pending_review';
+    }
+
     // Auto set completed_date when status changes to completed
     if (data.status === 'completed' && !data.completed_date) {
       data.completed_date = format(new Date(), 'yyyy-MM-dd');
@@ -68,7 +118,6 @@ export default function Tasks() {
     }
 
     // Track due date change history when editing
-    // Normalize dates to YYYY-MM-DD for comparison (API may return with time suffix)
     const oldDueNorm = editingTask?.due_date?.split('T')[0] || '';
     const newDueNorm = data.due_date?.split('T')[0] || '';
     if (editingTask && newDueNorm && oldDueNorm && newDueNorm !== oldDueNorm) {
@@ -228,6 +277,9 @@ export default function Tasks() {
            sortDir={sortDir}
            onSort={(field, dir) => { setSortField(field); setSortDir(dir); }}
            users={users}
+           isReviewer={isReviewer}
+           onApprove={handleApprove}
+           onReject={handleReject}
           />
           <TablePagination totalItems={filtered.length} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
         </>

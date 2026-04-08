@@ -1,7 +1,9 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format, differenceInDays } from 'date-fns';
+import { Check, X } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { parseUTCDate } from '@/lib/dateUtils';
 
@@ -22,7 +24,7 @@ const SVC_STYLES = {
 };
 const SVC_LABELS = { accounting: 'Accounting', payroll: 'Payroll', tax_consulting: 'Tax', audit: 'Audit', peak_licensing: 'Peak' };
 
-export default function TaskTable({ tasks, selected, setSelected, onRowClick, sortField, sortDir, onSort, users = [] }) {
+export default function TaskTable({ tasks, selected, setSelected, onRowClick, sortField, sortDir, onSort, users = [], isReviewer = false, onApprove, onReject }) {
   const { t } = useLanguage();
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -165,10 +167,48 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
                     </div>
                   )}
                 </td>
-                <td className="px-2 py-2.5">
+                <td className="px-2 py-2.5" onClick={e => { if (task.status === 'review' && isReviewer) e.stopPropagation(); }}>
                   <Badge variant="outline" className={`text-[10px] ${STATUS_STYLES[task.status] || ''}`}>
                     {STATUS_LABELS[task.status] || task.status}
                   </Badge>
+                  {/* Reviewer approve/reject buttons */}
+                  {task.status === 'review' && isReviewer && onApprove && (
+                    <div className="flex gap-1 mt-1.5">
+                      <Button size="sm" className="h-6 px-2 text-[10px] gap-1 bg-green-600 hover:bg-green-700"
+                        onClick={(e) => { e.stopPropagation(); onApprove(task.id); }}>
+                        <Check className="w-3 h-3" /> Approve
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1 text-red-600 border-red-200 hover:bg-red-50"
+                        onClick={(e) => { e.stopPropagation(); onReject(task.id); }}>
+                        <X className="w-3 h-3" /> ส่งกลับ
+                      </Button>
+                    </div>
+                  )}
+                  {/* Staff sees waiting badge */}
+                  {task.status === 'review' && !isReviewer && (
+                    <Badge variant="outline" className="text-[9px] mt-1 bg-purple-50 text-purple-700 border-purple-200">
+                      🔍 รอหัวหน้าตรวจ
+                    </Badge>
+                  )}
+                  {/* Reject note */}
+                  {task.review_status === 'rejected' && task.review_note && (
+                    <div className="mt-1 p-1 bg-red-50 border border-red-200 rounded">
+                      <p className="text-[9px] text-red-700 leading-tight">⚠️ {task.reviewer_name}: {task.review_note}</p>
+                    </div>
+                  )}
+                  {/* Checklist progress */}
+                  {task.checklist && task.checklist.length > 0 && (() => {
+                    const checked = task.checklist.filter(c => c.checked).length;
+                    return (
+                      <div className="flex items-center gap-1 mt-1">
+                        <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${checked === task.checklist.length ? 'bg-green-500' : 'bg-amber-500'}`}
+                            style={{ width: `${(checked / task.checklist.length) * 100}%` }} />
+                        </div>
+                        <span className="text-[9px] text-muted-foreground">{checked}/{task.checklist.length}</span>
+                      </div>
+                    );
+                  })()}
                 </td>
                 <td className="px-2 py-2.5 hidden xl:table-cell">
                   <span className="text-[11px] text-muted-foreground">

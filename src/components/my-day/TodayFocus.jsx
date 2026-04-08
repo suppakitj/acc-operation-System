@@ -14,10 +14,12 @@ const STATUS_BADGES = {
 
 function TaskCard({ task, onStatusChange, t }) {
   const nextAction = {
-    pending: { label: t('my_day_start_work'), status: 'in_progress', color: 'bg-blue-600 hover:bg-blue-700 text-white' },
-    in_progress: { label: t('my_day_send_review'), status: 'review', color: 'bg-amber-500 hover:bg-amber-600 text-white' },
-    review: { label: t('my_day_mark_done'), status: 'completed', color: 'bg-green-600 hover:bg-green-700 text-white' },
+    pending: { label: 'เริ่มทำงาน', status: 'in_progress', color: 'bg-blue-600 hover:bg-blue-700 text-white' },
+    in_progress: { label: 'ส่งตรวจ', status: 'review', color: 'bg-amber-500 hover:bg-amber-600 text-white' },
   }[task.status];
+
+  const checklist = task.checklist || [];
+  const checkedCount = checklist.filter(c => c.checked).length;
 
   return (
     <div className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-card hover:shadow-sm transition-shadow">
@@ -36,6 +38,22 @@ function TaskCard({ task, onStatusChange, t }) {
             </Badge>
           )}
         </div>
+        {/* Reject note */}
+        {task.review_status === 'rejected' && task.review_note && (
+          <div className="mt-1.5 p-1.5 bg-red-50 border border-red-200 rounded">
+            <p className="text-[10px] text-red-700">⚠️ ส่งกลับ: {task.review_note}</p>
+          </div>
+        )}
+        {/* Checklist progress */}
+        {checklist.length > 0 && (
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+              <div className={`h-full rounded-full ${checkedCount === checklist.length ? 'bg-green-500' : 'bg-amber-500'}`}
+                style={{ width: `${(checkedCount / checklist.length) * 100}%` }} />
+            </div>
+            <span className="text-[10px] text-muted-foreground">{checkedCount}/{checklist.length}</span>
+          </div>
+        )}
       </div>
       {nextAction && (
         <Button
@@ -45,6 +63,11 @@ function TaskCard({ task, onStatusChange, t }) {
         >
           {nextAction.label}
         </Button>
+      )}
+      {task.status === 'review' && (
+        <Badge variant="outline" className="text-[10px] shrink-0 bg-purple-50 text-purple-700 border-purple-200">
+          🔍 รอตรวจสอบ
+        </Badge>
       )}
     </div>
   );

@@ -65,8 +65,8 @@ export default function MyDay() {
   const updateTaskStatus = useMutation({
     mutationFn: ({ id, newStatus }) => {
       const updateData = { status: newStatus };
-      if (newStatus === 'completed') {
-        updateData.completed_date = format(new Date(), 'yyyy-MM-dd');
+      if (newStatus === 'review') {
+        updateData.review_status = 'pending_review';
       }
       return base44.entities.Task.update(id, updateData);
     },
@@ -78,6 +78,25 @@ export default function MyDay() {
   });
 
   const handleStatusChange = (taskId, newStatus) => {
+    const task = myTasks.find(t => t.id === taskId);
+    const isStaff = currentUser?.role === 'staff';
+
+    // Staff ห้ามกด completed
+    if (isStaff && newStatus === 'completed') {
+      toast.error('ไม่สามารถปิดงานเองได้ — ต้องส่งตรวจให้หัวหน้า approve');
+      return;
+    }
+
+    // เช็ค checklist ก่อนส่งตรวจ
+    if (newStatus === 'review' && task) {
+      const checklist = task.checklist || [];
+      const allChecked = checklist.length === 0 || checklist.every(item => item.checked);
+      if (!allChecked) {
+        toast.error('กรุณา check checklist ให้ครบก่อนส่งตรวจ');
+        return;
+      }
+    }
+
     updateTaskStatus.mutate({ id: taskId, newStatus });
   };
 
@@ -100,6 +119,7 @@ export default function MyDay() {
         dueToday={dueToday}
         overdue={overdue}
         onStatusChange={handleStatusChange}
+        currentUser={currentUser}
       />
       <MyTodoList currentUser={currentUser} />
       <MyStats myTasks={myTasks} myTimeEntries={myTimeEntries} />
