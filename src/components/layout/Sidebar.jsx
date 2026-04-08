@@ -6,7 +6,7 @@ import {
   Settings, ChevronLeft, ChevronRight, Key, ClipboardList,
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays,
   ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, ScanLine, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target, Activity,
-  HeartPulse, KeyRound, Globe, BookOpen, BookMarked, Home, ClipboardCheck, CalendarClock, FileBarChart
+  HeartPulse, KeyRound, Globe, BookOpen, BookMarked, Home, ClipboardCheck, CalendarClock, FileBarChart, GraduationCap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -21,6 +21,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const menuItems = [
     // ─── ส่วนตัว ───
     { id: 'my_day', label: t('menu_my_day'), icon: Home, path: '/MyDay' },
+    { id: 'my_skills', label: 'ทักษะของฉัน', icon: GraduationCap, path: '/MySkills' },
     // ─── ภาพรวม ───
     { id: 'dashboard', label: t('menu_dashboard'), icon: LayoutDashboard, path: '/Dashboard' },
     { id: 'kpi_dashboard', label: 'KPI Dashboard', icon: Target, path: '/KpiDashboard' },
@@ -73,7 +74,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
 
   // Menu groups — จัดหมวดให้ชัดเจน
   const menuGroups = [
-    { key: 'personal', label: 'ส่วนตัว', icon: Home, ids: ['my_day'] },
+    { key: 'personal', label: 'ส่วนตัว', icon: Home, ids: ['my_day', 'my_skills'] },
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
     { key: 'daily_work', label: 'งานประจำวัน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'time_tracking', 'ocr'] },
     { key: 'work_setup', label: 'เทมเพลต & ความรู้', icon: ClipboardList, ids: ['templates', 'task_generation', 'tax_calendar', 'knowledge_base', 'knowledge_manage'] },

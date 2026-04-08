@@ -42,6 +42,7 @@ const DEFAULT_MATRIX = {
   knowledge_base:   { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   knowledge_manage: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   my_day:           { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  my_skills:        { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   announcement_manage: { admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
   shoutout:         { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   engagement_insights: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },

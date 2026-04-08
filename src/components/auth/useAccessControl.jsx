@@ -173,6 +173,7 @@ export function useAccessControl(user) {
 
       // My Day
       if (p('my_day') !== 'no') menus.push('my_day');
+      if (p('my_skills') !== 'no') menus.push('my_skills');
 
       return menus;
     };
