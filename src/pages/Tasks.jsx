@@ -202,7 +202,7 @@ export default function Tasks() {
           }).catch(e => console.warn('Notification failed:', e.message));
         }
         sendLineToAccounting(
-          `📋 งานรอตรวจ\n━━━━━━━━━━━━━━━━\n📄 ${taskTitle}${customerName ? `\n🏢 ${customerName}` : ''}\n👤 ส่งโดย: ${staffName}\n📌 สถานะ: รอตรวจสอบ\n━━━━━━━━━━━━━━━━\n💡 เปิด ACC Precision Hub → Tasks เพื่อ Approve`
+          `📋 งานรอตรวจ\n━━━━━━━━━━━━━━━━\n📄 ${taskTitle}${customerName ? `\n🏢 ${customerName}` : ''}\n👤 ส่งโดย: ${staffName}\n📌 สถานะ: รอตรวจสอบ\n━━━━━━━━━━━━━━━━\n💡 เปิด https://accoperation.com/Tasks เพื่อ Approve`
         );
       } catch (e) { console.warn('Review notification error:', e.message); }
     }
@@ -240,7 +240,7 @@ export default function Tasks() {
           }
 
           sendLineToAccounting(
-            `✅ Checklist ครบ — พร้อม Approve\n━━━━━━━━━━━━━━━━\n📄 ${taskTitle}${customerName ? `\n🏢 ${customerName}` : ''}\n👤 ${staffName}\n📋 Checklist: ${checklist.length}/${checklist.length} ✅\n━━━━━━━━━━━━━━━━\n💡 เปิด My Day → งานรอตรวจ เพื่อ Approve`
+            `✅ Checklist ครบ — พร้อม Approve\n━━━━━━━━━━━━━━━━\n📄 ${taskTitle}${customerName ? `\n🏢 ${customerName}` : ''}\n👤 ${staffName}\n📋 Checklist: ${checklist.length}/${checklist.length} ✅\n━━━━━━━━━━━━━━━━\n💡 เปิด https://accoperation.com/Tasks เพื่อ Approve`
           );
         } catch (e) {
           console.warn('Auto-review notification error:', e.message);
