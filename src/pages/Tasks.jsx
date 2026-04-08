@@ -207,6 +207,47 @@ export default function Tasks() {
       } catch (e) { console.warn('Review notification error:', e.message); }
     }
 
+    // ── Auto Review: ถ้า checklist ครบ + สถานะยังเป็น in_progress → auto เปลี่ยนเป็น review ──
+    if (data.status === 'in_progress') {
+      const checklist = data.checklist || [];
+      const allChecked = checklist.length > 0 && checklist.every(item => item.checked);
+      if (allChecked) {
+        data.status = 'review';
+        data.review_status = 'pending_review';
+        toast.info('✅ Checklist ครบ — เปลี่ยนสถานะเป็น "รอตรวจสอบ" อัตโนมัติ');
+
+        try {
+          const taskDept = data.department || editingTask?.department || '';
+          const reviewers = users.filter(u =>
+            ['admin', 'management', 'manager', 'super_supervisor'].includes(u.role) &&
+            u.email !== currentUser.email &&
+            (!taskDept || u.department === taskDept || u.role === 'admin' || u.role === 'management')
+          );
+          const staffName = currentUser.full_name || currentUser.email;
+          const taskTitle = data.title || editingTask?.title || '';
+          const customerName = data.customer_name || editingTask?.customer_name || '';
+
+          for (const reviewer of reviewers.slice(0, 5)) {
+            base44.entities.Notification.create({
+              title: `✅ Checklist ครบ — พร้อม Approve: ${taskTitle}`,
+              message: `${staffName} ทำ checklist ครบทุกข้อ "${taskTitle}"${customerName ? ` (${customerName})` : ''} — พร้อม Approve`,
+              type: 'task_assigned',
+              target_user: reviewer.email,
+              related_entity_type: 'Task',
+              related_entity_id: editingTask?.id || '',
+              customer_name: customerName,
+            }).catch(e => console.warn('Notification failed:', e.message));
+          }
+
+          sendLineToAccounting(
+            `✅ Checklist ครบ — พร้อม Approve\n━━━━━━━━━━━━━━━━\n📄 ${taskTitle}${customerName ? `\n🏢 ${customerName}` : ''}\n👤 ${staffName}\n📋 Checklist: ${checklist.length}/${checklist.length} ✅\n━━━━━━━━━━━━━━━━\n💡 เปิด My Day → งานรอตรวจ เพื่อ Approve`
+          );
+        } catch (e) {
+          console.warn('Auto-review notification error:', e.message);
+        }
+      }
+    }
+
     // ถ้า reviewer ปิดงานตรง (ไม่ผ่าน review) → set reviewer info ด้วย
     if (data.status === 'completed' && isReviewer) {
       const checklist = data.checklist || editingTask?.checklist || [];
