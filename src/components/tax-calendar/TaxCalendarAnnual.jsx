@@ -14,7 +14,7 @@ export default function TaxCalendarAnnual({ items, selectedYear }) {
     <Card className="shadow-sm border border-orange-200">
       <CardHeader className="pb-2 pt-3 px-4">
         <CardTitle className="text-sm font-semibold text-orange-700">
-          📅 งานรายปี — สิ้นรอบบัญชี {selectedYear + 543}
+          📅 งานรายปี — สิ้นรอบบัญชี {selectedYear + 543 - 1}
         </CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-3">

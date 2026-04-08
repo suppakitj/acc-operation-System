@@ -173,11 +173,13 @@ Deno.serve(async (req) => {
     }
 
     // ── Generate annual deadlines ──
+    // งานรายปีของสิ้นรอบปี year-1 → deadline ตกในปี year
+    const fiscalYearEnd = year - 1;
     for (const rule of ANNUAL_RULES) {
       const dedupKey = `${rule.type}_0_${year}`;
       if (existingKeys.has(dedupKey)) { skippedDuplicate++; continue; }
 
-      const calc = rule.calcDeadline(year);
+      const calc = rule.calcDeadline(fiscalYearEnd);
       let actualDate;
       if (calc.day > 28) {
         const testDate = new Date(calc.filingYear, calc.month - 1, calc.day);
@@ -200,7 +202,7 @@ Deno.serve(async (req) => {
         category: rule.category,
         status: 'active',
         generated_by: user.email,
-        notes: `งานรายปี — สิ้นรอบ 31 ธ.ค. ${year}`,
+        notes: `งานรายปี — สิ้นรอบ 31 ธ.ค. ${fiscalYearEnd}`,
       };
 
       preview.push(record);
