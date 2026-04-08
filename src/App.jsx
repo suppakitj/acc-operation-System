@@ -52,6 +52,7 @@ import TaxCalendar from './pages/TaxCalendar';
 import CustomerMonthlySummary from './pages/CustomerMonthlySummary';
 import MySkills from './pages/MySkills';
 import Notifications from './pages/Notifications';
+import MeetingNotes from './pages/MeetingNotes';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -123,6 +124,7 @@ const AuthenticatedApp = () => {
         <Route path="/CustomerMonthlySummary" element={<CustomerMonthlySummary />} />
         <Route path="/MySkills" element={<MySkills />} />
         <Route path="/Notifications" element={<Notifications />} />
+        <Route path="/MeetingNotes" element={<MeetingNotes />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

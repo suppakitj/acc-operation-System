@@ -1,0 +1,60 @@
+{
+  "name": "MeetingNote",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "\u0e2b\u0e31\u0e27\u0e02\u0e49\u0e2d\u0e01\u0e32\u0e23\u0e1b\u0e23\u0e30\u0e0a\u0e38\u0e21/\u0e2a\u0e31\u0e48\u0e07\u0e07\u0e32\u0e19 \u0e40\u0e0a\u0e48\u0e19 '1-on-1 \u0e2a\u0e21\u0e0a\u0e32\u0e22 \u0e40\u0e23\u0e37\u0e48\u0e2d\u0e07 \u0e1b\u0e34\u0e14\u0e07\u0e1a ABC'"
+    },
+    "meeting_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e1b\u0e23\u0e30\u0e0a\u0e38\u0e21"
+    },
+    "manager_email": {
+      "type": "string",
+      "description": "email \u0e2b\u0e31\u0e27\u0e2b\u0e19\u0e49\u0e32\u0e17\u0e35\u0e48\u0e2a\u0e31\u0e48\u0e07\u0e07\u0e32\u0e19"
+    },
+    "manager_name": {
+      "type": "string"
+    },
+    "staff_email": {
+      "type": "string",
+      "description": "email \u0e25\u0e39\u0e01\u0e19\u0e49\u0e2d\u0e07\u0e17\u0e35\u0e48\u0e16\u0e39\u0e01\u0e2a\u0e31\u0e48\u0e07\u0e07\u0e32\u0e19"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string",
+      "description": "\u0e40\u0e19\u0e37\u0e49\u0e2d\u0e2b\u0e32\u0e17\u0e35\u0e48\u0e04\u0e38\u0e22/\u0e2a\u0e31\u0e48\u0e07\u0e07\u0e32\u0e19 (free text)"
+    },
+    "action_items": {
+      "type": "array",
+      "description": "\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e2a\u0e34\u0e48\u0e07\u0e17\u0e35\u0e48\u0e15\u0e49\u0e2d\u0e07\u0e17\u0e33 [{text, done, due_date}]"
+    },
+    "follow_up_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u0e27\u0e31\u0e19 follow-up \u0e04\u0e23\u0e31\u0e49\u0e07\u0e16\u0e31\u0e14\u0e44\u0e1b (optional)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "closed"
+      ],
+      "default": "open"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32\u0e17\u0e35\u0e48\u0e40\u0e01\u0e35\u0e48\u0e22\u0e27\u0e02\u0e49\u0e2d\u0e07 (optional)"
+    }
+  },
+  "required": [
+    "title",
+    "manager_email",
+    "staff_email",
+    "meeting_date"
+  ]
+}

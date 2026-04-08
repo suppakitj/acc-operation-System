@@ -174,6 +174,7 @@ export function useAccessControl(user) {
       // My Day
       if (p('my_day') !== 'no') menus.push('my_day');
       if (p('my_skills') !== 'no') menus.push('my_skills');
+      if (p('meeting_notes') !== 'no') menus.push('meeting_notes');
 
       return menus;
     };

@@ -6,7 +6,7 @@ import {
   Settings, ChevronLeft, ChevronRight, Key, ClipboardList,
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays,
   ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, ScanLine, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target, Activity,
-  HeartPulse, KeyRound, Globe, BookOpen, BookMarked, Home, ClipboardCheck, CalendarClock, FileBarChart, GraduationCap
+  HeartPulse, KeyRound, Globe, BookOpen, BookMarked, Home, ClipboardCheck, CalendarClock, FileBarChart, GraduationCap, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -34,6 +34,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'templates', label: t('menu_templates'), icon: ClipboardList, path: '/TaskTemplates' },
     { id: 'task_generation', label: 'สร้างงานอัตโนมัติ', icon: Zap, path: '/TaskGeneration' },
     { id: 'time_tracking', label: 'Time Tracking', icon: Timer, path: '/TimeTracking' },
+    { id: 'meeting_notes', label: 'Meeting Notes', icon: FileText, path: '/MeetingNotes' },
     { id: 'knowledge_base', label: 'Knowledge Base', icon: BookOpen, path: '/KnowledgeBase' },
     { id: 'knowledge_manage', label: 'จัดการ KB', icon: BookMarked, path: '/KnowledgeManage' },
     // ─── ลูกค้า ───
@@ -76,7 +77,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const menuGroups = [
     { key: 'personal', label: 'ส่วนตัว', icon: Home, ids: ['my_day', 'my_skills'] },
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
-    { key: 'daily_work', label: 'งานประจำวัน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'time_tracking', 'ocr'] },
+    { key: 'daily_work', label: 'งานประจำวัน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'time_tracking', 'meeting_notes', 'ocr'] },
     { key: 'work_setup', label: 'เทมเพลต & ความรู้', icon: ClipboardList, ids: ['templates', 'task_generation', 'tax_calendar', 'knowledge_base', 'knowledge_manage'] },
     { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault', 'director_vault'] },
     { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },
