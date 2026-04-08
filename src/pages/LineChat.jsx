@@ -93,6 +93,13 @@ export default function LineChat() {
   const queryClient = useQueryClient();
   const chatEndRef = useRef(null);
   const chatTopRef = useRef(null);
+  const prevMessageCount = useRef(0);
+
+  const scrollToBottom = useCallback((behavior = 'smooth') => {
+    setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior });
+    }, 100);
+  }, []);
   const [activeMentions, setActiveMentions] = useState([]);
   const [triggerMentionName, setTriggerMentionName] = useState(null);
 
@@ -170,6 +177,7 @@ export default function LineChat() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lineMessages'] });
       setNewMessage('');
+      scrollToBottom('smooth');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -266,12 +274,21 @@ export default function LineChat() {
   }, [visibleCount, totalMessages, hasMoreOnServer, loadOlderFromServer]);
 
   useEffect(() => {
-    if (selectedUserId && chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (selectedUserId) {
+      scrollToBottom('smooth');
+    }
     if (selectedUser) {
       const unreadIds = selectedUser.messages.filter(m => !m.is_read && m.direction === 'incoming').map(m => m.id);
       if (unreadIds.length > 0) markReadMutation.mutate(unreadIds);
     }
-  }, [selectedUserId, messages.length]);
+  }, [selectedUserId, allChatMessages.length]);
+
+  useEffect(() => {
+    if (allChatMessages.length > prevMessageCount.current && prevMessageCount.current > 0) {
+      scrollToBottom('smooth');
+    }
+    prevMessageCount.current = allChatMessages.length;
+  }, [allChatMessages.length]);
 
   const handleCaptureSend = async (file) => {
     if (!selectedUserId) return;
