@@ -55,7 +55,7 @@ export default function Tasks() {
   // ส่ง LINE ไปกลุ่มบัญชี (non-blocking)
   const sendLineToAccounting = (message) => {
     try {
-      const groupId = getLineConfig('line_group_dept_accounting') || getLineConfig('line_group_id');
+      const groupId = getLineConfig('line_group_dept_accounting');
       if (!groupId) return;
       base44.functions.invoke('lineSendMessage', {
         line_user_id: groupId,
