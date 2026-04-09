@@ -9,12 +9,13 @@ import { HardDrive, Save, FolderOpen, CheckCircle2, XCircle, Loader2 } from 'luc
 import { toast } from 'sonner';
 
 function GoogleDriveOAuthStatus() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['gdrive-connection'],
     queryFn: async () => {
       const res = await base44.functions.invoke('checkGdriveConnection', {});
       return res.data;
     },
+    retry: 1,
   });
 
   if (isLoading) {
@@ -26,6 +27,18 @@ function GoogleDriveOAuthStatus() {
     );
   }
 
+  if (isError) {
+    return (
+      <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
+        <XCircle className="w-4 h-4 text-amber-500" />
+        <div className="flex-1">
+          <span className="text-sm font-medium text-amber-700">ไม่สามารถตรวจสอบสถานะได้</span>
+          <p className="text-xs text-amber-500">กรุณาใช้ production URL เพื่อดูสถานะ Google Drive</p>
+        </div>
+      </div>
+    );
+  }
+
   if (data?.connected) {
     return (
       <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 border border-green-200">
@@ -33,6 +46,22 @@ function GoogleDriveOAuthStatus() {
         <div className="flex-1">
           <span className="text-sm font-medium text-green-700">เชื่อมต่อ Google Drive แล้ว</span>
           <p className="text-xs text-green-600">{data.displayName} ({data.email})</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if it's an auth/network error vs actually not connected
+  const errorMsg = data?.error || '';
+  const isAuthError = errorMsg.includes('private') || errorMsg.includes('access') || errorMsg.includes('auth');
+
+  if (isAuthError) {
+    return (
+      <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
+        <XCircle className="w-4 h-4 text-amber-500" />
+        <div className="flex-1">
+          <span className="text-sm font-medium text-amber-700">ไม่สามารถตรวจสอบสถานะได้</span>
+          <p className="text-xs text-amber-500">Session อาจหมดอายุ — ลอง refresh หน้าหรือ login ใหม่</p>
         </div>
       </div>
     );
