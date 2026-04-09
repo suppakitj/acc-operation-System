@@ -23,7 +23,7 @@ export const CATEGORY_COLOR = {
 };
 
 export default function TaxCalendarMonth({ month, year, items, monthLabel }) {
-  const sorted = [...items].sort((a, b) => a.deadline.localeCompare(b.deadline));
+  const sorted = [...items].sort((a, b) => a.deadline.localeCompare(b.deadline) || (a.tax_label || '').localeCompare(b.tax_label || ''));
 
   return (
     <Card className="shadow-sm border">
