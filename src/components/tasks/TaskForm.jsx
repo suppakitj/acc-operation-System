@@ -16,7 +16,7 @@ import TaskTimeTracker from '../time-tracking/TaskTimeTracker';
 import DueDateChangeHistory from './DueDateChangeHistory';
 import { toast } from 'sonner';
 
-export default function TaskForm({ task, onSubmit, isLoading, permissions, currentUser }) {
+export default function TaskForm({ task, onSubmit, onSaveAsTemplate, isLoading, permissions, currentUser }) {
   const canEditAssignee = permissions?.canEditAssignee !== false;
   const canEditDueDate = permissions ? permissions.canChangeDueDate(task) : true;
   const canEditStatus = permissions ? permissions.canChangeStatus(task) : true;
@@ -482,9 +482,21 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
         <TaskTimeTracker task={task} currentUser={currentUser} />
       )}
 
-      <Button onClick={() => onSubmit(form)} disabled={isLoading || !form.title} className="w-full">
-        {isLoading ? t('saving') : (task ? t('update') : t('create'))}
-      </Button>
+      <div className="space-y-2">
+        <Button onClick={() => onSubmit(form)} disabled={isLoading || !form.title || uploadingFindingIdx !== null || uploadingPending} className="w-full">
+          {isLoading ? t('saving') : (task ? t('update') : t('create'))}
+        </Button>
+        {task?.id && onSaveAsTemplate && (
+          <Button
+            variant="outline"
+            onClick={() => onSaveAsTemplate(form)}
+            disabled={isLoading || !form.title}
+            className="w-full gap-1.5 text-xs border-dashed"
+          >
+            💾 บันทึกเป็น Template (ใช้ซ้ำได้)
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

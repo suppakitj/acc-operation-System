@@ -472,6 +472,43 @@ export default function Tasks() {
     else createMutation.mutate(data, { onSettled: () => setSubmitting(false) });
   };
 
+  // ── 💾 Save Task as Template ──
+  const handleSaveAsTemplate = async (taskData) => {
+    try {
+      const allTemplates = await base44.entities.TaskTemplate.list('-created_date', 500);
+      const prefix = 'TPL';
+      const existing = allTemplates.filter(t => t.template_code?.startsWith(prefix + '-')).map(t => parseInt(t.template_code.split('-')[1]) || 0);
+      const max = existing.length > 0 ? Math.max(...existing) : 0;
+      const templateCode = `${prefix}-${String(max + 1).padStart(4, '0')}`;
+
+      const templateData = {
+        template_code: templateCode,
+        name: taskData.title || '',
+        description: taskData.description || '',
+        service_type: taskData.service_type || '',
+        department: taskData.department || '',
+        match_type: 'service',
+        recurring_type: 'monthly',
+        due_date_rule: 15,
+        default_priority: taskData.priority || 'medium',
+        default_status: 'pending',
+        default_owner_type: 'from_customer',
+        status: 'active',
+        default_checklist: (taskData.checklist || []).map(c => ({
+          item: c.item,
+          checked: false,
+        })),
+      };
+
+      await base44.entities.TaskTemplate.create(templateData);
+      queryClient.invalidateQueries({ queryKey: ['taskTemplates'] });
+      toast.success(`💾 บันทึกเป็น Template "${taskData.title}" (${templateCode}) สำเร็จ — ไปปรับแต่งได้ที่หน้า Task Templates`);
+    } catch (err) {
+      console.error('Save as template error:', err);
+      toast.error('บันทึกเป็น Template ไม่สำเร็จ: ' + (err.message || ''));
+    }
+  };
+
   // Clamp a Date to working hours (09:00–18:00) on the same day
   const clampToWorkHours = (date) => {
     const d = new Date(date);
@@ -632,7 +669,7 @@ export default function Tasks() {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingTask ? t('edit_task') : t('create_task')}</DialogTitle></DialogHeader>
-          <TaskForm task={editingTask} onSubmit={handleSubmit} isLoading={submitting || createMutation.isPending || updateMutation.isPending} permissions={ac} currentUser={currentUser} />
+          <TaskForm task={editingTask} onSubmit={handleSubmit} onSaveAsTemplate={editingTask ? handleSaveAsTemplate : undefined} isLoading={submitting || createMutation.isPending || updateMutation.isPending} permissions={ac} currentUser={currentUser} />
         </DialogContent>
       </Dialog>
     </div>
