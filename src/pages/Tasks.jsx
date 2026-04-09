@@ -70,6 +70,58 @@ export default function Tasks() {
     } catch (e) { console.warn('LINE config error:', e.message); }
   };
 
+  // ── 📢 Tax Status LINE: ส่งแจ้งลูกค้าเมื่อติ๊ก checklist ที่มี 📢 ──
+  const sendTaxStatusLine = async (task, oldChecklist, newChecklist) => {
+    try {
+      // หาข้อ 📢 ที่เพิ่งติ๊กใหม่ (เดิม unchecked → ใหม่ checked)
+      const newlyChecked = [];
+      (newChecklist || []).forEach((item, idx) => {
+        if (!item.checked) return;
+        if (!item.item?.startsWith('📢')) return;
+        const oldItem = (oldChecklist || [])[idx];
+        if (!oldItem || !oldItem.checked) {
+          newlyChecked.push(item.item.replace('📢', '').trim());
+        }
+      });
+
+      if (newlyChecked.length === 0) return;
+
+      // ดึง LINE groups ของลูกค้าที่ receive_tax_status = true
+      const customerId = task.customer_id;
+      if (!customerId) return;
+
+      const lineGroups = await base44.entities.LineGroup.filter({
+        customer_id: customerId,
+        receive_tax_status: true,
+      });
+
+      if (lineGroups.length === 0) return;
+
+      // สร้างข้อความ
+      const customerName = task.customer_name || '';
+      const now = new Date();
+      const monthNames = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+      const monthYear = `${monthNames[now.getMonth()]} ${now.getFullYear() + 543}`;
+      const staffName = currentUser?.full_name || currentUser?.email || '';
+
+      const statusLines = newlyChecked.map(s => `✅ ${s}`).join('\n');
+      const message = `📢 อัพเดทสถานะงาน\n━━━━━━━━━━━━━━━━\n🏢 ${customerName}\n📅 ${monthYear}\n\n${statusLines}\n\n👤 ${staffName}\n━━━━━━━━━━━━━━━━\nACC Consulting Co., Ltd.`;
+
+      // ส่งไปทุกกลุ่มที่เปิดรับ
+      for (const group of lineGroups) {
+        if (!group.group_id) continue;
+        base44.functions.invoke('lineSendMessage', {
+          line_user_id: group.group_id,
+          message,
+          display_name: 'ACC Precision Hub',
+          chat_type: 'group',
+        }).catch(e => console.warn('Tax Status LINE send failed:', e.message));
+      }
+    } catch (e) {
+      console.warn('sendTaxStatusLine error:', e.message);
+    }
+  };
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Task.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tasks'] }); setShowForm(false); },
@@ -404,7 +456,15 @@ export default function Tasks() {
       }];
     }
 
-    if (editingTask) updateMutation.mutate({ id: editingTask.id, data }, { onSettled: () => setSubmitting(false) });
+    if (editingTask) {
+      // 📢 ตรวจ checklist ที่มี 📢 ที่เพิ่งติ๊กใหม่ → ส่ง LINE แจ้งลูกค้า
+      sendTaxStatusLine(
+        { ...editingTask, ...data },
+        editingTask.checklist,
+        data.checklist
+      );
+      updateMutation.mutate({ id: editingTask.id, data }, { onSettled: () => setSubmitting(false) });
+    }
     else createMutation.mutate(data, { onSettled: () => setSubmitting(false) });
   };
 
