@@ -39,6 +39,7 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
   const [pendingPhotos, setPendingPhotos] = useState([]);
   const [uploadingPending, setUploadingPending] = useState(false);
   const [uploadingFindingIdx, setUploadingFindingIdx] = useState(null);
+  const [activeFindingIdx, setActiveFindingIdx] = useState(null);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const newFindingFileRef = useRef(null);
@@ -59,6 +60,7 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
   // ── Photo Upload for Findings ──
   const handleFindingFileUpload = async (findingIdx, files) => {
     if (!files || files.length === 0) return;
+    if (findingIdx == null || isNaN(findingIdx) || findingIdx < 0) return;
     setUploadingFindingIdx(findingIdx);
     try {
       const updatedFindings = [...(form.findings || [])];
@@ -373,11 +375,11 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
                   {/* Upload Buttons */}
                   <div className="flex items-center gap-1.5 mt-2">
                     <Button variant="outline" size="sm" className="text-[10px] h-6 gap-1 px-2" disabled={isUploading}
-                      onClick={() => { cameraInputRef.current.dataset.findingIdx = idx; cameraInputRef.current.click(); }}>
+                      onClick={() => { setActiveFindingIdx(idx); setTimeout(() => cameraInputRef.current?.click(), 0); }}>
                       {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />} ถ่ายรูป
                     </Button>
                     <Button variant="outline" size="sm" className="text-[10px] h-6 gap-1 px-2" disabled={isUploading}
-                      onClick={() => { fileInputRef.current.dataset.findingIdx = idx; fileInputRef.current.click(); }}>
+                      onClick={() => { setActiveFindingIdx(idx); setTimeout(() => fileInputRef.current?.click(), 0); }}>
                       {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Paperclip className="w-3 h-3" />} แนบไฟล์
                     </Button>
                     {photos.length > 0 && <span className="text-[9px] text-muted-foreground ml-1">📎 {photos.length} ไฟล์</span>}
@@ -393,9 +395,9 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
 
         {/* Hidden file inputs */}
         <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden"
-          onChange={(e) => { handleFindingFileUpload(parseInt(e.target.dataset.findingIdx), e.target.files); e.target.value = ''; }} />
+          onChange={(e) => { if (activeFindingIdx != null) handleFindingFileUpload(activeFindingIdx, e.target.files); e.target.value = ''; }} />
         <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple className="hidden"
-          onChange={(e) => { handleFindingFileUpload(parseInt(e.target.dataset.findingIdx), e.target.files); e.target.value = ''; }} />
+          onChange={(e) => { if (activeFindingIdx != null) handleFindingFileUpload(activeFindingIdx, e.target.files); e.target.value = ''; }} />
 
         {showFindingForm && (
           <div className="rounded-lg border border-dashed border-orange-300 bg-orange-50/50 p-3 space-y-2">
