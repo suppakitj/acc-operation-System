@@ -143,6 +143,64 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── Auto generate Tax Calendar สำหรับปีใหม่ (ทำเฉพาะเดือน ม.ค.) ──
+    let taxCalendarGenerated = 0;
+    if (currentMonth === 1) {
+      try {
+        const taxConfigs = await base44.asServiceRole.entities.AppConfig.filter({ key: 'last_auto_tax_calendar' });
+        const lastTaxYear = taxConfigs.length > 0 ? taxConfigs[0].value : '';
+
+        if (lastTaxYear !== String(currentYear)) {
+          const existingDeadlines = await base44.asServiceRole.entities.TaxDeadline.filter(
+            { for_year: currentYear }, 'for_month', 500
+          );
+          const existingKeys = new Set();
+          existingDeadlines.forEach(d => existingKeys.add(`${d.tax_type}_${d.for_month}_${d.for_year}`));
+
+          const TAX_RULES = [
+            { type: 'pnd1',  label: 'ภ.ง.ด.1',    category: 'withholding_tax', onlineDay: 15 },
+            { type: 'pnd3',  label: 'ภ.ง.ด.3',    category: 'withholding_tax', onlineDay: 15 },
+            { type: 'pnd53', label: 'ภ.ง.ด.53',   category: 'withholding_tax', onlineDay: 15 },
+            { type: 'pnd54', label: 'ภ.ง.ด.54',   category: 'withholding_tax', onlineDay: 15 },
+            { type: 'pp36',  label: 'ภ.พ.36',     category: 'vat',             onlineDay: 15 },
+            { type: 'pp30',  label: 'ภ.พ.30',     category: 'vat',             onlineDay: 23 },
+            { type: 'sso',   label: 'ประกันสังคม', category: 'sso',             onlineDay: 25 },
+          ];
+
+          for (let month = 1; month <= 12; month++) {
+            for (const rule of TAX_RULES) {
+              const key = `${rule.type}_${month}_${currentYear}`;
+              if (existingKeys.has(key)) continue;
+
+              await base44.asServiceRole.entities.TaxDeadline.create({
+                tax_type: rule.type,
+                tax_label: rule.label,
+                category: rule.category,
+                for_month: month,
+                for_year: currentYear,
+                deadline: `${currentYear}-${String(month).padStart(2, '0')}-${String(rule.onlineDay).padStart(2, '0')}`,
+                original_day: rule.onlineDay,
+              });
+              taxCalendarGenerated++;
+            }
+          }
+
+          if (taxConfigs.length > 0) {
+            await base44.asServiceRole.entities.AppConfig.update(taxConfigs[0].id, { value: String(currentYear) });
+          } else {
+            await base44.asServiceRole.entities.AppConfig.create({
+              key: 'last_auto_tax_calendar',
+              value: String(currentYear),
+              description: 'ปีล่าสุดที่ auto generate tax calendar',
+            });
+          }
+          console.log(`Auto generated ${taxCalendarGenerated} tax deadlines for ${currentYear}`);
+        }
+      } catch (e) {
+        console.warn('Auto tax calendar error:', e.message);
+      }
+    }
+
     // Send LINE notification to accounting group
     const monthNames = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
     const lineConfigs = await base44.asServiceRole.entities.AppConfig.filter({ key: 'line_group_dept_accounting' });
@@ -153,7 +211,7 @@ Deno.serve(async (req) => {
       const accessToken = lineTokenConfigs.length > 0 ? lineTokenConfigs[0].value : '';
 
       if (accessToken) {
-        const message = `📅 สร้างงานอัตโนมัติ\n━━━━━━━━━━━━━━━━\n📆 ${monthNames[currentMonth - 1]} ${currentYear + 543}\n✅ สร้าง ${created.length} งาน\n⏭️ ข้าม ${skippedDuplicate} งาน (สร้างแล้ว)\n📋 จาก ${templates.length} templates\n👤 โดย: ${triggeredBy}\n━━━━━━━━━━━━━━━━\nACC Consulting Co., Ltd.`;
+        const message = `📅 สร้างงานอัตโนมัติ\n━━━━━━━━━━━━━━━━\n📆 ${monthNames[currentMonth - 1]} ${currentYear + 543}\n✅ สร้าง ${created.length} งาน\n⏭️ ข้าม ${skippedDuplicate} งาน (สร้างแล้ว)\n📋 จาก ${templates.length} templates${taxCalendarGenerated > 0 ? `\n📆 สร้างปฏิทินภาษี ${taxCalendarGenerated} รายการ` : ''}\n👤 โดย: ${triggeredBy}\n━━━━━━━━━━━━━━━━\nACC Consulting Co., Ltd.`;
 
         await fetch('https://api.line.me/v2/bot/message/push', {
           method: 'POST',
@@ -175,6 +233,7 @@ Deno.serve(async (req) => {
       total_created: created.length,
       skipped_duplicate: skippedDuplicate,
       templates_used: templates.length,
+      tax_calendar_generated: taxCalendarGenerated,
       triggered_by: triggeredBy,
     });
   } catch (error) {
