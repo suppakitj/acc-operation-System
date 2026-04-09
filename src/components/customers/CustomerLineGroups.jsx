@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, MessageSquare, Loader2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Trash2, MessageSquare, Loader2, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function CustomerLineGroups({ customerId, readOnly }) {
@@ -31,6 +32,13 @@ export default function CustomerLineGroups({ customerId, readOnly }) {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.LineGroup.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lineGroups', customerId] });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.LineGroup.delete(id),
     onSuccess: () => {
@@ -45,7 +53,16 @@ export default function CustomerLineGroups({ customerId, readOnly }) {
       customer_id: customerId,
       group_id: newGroupId.trim(),
       group_name: newGroupName.trim(),
+      receive_tax_status: false,
     });
+  };
+
+  const toggleTaxStatus = (group) => {
+    const newVal = !group.receive_tax_status;
+    updateMutation.mutate(
+      { id: group.id, data: { receive_tax_status: newVal } },
+      { onSuccess: () => toast.success(newVal ? `กลุ่ม "${group.group_name}" จะรับแจ้งสถานะภาษีแล้ว` : `ปิดแจ้งสถานะภาษีกลุ่ม "${group.group_name}" แล้ว`) }
+    );
   };
 
   if (!customerId) {
@@ -66,26 +83,41 @@ export default function CustomerLineGroups({ customerId, readOnly }) {
         <div className="space-y-2">
           {groups.map(g => (
             <div key={g.id} className="flex items-center justify-between gap-2 p-2.5 rounded-lg border bg-muted/30">
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
                 <MessageSquare className="w-4 h-4 text-green-600 shrink-0" />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium truncate">{g.group_name}</p>
                   {g.group_id && (
                     <p className="text-[10px] text-muted-foreground truncate">ID: {g.group_id}</p>
                   )}
                 </div>
               </div>
-              {!readOnly && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                  onClick={() => deleteMutation.mutate(g.id)}
-                  disabled={deleteMutation.isPending}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Tax Status Toggle */}
+                <div className="flex items-center gap-1.5" title={g.receive_tax_status ? 'รับแจ้งสถานะภาษี' : 'ไม่รับแจ้งสถานะภาษี'}>
+                  <Bell className={`w-3 h-3 ${g.receive_tax_status ? 'text-orange-500' : 'text-muted-foreground/40'}`} />
+                  <Switch
+                    checked={!!g.receive_tax_status}
+                    onCheckedChange={() => toggleTaxStatus(g)}
+                    disabled={readOnly}
+                    className="scale-75"
+                  />
+                </div>
+                {g.receive_tax_status && (
+                  <Badge className="bg-orange-100 text-orange-700 text-[8px] px-1.5 border-orange-200">📢 Tax</Badge>
+                )}
+                {!readOnly && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => deleteMutation.mutate(g.id)}
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </div>
