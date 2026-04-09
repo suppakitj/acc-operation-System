@@ -41,6 +41,15 @@ const OBLIGATIONS = [
   { value: 'boj5_annual', label: 'บอจ.5 บัญชีรายชื่อผู้ถือหุ้น', desc: 'ยื่นภายใน 14 วันหลังประชุมผู้ถือหุ้น (ประชุมภายใน 4 เดือนหลังสิ้นรอบบัญชี)' },
 ];
 
+// Auto-suggest: เมื่อติ๊ก service → แนะนำ obligations ที่เกี่ยวข้อง
+const SERVICE_OBLIGATION_MAP = {
+  accounting: ['pnd1_monthly', 'pnd3_monthly', 'pnd53_monthly', 'pp30_monthly', 'sso_monthly', 'pnd50_half', 'pnd50_annual', 'audit_annual', 'dbd_filing', 'disclosure_form', 'boj5_annual'],
+  payroll: ['pnd1_monthly', 'sso_monthly'],
+  tax_consulting: ['pnd3_monthly', 'pnd53_monthly', 'pnd54_monthly', 'pp30_monthly', 'pp36_monthly'],
+  audit: ['audit_annual', 'dbd_filing'],
+  peak_licensing: [],
+};
+
 const DEPARTMENTS = [
   { value: 'management', label: 'Management' },
   { value: 'accounting', label: 'บัญชี' },
@@ -125,6 +134,27 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
   const toggleArr = (field, val) => {
     const list = form[field] || [];
     update(field, list.includes(val) ? list.filter(v => v !== val) : [...list, val]);
+  };
+
+  // Auto-suggest obligations เมื่อเพิ่ม service
+  const toggleServiceWithSuggest = (serviceValue) => {
+    const currentServices = form.services || [];
+    const isAdding = !currentServices.includes(serviceValue);
+    
+    // Toggle service ปกติ
+    toggleArr('services', serviceValue);
+    
+    // ถ้าเพิ่ม service → suggest obligations ที่ยังไม่มี
+    if (isAdding) {
+      const suggested = SERVICE_OBLIGATION_MAP[serviceValue] || [];
+      if (suggested.length > 0) {
+        const currentObligations = form.obligations || [];
+        const newObligations = [...new Set([...currentObligations, ...suggested])];
+        if (newObligations.length > currentObligations.length) {
+          update('obligations', newObligations);
+        }
+      }
+    }
   };
 
   const setUserField = (emailField, nameField, email) => {
@@ -340,7 +370,7 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
         <SectionHeader icon={Briefcase} title="ประเภทบริการ" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {SERVICES.map(s => (
-            <div key={s.value} className="flex items-center gap-2 p-2.5 rounded-lg border border-transparent hover:border-border hover:bg-muted/50 transition-all cursor-pointer" onClick={() => !readOnly && toggleArr('services', s.value)}>
+            <div key={s.value} className="flex items-center gap-2 p-2.5 rounded-lg border border-transparent hover:border-border hover:bg-muted/50 transition-all cursor-pointer" onClick={() => !readOnly && toggleServiceWithSuggest(s.value)}>
               <Checkbox checked={(form.services || []).includes(s.value)} disabled={readOnly} />
               <span className="text-xs font-medium">{s.label}</span>
             </div>
@@ -372,7 +402,7 @@ export default function CustomerForm({ customer, onSubmit, isLoading, readOnly }
       {/* Section: ภาระผูกพัน */}
       <div className="bg-card rounded-xl border p-4 md:p-5">
         <SectionHeader icon={ClipboardCheck} title="ภาระผูกพัน (Obligations)" />
-        <p className="text-xs text-muted-foreground mb-3">เลือกภาระที่ ACC ต้องดำเนินการให้ลูกค้ารายนี้</p>
+        <p className="text-xs text-muted-foreground mb-3">เลือกภาระที่ ACC ต้องดำเนินการให้ลูกค้ารายนี้ — <span className="text-primary">ติ๊กประเภทบริการด้านบนจะ auto เลือกภาระผูกพันที่เกี่ยวข้องให้</span></p>
         <div className="mb-4">
           <FieldWrapper label="วันสิ้นรอบบัญชี">
             <Select value={form.fiscal_year_end || '12-31'} onValueChange={v => update('fiscal_year_end', v)} disabled={readOnly}>
