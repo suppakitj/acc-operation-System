@@ -258,9 +258,130 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, username: decryptedUsername, password: decryptedPassword });
   }
 
-  // === DELETE ===
+  // === REQUEST DELETE (non-admin → pending approval) ===
+  if (action === 'request_delete') {
+    const { credential_id, reason } = body;
+    await base44.entities.CustomerCredential.update(credential_id, {
+      delete_requested: true,
+      delete_requested_by: user.email,
+      delete_requested_by_name: user.full_name || user.email,
+      delete_requested_at: new Date().toISOString(),
+      delete_reason: reason || '',
+    });
+    await logPdpaAccess(base44, {
+      action: 'request_delete',
+      entity_type: 'CustomerCredential',
+      entity_id: credential_id,
+      user_email: user.email,
+      user_name: user.full_name || user.email,
+      details: `ขอลบ credential ID: ${credential_id} — เหตุผล: ${reason || '-'}`,
+    });
+
+    // Notify admins
+    const allUsers = await base44.asServiceRole.entities.User.filter({});
+    const admins = allUsers.filter(u => u.role === 'admin');
+    const creds = await base44.entities.CustomerCredential.filter({ id: credential_id });
+    const cred = creds?.[0];
+    for (const admin of admins.slice(0, 5)) {
+      base44.asServiceRole.entities.Notification.create({
+        title: `🔐 ขออนุมัติลบ Credential`,
+        message: `${user.full_name || user.email} ขอลบ credential ของ ${cred?.customer_name || ''} (${cred?.service_name || ''}) — เหตุผล: ${reason || '-'}`,
+        type: 'system',
+        target_user: admin.email,
+        related_entity_type: 'CustomerCredential',
+        related_entity_id: credential_id,
+      }).catch(() => {});
+    }
+
+    return Response.json({ success: true, message: 'request_submitted' });
+  }
+
+  // === CANCEL DELETE REQUEST ===
+  if (action === 'cancel_delete') {
+    const { credential_id } = body;
+    await base44.entities.CustomerCredential.update(credential_id, {
+      delete_requested: false,
+      delete_requested_by: '',
+      delete_requested_by_name: '',
+      delete_requested_at: '',
+      delete_reason: '',
+    });
+    return Response.json({ success: true });
+  }
+
+  // === APPROVE DELETE (admin only) ===
+  if (action === 'approve_delete') {
+    const { credential_id } = body;
+    if (user.role !== 'admin') {
+      return Response.json({ error: 'ต้องเป็น Admin เท่านั้นถึงจะอนุมัติลบได้' }, { status: 403 });
+    }
+    const creds = await base44.entities.CustomerCredential.filter({ id: credential_id });
+    const cred = creds?.[0];
+    await base44.entities.CustomerCredential.delete(credential_id);
+    await logPdpaAccess(base44, {
+      action: 'approve_delete',
+      entity_type: 'CustomerCredential',
+      entity_id: credential_id,
+      user_email: user.email,
+      user_name: user.full_name || user.email,
+      details: `อนุมัติลบ credential ID: ${credential_id} (${cred?.customer_name || ''} — ${cred?.service_name || ''}) — ขอโดย: ${cred?.delete_requested_by_name || ''}`,
+    });
+
+    // Notify requester
+    if (cred?.delete_requested_by) {
+      base44.asServiceRole.entities.Notification.create({
+        title: `✅ อนุมัติลบ Credential แล้ว`,
+        message: `Admin ${user.full_name || user.email} อนุมัติลบ credential ของ ${cred?.customer_name || ''} (${cred?.service_name || ''})`,
+        type: 'system',
+        target_user: cred.delete_requested_by,
+      }).catch(() => {});
+    }
+
+    return Response.json({ success: true });
+  }
+
+  // === REJECT DELETE ===
+  if (action === 'reject_delete') {
+    const { credential_id, reject_reason } = body;
+    if (user.role !== 'admin') {
+      return Response.json({ error: 'ต้องเป็น Admin เท่านั้น' }, { status: 403 });
+    }
+    const creds = await base44.entities.CustomerCredential.filter({ id: credential_id });
+    const cred = creds?.[0];
+    await base44.entities.CustomerCredential.update(credential_id, {
+      delete_requested: false,
+      delete_requested_by: '',
+      delete_requested_by_name: '',
+      delete_requested_at: '',
+      delete_reason: '',
+    });
+    await logPdpaAccess(base44, {
+      action: 'reject_delete',
+      entity_type: 'CustomerCredential',
+      entity_id: credential_id,
+      user_email: user.email,
+      user_name: user.full_name || user.email,
+      details: `ปฏิเสธการลบ credential ID: ${credential_id} — เหตุผล: ${reject_reason || '-'}`,
+    });
+
+    if (cred?.delete_requested_by) {
+      base44.asServiceRole.entities.Notification.create({
+        title: `❌ ไม่อนุมัติลบ Credential`,
+        message: `Admin ${user.full_name || user.email} ไม่อนุมัติลบ credential ของ ${cred?.customer_name || ''} — เหตุผล: ${reject_reason || '-'}`,
+        type: 'system',
+        target_user: cred.delete_requested_by,
+      }).catch(() => {});
+    }
+
+    return Response.json({ success: true });
+  }
+
+  // === DELETE (admin direct delete — backward compat) ===
   if (action === 'delete') {
     const { credential_id } = body;
+    if (user.role !== 'admin') {
+      return Response.json({ error: 'ต้องเป็น Admin เท่านั้นถึงจะลบได้โดยตรง' }, { status: 403 });
+    }
     await base44.entities.CustomerCredential.delete(credential_id);
     await logPdpaAccess(base44, {
       action: 'delete',
@@ -268,7 +389,7 @@ Deno.serve(async (req) => {
       entity_id: credential_id,
       user_email: user.email,
       user_name: user.full_name || user.email,
-      details: `ลบ credential ID: ${credential_id}`,
+      details: `ลบ credential ID: ${credential_id} (admin direct)`,
     });
     return Response.json({ success: true });
   }

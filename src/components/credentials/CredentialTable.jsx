@@ -60,6 +60,9 @@ export default function CredentialTable({ data, onView, onEdit, onDelete, onView
               </td>
               <td className="px-3 py-2.5">
                 <div className="flex items-center gap-1">
+                  {row.delete_requested && (
+                    <Badge className="text-[9px] bg-amber-100 text-amber-700 border-0 mr-1">รอลบ</Badge>
+                  )}
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onView(row)} title="ดู (OTP)">
                     <Eye className="w-3.5 h-3.5 text-primary" />
                   </Button>
@@ -71,9 +74,11 @@ export default function CredentialTable({ data, onView, onEdit, onDelete, onView
                       <History className="w-3.5 h-3.5 text-orange-500" />
                     </Button>
                   )}
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(row)} title="ลบ">
-                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                  </Button>
+                  {!row.delete_requested && (
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(row)} title="ลบ">
+                      <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                    </Button>
+                  )}
                 </div>
               </td>
             </tr>

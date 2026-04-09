@@ -13,6 +13,7 @@ import CredentialTable from '@/components/credentials/CredentialTable';
 import OtpDecryptDialog from '@/components/credentials/OtpDecryptDialog';
 import ChangeHistoryDialog from '@/components/credentials/ChangeHistoryDialog';
 import OtpDeleteDialog from '@/components/credentials/OtpDeleteDialog';
+import PendingDeleteBanner from '@/components/credentials/PendingDeleteBanner';
 import TablePagination, { paginateData } from '@/components/shared/TablePagination';
 
 export default function CustomerCredentials() {
@@ -66,6 +67,8 @@ export default function CustomerCredentials() {
   }, [credentials, search, serviceFilter]);
 
   const paged = paginateData(filtered, page, pageSize);
+  const isAdmin = ac.role === 'admin';
+  const pendingDeletes = credentials.filter(c => c.delete_requested);
 
   const handleSave = async (form) => {
     setSaving(true);
@@ -147,6 +150,13 @@ export default function CustomerCredentials() {
         </Select>
       </div>
 
+      {/* Pending Delete Requests */}
+      <PendingDeleteBanner
+        pendingItems={pendingDeletes}
+        isAdmin={isAdmin}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['customerCredentials'] })}
+      />
+
       {/* Table */}
       <CredentialTable
         data={paged}
@@ -191,6 +201,7 @@ export default function CustomerCredentials() {
           onOpenChange={(val) => { if (!val) setDeleteCred(null); }}
           credential={deleteCred}
           onDeleted={() => queryClient.invalidateQueries({ queryKey: ['customerCredentials'] })}
+          isAdmin={isAdmin}
         />
       )}
 

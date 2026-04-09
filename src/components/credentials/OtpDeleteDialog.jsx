@@ -3,13 +3,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Trash2, Send, Loader2, AlertTriangle } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Trash2, Send, Loader2, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-export default function OtpDeleteDialog({ open, onOpenChange, credential, onDeleted }) {
-  const [step, setStep] = useState('confirm'); // confirm | otp_verify
+export default function OtpDeleteDialog({ open, onOpenChange, credential, onDeleted, isAdmin }) {
+  // Admin: confirm → OTP → delete directly
+  // Non-admin: confirm + reason → request_delete (pending admin approval)
+  const [step, setStep] = useState('confirm'); // confirm | otp_verify | reason
   const [otp, setOtp] = useState('');
+  const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRequestOtp = async () => {
@@ -31,7 +35,7 @@ export default function OtpDeleteDialog({ open, onOpenChange, credential, onDele
     } catch (err) {
       const data = err?.response?.data;
       if (data?.setup_required) {
-        toast.error('ยังไม่ได้ตั้งค่า Encryption Key — ไปที่ Settings → เชื่อมต่อ → Credential Vault');
+        toast.error('ยังไม่ได้ตั้งค่า Encryption Key');
         onOpenChange(false);
       } else {
         toast.error(data?.error || 'เกิดข้อผิดพลาดในการส่ง OTP');
@@ -59,7 +63,7 @@ export default function OtpDeleteDialog({ open, onOpenChange, credential, onDele
         toast.error(verifyRes.data.error || 'OTP ไม่ถูกต้อง');
         return;
       }
-      // OTP verified — now delete
+      // OTP verified — admin can delete directly
       await base44.functions.invoke('credentialManager', {
         action: 'delete',
         credential_id: credential.id,
@@ -75,10 +79,34 @@ export default function OtpDeleteDialog({ open, onOpenChange, credential, onDele
     }
   };
 
+  // Non-admin: submit delete request
+  const handleSubmitRequest = async () => {
+    setLoading(true);
+    try {
+      const res = await base44.functions.invoke('credentialManager', {
+        action: 'request_delete',
+        credential_id: credential.id,
+        reason: reason.trim(),
+      });
+      if (res.data.success) {
+        toast.success('ส่งคำขอลบไปให้ Admin อนุมัติแล้ว');
+        onDeleted();
+        onOpenChange(false);
+      } else {
+        toast.error(res.data.error || 'เกิดข้อผิดพลาด');
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || 'เกิดข้อผิดพลาด');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleClose = (val) => {
     if (!val) {
       setStep('confirm');
       setOtp('');
+      setReason('');
       setLoading(false);
     }
     onOpenChange(val);
@@ -96,27 +124,73 @@ export default function OtpDeleteDialog({ open, onOpenChange, credential, onDele
           </DialogDescription>
         </DialogHeader>
 
+        {/* ─── Step 1: Confirm ─── */}
         {step === 'confirm' && (
           <div className="space-y-4 py-2">
             <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
               <div>
                 <p className="font-medium">การลบจะไม่สามารถกู้คืนได้</p>
-                <p className="text-xs mt-1">ระบบจะส่ง OTP ไปยัง email ของคุณเพื่อยืนยันการลบ</p>
+                {isAdmin ? (
+                  <p className="text-xs mt-1">ระบบจะส่ง OTP ไปยัง email ของคุณเพื่อยืนยันการลบ</p>
+                ) : (
+                  <p className="text-xs mt-1">คำขอลบจะถูกส่งไปให้ Admin อนุมัติก่อน</p>
+                )}
               </div>
             </div>
+
+            {isAdmin ? (
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => handleClose(false)}>
+                  ยกเลิก
+                </Button>
+                <Button variant="destructive" className="flex-1" onClick={handleRequestOtp} disabled={loading}>
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                  ส่ง OTP เพื่อยืนยัน
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => handleClose(false)}>
+                  ยกเลิก
+                </Button>
+                <Button variant="destructive" className="flex-1" onClick={() => setStep('reason')}>
+                  ขอลบ → ส่ง Admin อนุมัติ
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ─── Step: Reason (non-admin) ─── */}
+        {step === 'reason' && (
+          <div className="space-y-4 py-2">
+            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-700 flex items-start gap-2">
+              <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0" />
+              <p>คำขอลบจะถูกส่งให้ Admin อนุมัติก่อนถึงจะลบจริง</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">เหตุผลที่ขอลบ *</Label>
+              <Textarea
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+                placeholder="เช่น ลูกค้ายกเลิกสัญญา, ข้อมูลซ้ำ..."
+                rows={3}
+              />
+            </div>
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => handleClose(false)}>
-                ยกเลิก
+              <Button variant="outline" className="flex-1" onClick={() => setStep('confirm')}>
+                กลับ
               </Button>
-              <Button variant="destructive" className="flex-1" onClick={handleRequestOtp} disabled={loading}>
+              <Button variant="destructive" className="flex-1" onClick={handleSubmitRequest} disabled={loading || !reason.trim()}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
-                ส่ง OTP เพื่อยืนยัน
+                ส่งคำขอลบ
               </Button>
             </div>
           </div>
         )}
 
+        {/* ─── Step: OTP verify (admin only) ─── */}
         {step === 'otp_verify' && (
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground text-center">กรอกรหัส OTP 6 หลักเพื่อยืนยันการลบ</p>
