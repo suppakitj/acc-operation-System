@@ -18,6 +18,7 @@ import GoogleDriveSettings from '../components/settings/GoogleDriveSettings';
 import ManusSettings from '../components/settings/ManusSettings';
 import CredentialVaultSettings from '../components/settings/CredentialVaultSettings';
 import SessionTimeoutSettings from '../components/settings/SessionTimeoutSettings';
+import MiniAppSettings from '../components/settings/MiniAppSettings';
 import ProfileSettings from '../components/settings/ProfileSettings';
 import AppearanceSettings from '../components/settings/AppearanceSettings';
 import NotificationSettings from '../components/settings/NotificationSettings';
@@ -61,6 +62,7 @@ export default function AppSettings() {
         {/* Tab: System (Admin) */}
         {isAdmin && (
           <TabsContent value="system" className="space-y-4">
+            <MiniAppSettings />
             <SessionTimeoutSettings />
           </TabsContent>
         )}
