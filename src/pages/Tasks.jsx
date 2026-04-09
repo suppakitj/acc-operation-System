@@ -327,6 +327,7 @@ export default function Tasks() {
     }
 
     // เช็ค checklist ก่อนส่งตรวจ
+    const statusChangedToReview = data.status === 'review' && editingTask?.status !== 'review';
     if (data.status === 'review') {
       const checklist = data.checklist || [];
       const checkedCount = checklist.filter(item => item.checked).length;
@@ -337,8 +338,8 @@ export default function Tasks() {
       }
       data.review_status = 'pending_review';
 
-      // แจ้งเตือน reviewer ว่ามีงานรอตรวจ
-      try {
+      // แจ้งเตือน reviewer เฉพาะเมื่อ status เปลี่ยนเป็น review ครั้งแรก
+      if (statusChangedToReview) try {
         const taskDept = data.department || editingTask?.department || '';
         const reviewers = users.filter(u =>
           ['admin', 'management', 'manager', 'super_supervisor'].includes(u.role) &&
@@ -366,10 +367,13 @@ export default function Tasks() {
     }
 
     // ── Auto Review: ถ้า checklist ครบ + สถานะยังเป็น in_progress → auto เปลี่ยนเป็น review ──
-    if (data.status === 'in_progress') {
+    if (data.status === 'in_progress' && editingTask?.status === 'in_progress') {
       const checklist = data.checklist || [];
       const allChecked = checklist.length > 0 && checklist.every(item => item.checked);
-      if (allChecked) {
+      // เช็คว่า checklist เพิ่งครบ (เดิมยังไม่ครบ)
+      const oldChecklist = editingTask?.checklist || [];
+      const wasAllChecked = oldChecklist.length > 0 && oldChecklist.every(item => item.checked);
+      if (allChecked && !wasAllChecked) {
         data.status = 'review';
         data.review_status = 'pending_review';
         toast.info('✅ Checklist ครบ — เปลี่ยนสถานะเป็น "รอตรวจสอบ" อัตโนมัติ');
