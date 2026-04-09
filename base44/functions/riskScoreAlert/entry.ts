@@ -185,16 +185,6 @@ Deno.serve(async (req) => {
     const lineToken = getVal('line_access_token');
     const senderName = getVal('o365_sender_name') || getVal('smtp_sender_name') || 'ACC Consulting';
 
-    // --- LINE --- ส่งไปกลุ่ม Management
-    const lineTarget = getVal('line_group_dept_management');
-    let lineSent = false;
-    if (lineToken && lineTarget) {
-      const msg = buildRiskAlertMessage(todayStr, highRiskTasks);
-      await sendToLine(lineToken, lineTarget, msg);
-      lineSent = true;
-      console.log('LINE risk alert sent');
-    }
-
     // --- Email to admin/management ---
     const allUsers = await base44.asServiceRole.entities.User.filter({});
     const mgmtUsers = allUsers.filter(u => ['admin', 'management'].includes(u.role) && u.user_status !== 'inactive');
@@ -221,7 +211,7 @@ Deno.serve(async (req) => {
       title: `🔔 Risk Alert: ${highRiskTasks.length} งานเสี่ยงสูง`,
       message: `พบ ${highRiskTasks.filter(t=>t._riskScore>=70).length} งานวิกฤต และ ${highRiskTasks.filter(t=>t._riskScore>=50&&t._riskScore<70).length} งานเสี่ยงสูง`,
       type: 'system',
-      sent_via_line: lineSent,
+      sent_via_line: false,
       sent_via_email: emailSent > 0,
     });
 
@@ -230,7 +220,7 @@ Deno.serve(async (req) => {
       high_risk_count: highRiskTasks.length,
       critical: highRiskTasks.filter(t => t._riskScore >= 70).length,
       high: highRiskTasks.filter(t => t._riskScore >= 50 && t._riskScore < 70).length,
-      line_sent: lineSent,
+      line_sent: false,
       emails_sent: emailSent,
     });
 
