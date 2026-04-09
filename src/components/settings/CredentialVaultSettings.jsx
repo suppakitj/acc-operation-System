@@ -12,22 +12,22 @@ import { toast } from 'sonner';
 export default function CredentialVaultSettings() {
   const queryClient = useQueryClient();
   const { data: configs = [] } = useQuery({
-    queryKey: ['appConfig'],
-    queryFn: () => base44.entities.AppConfig.list(),
+    queryKey: ['appConfig', 'credentialKey'],
+    queryFn: () => base44.entities.AppConfig.filter({ key: 'credential_encryption_key' }, '-created_date', 1),
   });
 
-  const getVal = (key) => configs.find(c => c.key === key)?.value || '';
-  const getId = (key) => configs.find(c => c.key === key)?.id || null;
+  const getVal = () => configs[0]?.value || '';
+  const getId = () => configs[0]?.id || null;
 
   const [encKey, setEncKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setEncKey(getVal('credential_encryption_key'));
+    setEncKey(getVal());
   }, [configs]);
 
-  const isKeySet = !!getVal('credential_encryption_key');
+  const isKeySet = !!getVal();
 
   const generateKey = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
@@ -48,7 +48,7 @@ export default function CredentialVaultSettings() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!encKey || encKey.length < 16) throw new Error('Key ต้องมีความยาวอย่างน้อย 16 ตัวอักษร');
-      const existingId = getId('credential_encryption_key');
+      const existingId = getId();
       if (existingId) {
         await base44.entities.AppConfig.update(existingId, { value: encKey });
       } else {
@@ -56,7 +56,7 @@ export default function CredentialVaultSettings() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appConfig'] });
+      queryClient.invalidateQueries({ queryKey: ['appConfig', 'credentialKey'] });
       toast.success('บันทึก Encryption Key แล้ว');
     },
     onError: (e) => toast.error(e.message),
