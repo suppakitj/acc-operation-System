@@ -21,6 +21,7 @@ export default function MyDay() {
   const { data: currentUser, isLoading: isLoadingUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
+    staleTime: 5 * 60_000,
   });
 
   const { data: myTasks = [], isLoading: isLoadingTasks } = useQuery({
@@ -31,6 +32,7 @@ export default function MyDay() {
       200
     ),
     enabled: !!currentUser?.email,
+    staleTime: 30_000,
   });
 
   const { data: myTimeEntries = [] } = useQuery({
@@ -38,9 +40,10 @@ export default function MyDay() {
     queryFn: () => base44.entities.TimeEntry.filter(
       { user_email: currentUser.email },
       '-created_date',
-      500
+      100
     ),
     enabled: !!currentUser?.email,
+    staleTime: 30_000,
   });
 
   // ดึงงานรอตรวจ — เฉพาะ reviewer เท่านั้น
