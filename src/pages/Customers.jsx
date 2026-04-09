@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Trash2 } from 'lucide-react';
 import CustomerForm from '../components/customers/CustomerForm';
 import CustomerImportExport from '../components/customers/CustomerImportExport';
 import CustomerSummaryCards from '../components/customers/CustomerSummaryCards';
 import CustomerTable from '../components/customers/CustomerTable';
+import CustomerDeleteDialog from '../components/customers/CustomerDeleteDialog';
+import CustomerPendingDeleteBanner from '../components/customers/CustomerPendingDeleteBanner';
 import TablePagination, { paginateData } from '../components/shared/TablePagination';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
@@ -36,6 +38,7 @@ export default function Customers() {
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [deleteCustomer, setDeleteCustomer] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: customers = [], isLoading } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500), staleTime: 60_000 });
@@ -96,8 +99,17 @@ export default function Customers() {
 
   const canEdit = ac.canEditCustomer;
   const canAdd = ac.canAddCustomer;
+  const canDelete = ac.canDeleteCustomer;
+  const isAdmin = ac.role === 'admin';
+
+  const pendingDeletes = useMemo(() => customers.filter(c => c.delete_requested), [customers]);
 
   const onRowClick = (c) => { setEditingCustomer(c); setShowForm(true); };
+
+  const handleDeleteRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['customers'] });
+    setDeleteCustomer(null);
+  };
 
   return (
     <div className="space-y-5">
@@ -118,6 +130,9 @@ export default function Customers() {
           </div>
         )}
       </div>
+
+      {/* Pending Delete Banner */}
+      <CustomerPendingDeleteBanner pendingItems={pendingDeletes} isAdmin={isAdmin} onRefresh={() => queryClient.invalidateQueries({ queryKey: ['customers'] })} />
 
       {/* Summary Cards */}
       <CustomerSummaryCards stats={stats} />
@@ -172,8 +187,26 @@ export default function Customers() {
             isLoading={createMutation.isPending || updateMutation.isPending}
             readOnly={!canEdit}
           />
+          {/* Delete button inside form dialog */}
+          {editingCustomer && (canDelete || canEdit) && !editingCustomer.delete_requested && (
+            <div className="mt-4 pt-4 border-t border-dashed">
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={() => { setShowForm(false); setDeleteCustomer(editingCustomer); }}>
+                <Trash2 className="w-3.5 h-3.5" /> ลบลูกค้า
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Dialog */}
+      <CustomerDeleteDialog
+        open={!!deleteCustomer}
+        onOpenChange={(val) => { if (!val) setDeleteCustomer(null); }}
+        customer={deleteCustomer}
+        onDeleted={handleDeleteRefresh}
+        isAdmin={isAdmin}
+      />
     </div>
   );
 }

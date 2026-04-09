@@ -144,16 +144,25 @@
           "pnd1k_yearly",
           "pnd3_monthly",
           "pnd53_monthly",
+          "pnd54_monthly",
           "pp30_monthly",
+          "pp36_monthly",
           "sso_monthly",
           "pnd90_director",
           "pnd91_director",
           "pnd50_half",
+          "pnd51_half",
           "pnd50_annual",
           "audit_annual",
-          "dbd_filing"
+          "dbd_filing",
+          "disclosure_form",
+          "boj5_annual"
         ]
       }
+    },
+    "fiscal_year_end": {
+      "type": "string",
+      "description": "\u0e27\u0e31\u0e19\u0e2a\u0e34\u0e49\u0e19\u0e23\u0e2d\u0e1a\u0e1a\u0e31\u0e0d\u0e0a\u0e35 \u0e40\u0e0a\u0e48\u0e19 12-31"
     },
     "peak_package": {
       "type": "string",
@@ -245,6 +254,27 @@
     "notes": {
       "type": "string",
       "description": "\u0e2b\u0e21\u0e32\u0e22\u0e40\u0e2b\u0e15\u0e38"
+    },
+    "delete_requested": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u0e21\u0e35\u0e04\u0e33\u0e02\u0e2d\u0e25\u0e1a\u0e2d\u0e22\u0e39\u0e48\u0e2b\u0e23\u0e37\u0e2d\u0e44\u0e21\u0e48"
+    },
+    "delete_requested_by": {
+      "type": "string",
+      "description": "email \u0e1c\u0e39\u0e49\u0e02\u0e2d\u0e25\u0e1a"
+    },
+    "delete_requested_by_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e02\u0e2d\u0e25\u0e1a"
+    },
+    "delete_requested_at": {
+      "type": "string",
+      "description": "\u0e27\u0e31\u0e19\u0e40\u0e27\u0e25\u0e32\u0e17\u0e35\u0e48\u0e02\u0e2d\u0e25\u0e1a"
+    },
+    "delete_reason": {
+      "type": "string",
+      "description": "\u0e40\u0e2b\u0e15\u0e38\u0e1c\u0e25\u0e17\u0e35\u0e48\u0e02\u0e2d\u0e25\u0e1a"
     }
   },
   "required": [
