@@ -280,7 +280,14 @@ export default function TaskForm({ task, onSubmit, isLoading, permissions, curre
           {form.checklist?.map((item, i) => (
             <div key={i} className="flex items-center gap-2">
               <Checkbox checked={item.checked} onCheckedChange={() => toggleChecklistItem(i)} />
-              <span className={`text-sm flex-1 ${item.checked ? 'line-through text-muted-foreground' : ''}`}>{item.item}</span>
+              <span className={`text-sm flex-1 ${item.checked ? 'line-through text-muted-foreground' : ''}`}>
+                {item.item?.startsWith('📢') ? (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="text-orange-500 text-xs font-medium bg-orange-50 px-1 rounded">📢 LINE</span>
+                    <span>{item.item.replace('📢', '').trim()}</span>
+                  </span>
+                ) : item.item}
+              </span>
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeChecklistItem(i)}><Trash2 className="w-3 h-3" /></Button>
             </div>
           ))}
