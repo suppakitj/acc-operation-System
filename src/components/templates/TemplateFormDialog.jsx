@@ -244,18 +244,29 @@ export default function TemplateFormDialog({ open, onOpenChange, template, onSub
 
           {/* Checklist */}
           <div>
-            <h3 className="text-sm font-semibold mb-3 text-primary">Checklist เริ่มต้น</h3>
+            <h3 className="text-sm font-semibold mb-2 text-primary">Checklist เริ่มต้น</h3>
+            <p className="text-[11px] text-muted-foreground mb-3">ข้อที่ขึ้นต้นด้วย 📢 จะส่ง LINE แจ้งลูกค้าอัตโนมัติเมื่อพนักงานติ๊ก — เช่น พิมพ์ "📢 ยื่น ภ.พ.30" (copy emoji 📢 นำหน้า)</p>
             <div className="space-y-2">
               {(form.default_checklist || []).map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
-                  <span className="flex-1 text-xs">• {item.item}</span>
+                  <span className="flex-1 text-xs">
+                    {item.item?.startsWith('📢') ? (
+                      <span className="inline-flex items-center gap-1">
+                        <span className="text-orange-500 text-[10px] font-medium bg-orange-50 px-1 rounded">📢 LINE</span>
+                        • {item.item.replace('📢', '').trim()}
+                      </span>
+                    ) : (
+                      <>• {item.item}</>
+                    )}
+                  </span>
                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => update('default_checklist', form.default_checklist.filter((_, idx) => idx !== i))}>
                     <Trash2 className="w-3 h-3" />
                   </Button>
                 </div>
               ))}
               <div className="flex gap-2">
-                <Input placeholder="เพิ่มรายการ..." value={newItem} onChange={e => setNewItem(e.target.value)} onKeyDown={e => e.key === 'Enter' && addChecklistItem()} className="text-xs" />
+                <Input placeholder="เพิ่มรายการ... (ใส่ 📢 นำหน้าเพื่อแจ้ง LINE)" value={newItem} onChange={e => setNewItem(e.target.value)} onKeyDown={e => e.key === 'Enter' && addChecklistItem()} className="text-xs" />
+                <Button variant="outline" size="sm" className="text-[10px] px-2 shrink-0 gap-1" onClick={() => { if (newItem.trim() && !newItem.startsWith('📢')) setNewItem('📢 ' + newItem); else if (!newItem.trim()) setNewItem('📢 '); }} title="เพิ่ม 📢 นำหน้า">📢</Button>
                 <Button variant="outline" size="icon" onClick={addChecklistItem}><Plus className="w-4 h-4" /></Button>
               </div>
             </div>
