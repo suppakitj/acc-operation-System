@@ -209,9 +209,117 @@ Deno.serve(async (req) => {
     });
   }
 
-  // === DELETE ===
+  // === REQUEST DELETE (non-admin → pending approval) ===
+  if (action === 'request_delete') {
+    const { director_id, reason } = body;
+    const dirs = await base44.entities.DirectorInfo.filter({ id: director_id });
+    const dir = dirs?.[0];
+    await base44.entities.DirectorInfo.update(director_id, {
+      delete_requested: true,
+      delete_requested_by: user.email,
+      delete_requested_by_name: user.full_name || user.email,
+      delete_requested_at: new Date().toISOString(),
+      delete_reason: reason || '',
+    });
+    await logPdpaAccess(base44, {
+      action: 'request_delete',
+      entity_type: 'DirectorInfo',
+      entity_id: director_id,
+      user_email: user.email,
+      user_name: user.full_name || user.email,
+      details: `ขอลบข้อมูลกรรมการ ${dir?.customer_name || ''} — เหตุผล: ${reason || '-'}`,
+    });
+    // Notify admins
+    const allUsers = await base44.asServiceRole.entities.User.filter({});
+    const admins = allUsers.filter(u => u.role === 'admin');
+    for (const admin of admins.slice(0, 5)) {
+      base44.asServiceRole.entities.Notification.create({
+        title: '🔐 ขออนุมัติลบข้อมูลกรรมการ',
+        message: `${user.full_name || user.email} ขอลบข้อมูลกรรมการของ ${dir?.customer_name || ''} (${dir?.position || ''}) — เหตุผล: ${reason || '-'}`,
+        type: 'system',
+        target_user: admin.email,
+        related_entity_type: 'DirectorInfo',
+        related_entity_id: director_id,
+      }).catch(() => {});
+    }
+    return Response.json({ success: true, message: 'request_submitted' });
+  }
+
+  // === CANCEL DELETE REQUEST ===
+  if (action === 'cancel_delete') {
+    const { director_id } = body;
+    await base44.entities.DirectorInfo.update(director_id, {
+      delete_requested: false, delete_requested_by: '', delete_requested_by_name: '',
+      delete_requested_at: '', delete_reason: '',
+    });
+    return Response.json({ success: true });
+  }
+
+  // === APPROVE DELETE (admin only) ===
+  if (action === 'approve_delete') {
+    const { director_id } = body;
+    if (user.role !== 'admin') {
+      return Response.json({ error: 'ต้องเป็น Admin เท่านั้น' }, { status: 403 });
+    }
+    const dirs = await base44.entities.DirectorInfo.filter({ id: director_id });
+    const dir = dirs?.[0];
+    await base44.entities.DirectorInfo.delete(director_id);
+    await logPdpaAccess(base44, {
+      action: 'approve_delete',
+      entity_type: 'DirectorInfo',
+      entity_id: director_id,
+      user_email: user.email,
+      user_name: user.full_name || user.email,
+      details: `อนุมัติลบข้อมูลกรรมการ ${dir?.customer_name || ''} (${dir?.position || ''}) — ขอโดย: ${dir?.delete_requested_by_name || ''}`,
+    });
+    if (dir?.delete_requested_by) {
+      base44.asServiceRole.entities.Notification.create({
+        title: '✅ อนุมัติลบข้อมูลกรรมการแล้ว',
+        message: `Admin ${user.full_name || user.email} อนุมัติลบข้อมูลกรรมการของ ${dir?.customer_name || ''}`,
+        type: 'system',
+        target_user: dir.delete_requested_by,
+      }).catch(() => {});
+    }
+    return Response.json({ success: true });
+  }
+
+  // === REJECT DELETE (admin only) ===
+  if (action === 'reject_delete') {
+    const { director_id, reject_reason } = body;
+    if (user.role !== 'admin') {
+      return Response.json({ error: 'ต้องเป็น Admin เท่านั้น' }, { status: 403 });
+    }
+    const dirs = await base44.entities.DirectorInfo.filter({ id: director_id });
+    const dir = dirs?.[0];
+    await base44.entities.DirectorInfo.update(director_id, {
+      delete_requested: false, delete_requested_by: '', delete_requested_by_name: '',
+      delete_requested_at: '', delete_reason: '',
+    });
+    await logPdpaAccess(base44, {
+      action: 'reject_delete',
+      entity_type: 'DirectorInfo',
+      entity_id: director_id,
+      user_email: user.email,
+      user_name: user.full_name || user.email,
+      details: `ปฏิเสธลบข้อมูลกรรมการ ${dir?.customer_name || ''} — เหตุผล: ${reject_reason || '-'}`,
+    });
+    if (dir?.delete_requested_by) {
+      base44.asServiceRole.entities.Notification.create({
+        title: '❌ ไม่อนุมัติลบข้อมูลกรรมการ',
+        message: `Admin ${user.full_name || user.email} ไม่อนุมัติลบข้อมูลกรรมการของ ${dir?.customer_name || ''} — เหตุผล: ${reject_reason || '-'}`,
+        type: 'system',
+        target_user: dir.delete_requested_by,
+      }).catch(() => {});
+    }
+    return Response.json({ success: true });
+  }
+
+  // === DELETE (admin direct) ===
   if (action === 'delete') {
     const { director_id } = body;
+    if (user.role !== 'admin') {
+      return Response.json({ error: 'ต้องเป็น Admin เท่านั้นถึงจะลบได้โดยตรง' }, { status: 403 });
+    }
     await base44.entities.DirectorInfo.delete(director_id);
     await logPdpaAccess(base44, {
       action: 'delete',
@@ -219,7 +327,7 @@ Deno.serve(async (req) => {
       entity_id: director_id,
       user_email: user.email,
       user_name: user.full_name || user.email,
-      details: `ลบข้อมูลกรรมการ ID: ${director_id}`,
+      details: `ลบข้อมูลกรรมการ ID: ${director_id} (admin direct)`,
     });
     return Response.json({ success: true });
   }

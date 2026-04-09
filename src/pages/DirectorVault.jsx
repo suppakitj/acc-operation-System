@@ -5,15 +5,13 @@ import { useAccessControl } from '@/components/auth/useAccessControl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
-} from '@/components/ui/alert-dialog';
 import { Shield, Plus, Search, Eye, Pencil, Trash2, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import TablePagination, { paginateData } from '@/components/shared/TablePagination';
 import DirectorForm from '@/components/directors/DirectorForm';
 import DirectorOtpDialog from '@/components/directors/DirectorOtpDialog';
+import DirectorDeleteDialog from '@/components/directors/DirectorDeleteDialog';
+import DirectorPendingDeleteBanner from '@/components/directors/DirectorPendingDeleteBanner';
 
 const TAX_LABELS = {
   pnd90: 'ภงด.90',
@@ -60,6 +58,8 @@ export default function DirectorVault() {
   }, [directors, search]);
 
   const paged = paginateData(filtered, page, pageSize);
+  const isAdmin = ac.role === 'admin';
+  const pendingDeletes = directors.filter(d => d.delete_requested);
 
   const handleSave = async (formData) => {
     setSaving(true);
@@ -88,19 +88,8 @@ export default function DirectorVault() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!deleteDirector) return;
-    try {
-      await base44.functions.invoke('directorManager', {
-        action: 'delete', director_id: deleteDirector.id,
-      });
-      toast.success('ลบข้อมูลกรรมการแล้ว');
-      queryClient.invalidateQueries({ queryKey: ['directors'] });
-    } catch {
-      toast.error('เกิดข้อผิดพลาดในการลบ');
-    } finally {
-      setDeleteDirector(null);
-    }
+  const handleDeleteDone = () => {
+    queryClient.invalidateQueries({ queryKey: ['directors'] });
   };
 
   const handleStartEdit = (dir) => {
@@ -143,6 +132,13 @@ export default function DirectorVault() {
         <Input placeholder="ค้นหาบริษัท / ตำแหน่ง..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="pl-9" />
       </div>
 
+      {/* Pending Delete Requests */}
+      <DirectorPendingDeleteBanner
+        pendingItems={pendingDeletes}
+        isAdmin={isAdmin}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['directors'] })}
+      />
+
       <div className="bg-card rounded-xl border overflow-x-auto">
         <table className="w-full text-left">
           <thead>
@@ -171,15 +167,20 @@ export default function DirectorVault() {
                 </td>
                 <td className="px-3 py-2.5">
                   <div className="flex items-center gap-1">
+                    {dir.delete_requested && (
+                      <Badge className="text-[9px] bg-amber-100 text-amber-700 border-0 mr-1">รอลบ</Badge>
+                    )}
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewDirector(dir)} title="ดู (OTP)">
                       <Eye className="w-3.5 h-3.5 text-primary" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleStartEdit(dir)} title="แก้ไข">
                       <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteDirector(dir)} title="ลบ">
-                      <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                    </Button>
+                    {!dir.delete_requested && (
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteDirector(dir)} title="ลบ">
+                        <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                      </Button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -220,21 +221,16 @@ export default function DirectorVault() {
         />
       )}
 
-      {/* Delete confirm */}
-      <AlertDialog open={!!deleteDirector} onOpenChange={(val) => { if (!val) setDeleteDirector(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>ยืนยันลบข้อมูลกรรมการ</AlertDialogTitle>
-            <AlertDialogDescription>
-              ลบข้อมูลกรรมการของ <strong>{deleteDirector?.customer_name}</strong> ({deleteDirector?.position || 'กรรมการ'})? การกระทำนี้ไม่สามารถย้อนกลับได้
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">ลบ</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Delete Dialog */}
+      {deleteDirector && (
+        <DirectorDeleteDialog
+          open={!!deleteDirector}
+          onOpenChange={(val) => { if (!val) setDeleteDirector(null); }}
+          director={deleteDirector}
+          onDeleted={handleDeleteDone}
+          isAdmin={isAdmin}
+        />
+      )}
     </div>
   );
 }
