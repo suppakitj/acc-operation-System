@@ -162,6 +162,7 @@ export default function Tasks() {
   const doApprove = async (taskId) => {
     const task = tasks.find(t => t.id === taskId);
     const today = format(new Date(), 'yyyy-MM-dd');
+    // Explicitly preserve findings + checklist so partial update doesn't accidentally clear them
     await base44.entities.Task.update(taskId, {
       status: 'completed',
       completed_date: today,
@@ -169,6 +170,8 @@ export default function Tasks() {
       reviewer_email: currentUser.email,
       reviewer_name: currentUser.full_name || currentUser.email,
       reviewed_date: today,
+      findings: task?.findings || [],
+      checklist: task?.checklist || [],
     });
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
     toast.success('✅ Approve เรียบร้อย');
