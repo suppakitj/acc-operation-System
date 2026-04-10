@@ -39,6 +39,7 @@ export default function TaskForm({ task, onSubmit, onSaveAsTemplate, isLoading, 
   const [pendingPhotos, setPendingPhotos] = useState([]);
   const [uploadingPending, setUploadingPending] = useState(false);
   const [uploadingFindingIdx, setUploadingFindingIdx] = useState(null);
+  const [savingTemplate, setSavingTemplate] = useState(false);
   const [activeFindingIdx, setActiveFindingIdx] = useState(null);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -489,11 +490,11 @@ export default function TaskForm({ task, onSubmit, onSaveAsTemplate, isLoading, 
         {task?.id && onSaveAsTemplate && (
           <Button
             variant="outline"
-            onClick={() => onSaveAsTemplate(form)}
-            disabled={isLoading || !form.title}
+            onClick={async () => { setSavingTemplate(true); try { await onSaveAsTemplate(form); } finally { setSavingTemplate(false); } }}
+            disabled={isLoading || !form.title || savingTemplate}
             className="w-full gap-1.5 text-xs border-dashed"
           >
-            💾 บันทึกเป็น Template (ใช้ซ้ำได้)
+            {savingTemplate ? '⏳ กำลังบันทึก...' : '💾 บันทึกเป็น Template (ใช้ซ้ำได้)'}
           </Button>
         )}
       </div>
