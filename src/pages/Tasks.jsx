@@ -13,6 +13,7 @@ import TaskDeptTabs from '../components/tasks/TaskDeptTabs';
 import TaskFilters from '../components/tasks/TaskFilters';
 import TaskTable from '../components/tasks/TaskTable';
 import ApproveFindingsDialog from '../components/tasks/ApproveFindingsDialog';
+import RejectDialog from '../components/tasks/RejectDialog';
 import TablePagination, { paginateData } from '../components/shared/TablePagination';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
@@ -30,6 +31,7 @@ export default function Tasks() {
   const [pageSize, setPageSize] = useState(25);
   // Approve Dialog state
   const [approveDialog, setApproveDialog] = useState({ open: false, taskId: null, task: null, customer: null });
+  const [rejectDialog, setRejectDialog] = useState({ open: false, taskId: null, task: null });
 
   const [filters, setFilters] = useState({
     search: '', department: 'all', status: 'all', priority: 'all',
@@ -45,6 +47,11 @@ export default function Tasks() {
   // Apply department-based visibility
   const tasks = ac.filterByDepartment(allTasks);
   const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500), staleTime: 60_000 });
+  const { data: allHolidays = [] } = useQuery({
+    queryKey: ['holidays'],
+    queryFn: () => base44.entities.HolidayMaster.filter({ status: 'active' }),
+    staleTime: 5 * 60_000,
+  });
   const customers = allCustomers.filter(c => c.status === 'active');
   const { data: users = [] } = useUserList();
 
@@ -281,28 +288,62 @@ export default function Tasks() {
     setApproveDialog({ open: false, taskId: null, task: null, customer: null });
   };
 
-  const handleReject = async (taskId) => {
-    const note = prompt('เหตุผลที่ส่งกลับ:');
-    if (note === null) return;
-    await base44.entities.Task.update(taskId, {
+  const handleReject = (taskId) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    setRejectDialog({ open: true, taskId, task });
+  };
+
+  const doReject = async ({ note, newDueDate }) => {
+    const { taskId, task } = rejectDialog;
+    if (!taskId) return;
+
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const oldDue = task.due_date?.split('T')[0] || '';
+    const newDue = newDueDate?.split('T')[0] || '';
+    const dueChanged = newDue && oldDue && newDue !== oldDue;
+
+    const updateData = {
       status: 'in_progress',
       review_status: 'rejected',
       reviewer_email: currentUser.email,
       reviewer_name: currentUser.full_name || currentUser.email,
-      reviewed_date: format(new Date(), 'yyyy-MM-dd'),
+      reviewed_date: today,
       review_note: note || '',
-    });
+      review_deadline: null,
+      findings: task.findings || [],
+      checklist: task.checklist || [],
+    };
+
+    if (newDue) {
+      updateData.due_date = newDue;
+      if (dueChanged) {
+        const currentHistory = Array.isArray(task.due_date_change_history) ? task.due_date_change_history : [];
+        updateData.due_date_change_count = (task.due_date_change_count || 0) + 1;
+        updateData.due_date_change_history = [...currentHistory, {
+          changed_at: new Date().toISOString(),
+          changed_by: currentUser?.email || '',
+          changed_by_name: currentUser?.full_name || '',
+          changed_by_role: currentUser?.role || '',
+          old_due_date: oldDue,
+          new_due_date: newDue,
+          reason: `ส่งกลับ: ${note || 'ไม่ระบุเหตุผล'}`,
+        }];
+      }
+    }
+
+    await base44.entities.Task.update(taskId, updateData);
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    setRejectDialog({ open: false, taskId: null, task: null });
     toast.success('📤 ส่งกลับให้แก้ไขแล้ว');
 
-    // แจ้งเตือน staff ที่ถูก reject
     try {
-      const task = tasks.find(t => t.id === taskId);
       const reviewerName = currentUser.full_name || currentUser.email;
+      const dueDateMsg = newDue ? `\n📅 กำหนดส่งใหม่: ${newDue}` : '';
       if (task?.assigned_to) {
         base44.entities.Notification.create({
           title: `⚠️ งานถูกส่งกลับ: ${task.title}`,
-          message: `${reviewerName} ส่งกลับงาน "${task.title}"${note ? ` — เหตุผล: ${note}` : ''} กรุณาแก้ไขแล้วส่งตรวจใหม่`,
+          message: `${reviewerName} ส่งกลับงาน "${task.title}"${note ? ` — เหตุผล: ${note}` : ''}${newDue ? ` — กำหนดส่งใหม่: ${newDue}` : ''} กรุณาแก้ไขแล้วส่งตรวจใหม่`,
           type: 'task_assigned',
           target_user: task.assigned_to,
           related_entity_type: 'Task',
@@ -311,9 +352,30 @@ export default function Tasks() {
         }).catch(e => console.warn('Reject notification failed:', e.message));
       }
       sendLineToAccounting(
-        `⚠️ งานถูกส่งกลับ\n━━━━━━━━━━━━━━━━\n📄 ${task?.title || ''}\n🏢 ${task?.customer_name || '-'}\n👤 ผู้รับผิดชอบ: ${task?.assigned_name || '-'}\n🔍 ส่งกลับโดย: ${reviewerName}\n📝 เหตุผล: ${note || '-'}\n━━━━━━━━━━━━━━━━\n💡 กรุณาแก้ไขแล้วส่งตรวจใหม่`
+        `⚠️ งานถูกส่งกลับ\n━━━━━━━━━━━━━━━━\n📄 ${task?.title || ''}\n🏢 ${task?.customer_name || '-'}\n👤 ผู้รับผิดชอบ: ${task?.assigned_name || '-'}\n🔍 ส่งกลับโดย: ${reviewerName}\n📝 เหตุผล: ${note || '-'}${dueDateMsg}\n━━━━━━━━━━━━━━━━\n💡 กรุณาแก้ไขแล้วส่งตรวจใหม่`
       );
     } catch (e) { console.warn('Reject notification error:', e.message); }
+  };
+
+  // ── คำนวณ review_deadline = due_date + 2 วันทำการ (ข้ามเสาร์-อาทิตย์ + วันหยุด) ──
+  const calcReviewDeadline = (dueDate) => {
+    if (!dueDate) return '';
+    const holidayDates = new Set(
+      (allHolidays || [])
+        .filter(h => h.status === 'active' && h.date)
+        .map(h => h.date.split('T')[0])
+    );
+    let d = new Date(dueDate + 'T00:00:00');
+    let added = 0;
+    while (added < 2) {
+      d.setDate(d.getDate() + 1);
+      const day = d.getDay();
+      const dateStr = d.toISOString().split('T')[0];
+      if (day !== 0 && day !== 6 && !holidayDates.has(dateStr)) {
+        added++;
+      }
+    }
+    return d.toISOString().split('T')[0];
   };
 
   const [submitting, setSubmitting] = useState(false);
@@ -340,6 +402,11 @@ export default function Tasks() {
         return;
       }
       data.review_status = 'pending_review';
+
+      // Auto คำนวณ review_deadline = due_date + 2 วันทำการ
+      if (!data.review_deadline) {
+        data.review_deadline = calcReviewDeadline(data.due_date || editingTask?.due_date);
+      }
 
       // แจ้งเตือน reviewer เฉพาะเมื่อ status เปลี่ยนเป็น review ครั้งแรก
       if (statusChangedToReview) try {
@@ -379,6 +446,7 @@ export default function Tasks() {
       if (allChecked && !wasAllChecked) {
         data.status = 'review';
         data.review_status = 'pending_review';
+        data.review_deadline = calcReviewDeadline(data.due_date || editingTask?.due_date);
         toast.info('✅ Checklist ครบ — เปลี่ยนสถานะเป็น "รอตรวจสอบ" อัตโนมัติ');
 
         try {
@@ -667,6 +735,13 @@ export default function Tasks() {
         customer={approveDialog.customer}
         onApproveOnly={async () => { await doApprove(approveDialog.taskId); setApproveDialog({ open: false, taskId: null, task: null, customer: null }); }}
         onApproveAndSend={doApproveAndSend}
+      />
+
+      <RejectDialog
+        open={rejectDialog.open}
+        onOpenChange={(open) => { if (!open) setRejectDialog({ open: false, taskId: null, task: null }); }}
+        task={rejectDialog.task}
+        onConfirm={doReject}
       />
 
       <Dialog open={showForm} onOpenChange={setShowForm}>

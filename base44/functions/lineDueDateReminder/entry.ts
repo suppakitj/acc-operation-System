@@ -163,7 +163,13 @@ Deno.serve(async (req) => {
     const due7Days = [];
 
     for (const task of activeTasks) {
-      const diff = getDaysDiff(task.due_date, todayStr);
+      // งาน review → ใช้ review_deadline, ถ้าไม่มี → ข้าม (ไม่นับ overdue)
+      const effectiveDate = task.status === 'review'
+        ? (task.review_deadline || null)
+        : task.due_date;
+      if (!effectiveDate) continue;
+
+      const diff = getDaysDiff(effectiveDate, todayStr);
       if (diff < 0) overdueTasks.push({ ...task, _daysOver: Math.abs(diff) });
       else if (diff <= 3) due3Days.push({ ...task, _daysLeft: diff });
       else if (diff <= 7) due7Days.push({ ...task, _daysLeft: diff });

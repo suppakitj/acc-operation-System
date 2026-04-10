@@ -114,8 +114,12 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
           {tasks.length === 0 ? (
             <tr><td colSpan={11} className="text-center py-12 text-sm text-muted-foreground">{t('no_data')}</td></tr>
           ) : tasks.map(task => {
-            const isOverdue = task.due_date && task.status !== 'completed' && task.status !== 'cancelled' && new Date(task.due_date) < todayStart;
-            const daysLate = isOverdue ? differenceInDays(todayStart, new Date(task.due_date)) : 0;
+            // งาน review → ใช้ review_deadline แทน due_date สำหรับ overdue
+            const effectiveDue = task.status === 'review'
+              ? (task.review_deadline || null)
+              : task.due_date;
+            const isOverdue = effectiveDue && task.status !== 'completed' && task.status !== 'cancelled' && new Date(effectiveDue) < todayStart;
+            const daysLate = isOverdue ? differenceInDays(todayStart, new Date(effectiveDue)) : 0;
             return (
               <tr key={task.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors cursor-pointer group"
                 onClick={() => onRowClick(task)}>
@@ -184,10 +188,16 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
                       </Button>
                     </div>
                   )}
+                  {/* Review deadline badge for reviewer */}
+                  {task.status === 'review' && isReviewer && task.review_deadline && (
+                    <p className="text-[9px] text-purple-600 mt-1">
+                      ⏰ กำหนดตรวจ: {format(new Date(task.review_deadline + 'T00:00:00'), 'd MMM yy')}
+                    </p>
+                  )}
                   {/* Staff sees waiting badge */}
                   {task.status === 'review' && !isReviewer && (
                     <Badge variant="outline" className="text-[9px] mt-1 bg-purple-50 text-purple-700 border-purple-200">
-                      🔍 รอหัวหน้าตรวจ
+                      🔍 รอหัวหน้าตรวจ{task.review_deadline ? ` (ภายใน ${format(new Date(task.review_deadline + 'T00:00:00'), 'd MMM')})` : ''}
                     </Badge>
                   )}
                   {/* Reject note */}

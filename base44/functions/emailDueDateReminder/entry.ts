@@ -149,8 +149,15 @@ Deno.serve(async (req) => {
     const allTasks = await base44.asServiceRole.entities.Task.filter({});
     const alertTasks = allTasks
       .filter(t => t.due_date && t.status !== 'completed' && t.status !== 'cancelled')
-      .map(t => ({ ...t, daysLeft: dateDiffDays(t.due_date, today) }))
-      .filter(t => t.daysLeft <= 7);
+      .map(t => {
+        // งาน review → ใช้ review_deadline แทน due_date
+        const effectiveDate = t.status === 'review'
+          ? (t.review_deadline || null)
+          : t.due_date;
+        if (!effectiveDate) return null;
+        return { ...t, daysLeft: dateDiffDays(effectiveDate, today) };
+      })
+      .filter(t => t && t.daysLeft <= 7);
 
     if (alertTasks.length === 0) {
       console.log('No tasks approaching due date. Skipping email.');
