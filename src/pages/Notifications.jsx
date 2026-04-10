@@ -27,6 +27,18 @@ export default function Notifications() {
     },
   });
 
+  const markAllReadMutation = useMutation({
+    mutationFn: async (ids) => {
+      for (const id of ids) {
+        await base44.entities.Notification.update(id, { is_read: true });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unreadNotifications'] });
+    },
+  });
+
   const unread = notifications.filter(n => !n.is_read);
 
   const TYPE_CONFIG = {
@@ -47,8 +59,8 @@ export default function Notifications() {
           <p className="text-sm text-muted-foreground">{t('notif_unread', { n: unread.length })}</p>
         </div>
         {unread.length > 0 && (
-          <Button variant="outline" size="sm" onClick={() => unread.forEach(n => markReadMutation.mutate(n.id))} className="gap-2 self-start sm:self-auto">
-            <CheckCheck className="w-4 h-4" /> {t('mark_all_read')}
+          <Button variant="outline" size="sm" onClick={() => markAllReadMutation.mutate(unread.map(n => n.id))} disabled={markAllReadMutation.isPending} className="gap-2 self-start sm:self-auto">
+            <CheckCheck className="w-4 h-4" /> {markAllReadMutation.isPending ? 'กำลังอ่าน...' : t('mark_all_read')}
           </Button>
         )}
       </div>
