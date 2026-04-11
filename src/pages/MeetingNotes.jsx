@@ -228,6 +228,7 @@ export default function MeetingNotes() {
       follow_up_date: note.follow_up_date || '',
       action_items: note.action_items || [], status: note.status || 'open',
     });
+    setNewActionText(''); setNewActionDue('');
     setShowForm(true);
   };
 
@@ -243,7 +244,7 @@ export default function MeetingNotes() {
           </h1>
           <p className="text-xs text-muted-foreground mt-1">บันทึกการสั่งงาน/ประชุม 1-on-1 — กันลืมเวลาสั่งงานปากเปล่า</p>
         </div>
-        <Button size="sm" className="gap-1.5 self-start" onClick={() => { setEditing(null); setForm(emptyForm); setShowForm(true); }}>
+        <Button size="sm" className="gap-1.5 self-start" onClick={() => { setEditing(null); setForm(emptyForm); setNewActionText(''); setNewActionDue(''); setShowForm(true); }}>
           <Plus className="w-4 h-4" /> สร้างบันทึกใหม่
         </Button>
       </div>
