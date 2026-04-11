@@ -20,6 +20,7 @@ import {
 import { toast } from 'sonner';
 import { useUserList } from '../hooks/useUserList';
 import StaffMultiSelect from '../components/meeting/StaffMultiSelect';
+import SearchableSelect from '../components/ui/SearchableSelect';
 
 export default function MeetingNotes() {
   const queryClient = useQueryClient();
@@ -38,6 +39,13 @@ export default function MeetingNotes() {
     staleTime: 30_000,
   });
   
+  const { data: allCustomers = [] } = useQuery({
+    queryKey: ['customers'],
+    queryFn: () => base44.entities.Customer.list('-created_date', 500),
+    staleTime: 60_000,
+  });
+  const activeCustomers = useMemo(() => allCustomers.filter(c => c.status === 'active'), [allCustomers]);
+
   const { data: appConfigs = [] } = useQuery({
     queryKey: ['appConfig', 'line_meeting'],
     queryFn: () => base44.entities.AppConfig.list(),
@@ -379,7 +387,12 @@ export default function MeetingNotes() {
 
             <div className="space-y-1.5">
               <Label>ลูกค้าที่เกี่ยวข้อง (optional)</Label>
-              <Input value={form.customer_name} onChange={e => setForm(p => ({ ...p, customer_name: e.target.value }))} placeholder="ชื่อลูกค้า" />
+              <SearchableSelect
+                value={form.customer_name}
+                onValueChange={v => setForm(p => ({ ...p, customer_name: v }))}
+                options={activeCustomers.map(c => ({ value: c.company_name, label: c.company_name }))}
+                placeholder="พิมพ์ค้นหาชื่อลูกค้า..."
+              />
             </div>
 
             <div className="space-y-1.5">
