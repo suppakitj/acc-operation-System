@@ -450,9 +450,9 @@ export default function MeetingNotes() {
               <Input type="date" value={form.follow_up_date} onChange={e => setForm(p => ({ ...p, follow_up_date: e.target.value }))} />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => { setShowForm(false); setEditing(null); setForm(emptyForm); }}>ยกเลิก</Button>
-              <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+            <div className="flex justify-end gap-2 pt-4 relative z-[100]">
+              <Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditing(null); setForm(emptyForm); }}>ยกเลิก</Button>
+              <Button type="button" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleSave(); }} disabled={createMutation.isPending || updateMutation.isPending}>
                 {editing ? 'บันทึก' : 'สร้าง'}
               </Button>
             </div>
