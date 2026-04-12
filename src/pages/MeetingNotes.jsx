@@ -211,19 +211,25 @@ export default function MeetingNotes() {
   };
 
   const handleSave = () => {
-    if (!form.title.trim() || (form.staff_emails || []).length === 0) {
-      toast.error('กรุณากรอกหัวข้อและเลือกพนักงานอย่างน้อย 1 คน');
+    console.log('handleSave called', { title: form.title, staff_emails: form.staff_emails, action_items: form.action_items });
+    if (!form.title.trim()) {
+      toast.error('กรุณากรอกหัวข้อ');
+      return;
+    }
+    if ((form.staff_emails || []).length === 0) {
+      toast.error('กรุณาเลือกพนักงานอย่างน้อย 1 คน');
       return;
     }
     // Clean action_items — ensure proper format
     const cleanedForm = {
       ...form,
       action_items: (form.action_items || []).map(item => ({
-        text: item.text || '',
-        done: item.done || false,
-        due_date: item.due_date || '',
+        text: String(item.text || ''),
+        done: !!item.done,
+        due_date: String(item.due_date || ''),
       })),
     };
+    console.log('Submitting cleanedForm', cleanedForm);
     if (editing) {
       updateMutation.mutate({ id: editing.id, data: cleanedForm });
     } else {
