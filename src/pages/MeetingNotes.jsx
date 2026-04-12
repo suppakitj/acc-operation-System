@@ -138,6 +138,9 @@ export default function MeetingNotes() {
         console.warn('Meeting notification error:', e.message);
       }
     },
+    onError: (err) => {
+      toast.error('สร้างไม่สำเร็จ: ' + (err.message || ''));
+    },
   });
 
   const updateMutation = useMutation({
@@ -154,6 +157,9 @@ export default function MeetingNotes() {
       queryClient.invalidateQueries({ queryKey: ['meetingNotes'] });
       setShowForm(false); setEditing(null); setForm(emptyForm);
       toast.success('อัปเดตเรียบร้อย');
+    },
+    onError: (err) => {
+      toast.error('อัปเดตไม่สำเร็จ: ' + (err.message || ''));
     },
   });
 
@@ -209,10 +215,19 @@ export default function MeetingNotes() {
       toast.error('กรุณากรอกหัวข้อและเลือกพนักงานอย่างน้อย 1 คน');
       return;
     }
+    // Clean action_items — ensure proper format
+    const cleanedForm = {
+      ...form,
+      action_items: (form.action_items || []).map(item => ({
+        text: item.text || '',
+        done: item.done || false,
+        due_date: item.due_date || '',
+      })),
+    };
     if (editing) {
-      updateMutation.mutate({ id: editing.id, data: form });
+      updateMutation.mutate({ id: editing.id, data: cleanedForm });
     } else {
-      createMutation.mutate(form);
+      createMutation.mutate(cleanedForm);
     }
   };
 
