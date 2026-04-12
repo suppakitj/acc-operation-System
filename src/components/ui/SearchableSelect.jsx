@@ -81,7 +81,7 @@ export default function SearchableSelect({
       {open && (
         <div
           ref={dropdownRef}
-          className="absolute z-[9999] mt-1 w-full min-w-[8rem] rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
+          className="absolute z-[60] mt-1 w-full min-w-[8rem] rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
           onFocus={stopPropagation}
           onBlur={stopPropagation}
         >
