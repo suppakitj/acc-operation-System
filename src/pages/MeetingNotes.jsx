@@ -453,9 +453,14 @@ export default function MeetingNotes() {
           </div>
           <div className="flex justify-end gap-2 pt-3 border-t mt-2 shrink-0">
             <Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditing(null); setForm(emptyForm); }}>ยกเลิก</Button>
-            <Button type="button" onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-9 px-4 py-2 bg-primary text-primary-foreground shadow hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
+              disabled={createMutation.isPending || updateMutation.isPending}
+              onPointerDown={(e) => { e.preventDefault(); handleSave(); }}
+            >
               {editing ? 'บันทึก' : 'สร้าง'}
-            </Button>
+            </button>
           </div>
         </DialogContent>
       </Dialog>
