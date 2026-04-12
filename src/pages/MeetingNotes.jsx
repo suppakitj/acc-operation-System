@@ -381,11 +381,11 @@ export default function MeetingNotes() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={showForm} onOpenChange={(open) => { if (!open) { setShowForm(false); setEditing(null); setForm(emptyForm); } }}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editing ? 'แก้ไขบันทึก' : 'สร้างบันทึกใหม่'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto flex-1 pr-1">
             <div className="space-y-1.5">
               <Label>หัวข้อ *</Label>
               <Input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="เช่น สั่งงาน สมชาย เรื่อง ปิดงบ ABC" />
@@ -450,12 +450,12 @@ export default function MeetingNotes() {
               <Input type="date" value={form.follow_up_date} onChange={e => setForm(p => ({ ...p, follow_up_date: e.target.value }))} />
             </div>
 
-            <div className="flex justify-end gap-2 pt-4 relative z-[100]">
-              <Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditing(null); setForm(emptyForm); }}>ยกเลิก</Button>
-              <Button type="button" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleSave(); }} disabled={createMutation.isPending || updateMutation.isPending}>
-                {editing ? 'บันทึก' : 'สร้าง'}
-              </Button>
-            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-3 border-t mt-2 shrink-0">
+            <Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditing(null); setForm(emptyForm); }}>ยกเลิก</Button>
+            <Button type="button" onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+              {editing ? 'บันทึก' : 'สร้าง'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
