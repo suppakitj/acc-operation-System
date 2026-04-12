@@ -429,7 +429,7 @@ export default function MeetingNotes() {
                 <div key={idx} className="flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1.5">
                   <span className="text-xs flex-1">{item.text}</span>
                   {item.due_date && <span className="text-[10px] text-muted-foreground">{item.due_date}</span>}
-                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => removeActionItem(idx)}>
+                  <Button type="button" variant="ghost" size="icon" className="h-5 w-5" onClick={() => removeActionItem(idx)}>
                     <X className="w-3 h-3" />
                   </Button>
                 </div>
@@ -439,7 +439,7 @@ export default function MeetingNotes() {
                   className="text-xs h-8 flex-1"
                   onKeyDown={e => e.key === 'Enter' && addActionItem()} />
                 <Input type="date" value={newActionDue} onChange={e => setNewActionDue(e.target.value)} className="text-xs h-8 w-[140px]" />
-                <Button variant="outline" size="sm" className="h-8" onClick={addActionItem}>
+                <Button type="button" variant="outline" size="sm" className="h-8" onClick={addActionItem}>
                   <Plus className="w-3 h-3" />
                 </Button>
               </div>
