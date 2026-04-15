@@ -276,13 +276,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create one notification record
-    await base44.asServiceRole.entities.Notification.create({
-      title: `📧 ส่งอีเมลแจ้งเตือน Due Date อัตโนมัติ`,
-      message: `ส่งอีเมลแจ้งเตือน ${alertTasks.length} งานใกล้กำหนด ไปยัง ${sentCount} คน`,
-      type: 'system',
-      is_read: false,
-    });
+    // Create one notification record for admins
+    for (const mgtUser of managementUsers) {
+      if (!mgtUser.email) continue;
+      await base44.asServiceRole.entities.Notification.create({
+        title: `📧 ส่งอีเมลแจ้งเตือน Due Date อัตโนมัติ`,
+        message: `ส่งอีเมลแจ้งเตือน ${alertTasks.length} งานใกล้กำหนด ไปยัง ${sentCount} คน`,
+        type: 'system',
+        target_user: mgtUser.email,
+        is_read: false,
+      });
+    }
 
     const summary = {
       status: 'completed',
