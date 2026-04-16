@@ -13,7 +13,7 @@ import { useLanguage } from '../LanguageContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAccessControl } from '../auth/useAccessControl';
 
-export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, setMobileOpen }) {
+export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, setMobileOpen, lineUnreadCount = 0 }) {
   const location = useLocation();
   const { t } = useLanguage();
   const ac = useAccessControl(user);
@@ -193,7 +193,12 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
                         title={collapsed && !mobileOpen ? item.label : undefined}
                       >
                         <item.icon className={cn("w-[18px] h-[18px] shrink-0", isActive && "text-sidebar-primary")} />
-                        {(!collapsed || mobileOpen) && <span className="truncate">{item.label}</span>}
+                        {(!collapsed || mobileOpen) && <span className="truncate flex-1">{item.label}</span>}
+                        {(!collapsed || mobileOpen) && item.id === 'line_chat' && lineUnreadCount > 0 && (
+                          <span className="min-w-[20px] h-[20px] rounded-full bg-green-500 text-white text-[10px] flex items-center justify-center font-bold px-1 shrink-0">
+                            {lineUnreadCount > 99 ? '99+' : lineUnreadCount}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}

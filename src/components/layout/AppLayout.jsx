@@ -24,8 +24,23 @@ export default function AppLayout() {
       return base44.entities.Notification.filter({ target_user: user.email, is_read: false });
     },
     enabled: !!user?.email,
-    refetchInterval: 2 * 60_000, // every 2min instead of 1min
+    refetchInterval: 2 * 60_000,
     staleTime: 60_000,
+  });
+
+  const { data: lineUnreadCount = 0 } = useQuery({
+    queryKey: ['lineUnreadCount'],
+    queryFn: async () => {
+      const messages = await base44.entities.LineMessage.filter(
+        { is_read: false, direction: 'incoming' },
+        '-created_date',
+        500
+      );
+      return messages.length;
+    },
+    enabled: !!user?.email,
+    refetchInterval: 30_000,
+    staleTime: 15_000,
   });
 
   // Log login event once
@@ -62,6 +77,7 @@ export default function AppLayout() {
         setCollapsed={setCollapsed}
         mobileOpen={mobileOpen}
         setMobileOpen={setMobileOpen}
+        lineUnreadCount={lineUnreadCount}
       />
       <div className={cn(
         "transition-all duration-300",
@@ -71,6 +87,7 @@ export default function AppLayout() {
         <TopBar
           user={user}
           unreadCount={notifications?.length || 0}
+          lineUnreadCount={lineUnreadCount}
           onMenuClick={() => setMobileOpen(true)}
         />
         <main className="p-4 md:p-6 max-w-[1600px] mx-auto">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, LogOut, Settings, Palette, Menu, Globe } from 'lucide-react';
+import { Bell, LogOut, Settings, Palette, Menu, Globe, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -10,7 +10,7 @@ import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../LanguageContext';
 
-export default function TopBar({ user, unreadCount, onMenuClick }) {
+export default function TopBar({ user, unreadCount, lineUnreadCount = 0, onMenuClick }) {
   const { t, lang, setLang } = useLanguage();
 
   const deptKey = user?.department ? `dept_${user.department}` : null;
@@ -33,6 +33,18 @@ export default function TopBar({ user, unreadCount, onMenuClick }) {
         <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setLang(lang === 'th' ? 'en' : 'th')}>
           <span className="text-xs font-bold">{lang === 'th' ? 'EN' : 'TH'}</span>
         </Button>
+
+        {/* LINE unread */}
+        {lineUnreadCount > 0 && (
+          <Link to="/LineChat">
+            <Button variant="ghost" size="icon" className="relative h-9 w-9">
+              <MessageCircle className="w-[18px] h-[18px] text-green-600" />
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-green-500 text-white text-[10px] flex items-center justify-center font-bold px-1">
+                {lineUnreadCount > 99 ? '99+' : lineUnreadCount}
+              </span>
+            </Button>
+          </Link>
+        )}
 
         {/* Notifications */}
         <Link to="/Notifications">
