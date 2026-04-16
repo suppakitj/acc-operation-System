@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
@@ -42,6 +42,44 @@ export default function AppLayout() {
     refetchInterval: 30_000,
     staleTime: 15_000,
   });
+
+  // ─── Tab title กะพริบเมื่อ LINE ใหม่ ───
+  const originalTitle = useRef(document.title);
+  const titleInterval = useRef(null);
+
+  useEffect(() => {
+    if (lineUnreadCount > 0) {
+      if (titleInterval.current) clearInterval(titleInterval.current);
+      let show = true;
+      titleInterval.current = setInterval(() => {
+        document.title = show
+          ? `(${lineUnreadCount}) 💬 LINE ใหม่ — ACC`
+          : originalTitle.current;
+        show = !show;
+      }, 1500);
+    } else {
+      if (titleInterval.current) {
+        clearInterval(titleInterval.current);
+        titleInterval.current = null;
+      }
+      document.title = originalTitle.current;
+    }
+    return () => {
+      if (titleInterval.current) clearInterval(titleInterval.current);
+    };
+  }, [lineUnreadCount]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      if (lineUnreadCount === 0 && titleInterval.current) {
+        clearInterval(titleInterval.current);
+        titleInterval.current = null;
+        document.title = originalTitle.current;
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [lineUnreadCount]);
 
   // Log login event once
   const loginLogged = useRef(false);
