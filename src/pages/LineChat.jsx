@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Send, Search, MessageCircle, User, Users, ArrowLeft, AlertCircle, Settings, ChevronUp, Paperclip, Loader2, ScreenShare, X, Smile } from 'lucide-react';
+import { Send, Search, MessageCircle, User, Users, ArrowLeft, AlertCircle, Settings, ChevronUp, Paperclip, Loader2, ScreenShare, X, Smile, CheckCheck } from 'lucide-react';
 import ChatBubble from '../components/chat/ChatBubble';
 import CreateTaskFromChat from '../components/chat/CreateTaskFromChat';
 import ScreenCaptureDialog from '../components/chat/ScreenCaptureDialog';
@@ -116,6 +116,12 @@ export default function LineChat() {
   }, []);
   const [activeMentions, setActiveMentions] = useState([]);
   const [triggerMentionName, setTriggerMentionName] = useState(null);
+
+  const { data: currentUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+    staleTime: 2 * 60_000,
+  });
 
   const { data: configs = [] } = useQuery({
     queryKey: ['appConfig', 'line_oa'],
@@ -476,9 +482,24 @@ export default function LineChat() {
                   <p className="text-[11px] text-muted-foreground">{totalUnread} ข้อความใหม่</p>
                 )}
               </div>
-              <Badge variant="outline" className="bg-green-50 text-green-700 text-[10px] gap-1.5 border-green-200">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> LINE
-              </Badge>
+              <div className="flex items-center gap-1.5">
+                {currentUser?.role === 'admin' && totalUnread > 0 && (
+                  <Button variant="outline" size="sm" className="text-[10px] h-6 gap-1 px-2"
+                    onClick={async () => {
+                      const res = await base44.functions.invoke('markAllLineRead', {});
+                      toast.success(`ล้าง unread ${res.data?.marked || 0} ข้อความ`);
+                      queryClient.invalidateQueries({ queryKey: ['lineMessages'] });
+                      queryClient.invalidateQueries({ queryKey: ['lineUnreadCount'] });
+                      setAllMessages(prev => prev.map(m => ({ ...m, is_read: true })));
+                      queryClient.setQueryData(['lineUnreadCount'], 0);
+                    }}>
+                    <CheckCheck className="w-3 h-3" /> ล้าง unread
+                  </Button>
+                )}
+                <Badge variant="outline" className="bg-green-50 text-green-700 text-[10px] gap-1.5 border-green-200">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> LINE
+                </Badge>
+              </div>
             </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
