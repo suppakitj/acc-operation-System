@@ -34,7 +34,7 @@ export default function Tasks() {
   const [rejectDialog, setRejectDialog] = useState({ open: false, taskId: null, task: null });
 
   const [filters, setFilters] = useState({
-    search: '', department: 'all', status: 'all', priority: 'all',
+    search: '', department: 'all', status: 'active', priority: 'all',
     owner: 'all', serviceType: 'all', client: 'all', taskType: 'all',
     dateFrom: '', dateTo: '', _count: 0, _total: 0,
   });
@@ -627,16 +627,18 @@ export default function Tasks() {
   };
 
   const filtered = useMemo(() => {
-    let result = filters.status === 'all'
-      ? tasks.filter(t => t.status !== 'cancelled' && t.status !== 'completed')
-      : tasks;
+    let result = [...tasks];
     const f = filters;
     if (f.search) {
       const s = f.search.toLowerCase();
       result = result.filter(t => t.title?.toLowerCase().includes(s) || t.customer_name?.toLowerCase().includes(s) || String(t.id).includes(s));
     }
     if (f.department !== 'all') result = result.filter(t => t.department === f.department);
-    if (f.status !== 'all') result = result.filter(t => t.status === f.status);
+    if (f.status === 'active') {
+      result = result.filter(t => t.status !== 'completed' && t.status !== 'cancelled');
+    } else if (f.status !== 'all') {
+      result = result.filter(t => t.status === f.status);
+    }
     if (f.priority !== 'all') result = result.filter(t => t.priority === f.priority);
     if (f.owner !== 'all') result = result.filter(t => t.assigned_to === f.owner);
     if (f.serviceType !== 'all') result = result.filter(t => t.service_type === f.serviceType);
@@ -672,7 +674,15 @@ export default function Tasks() {
   const paged = paginateData(filtered, page, pageSize);
 
   // Update counts in filters for display
-  const filtersWithCounts = { ...filters, _count: filtered.length, _total: tasks.length };
+  const statusCounts = {
+    active: tasks.filter(t => t.status !== 'completed' && t.status !== 'cancelled').length,
+    pending: tasks.filter(t => t.status === 'pending').length,
+    in_progress: tasks.filter(t => t.status === 'in_progress').length,
+    review: tasks.filter(t => t.status === 'review').length,
+    completed: tasks.filter(t => t.status === 'completed').length,
+    cancelled: tasks.filter(t => t.status === 'cancelled').length,
+  };
+  const filtersWithCounts = { ...filters, _count: filtered.length, _total: tasks.length, _statusCounts: statusCounts };
 
   return (
     <div className="space-y-4">

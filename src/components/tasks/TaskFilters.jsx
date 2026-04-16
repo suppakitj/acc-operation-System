@@ -9,8 +9,45 @@ export default function TaskFilters({ filters, setFilters, customers = [], users
   const { t } = useLanguage();
   const update = (key, value) => setFilters(prev => ({ ...prev, [key]: value }));
 
+  const STATUS_TABS = [
+    { key: 'all', label: 'ทั้งหมด', color: 'bg-primary text-primary-foreground' },
+    { key: 'active', label: 'ยังไม่เสร็จ', color: 'bg-blue-600 text-white' },
+    { key: 'pending', label: 'รอดำเนินการ', color: 'bg-slate-500 text-white' },
+    { key: 'in_progress', label: 'กำลังทำ', color: 'bg-orange-500 text-white' },
+    { key: 'review', label: 'รอ Approve', color: 'bg-purple-600 text-white' },
+    { key: 'completed', label: 'เสร็จแล้ว', color: 'bg-green-600 text-white' },
+  ];
+
   return (
     <div className="space-y-2">
+      {/* Quick Status Tabs */}
+      <div className="flex flex-wrap gap-1.5">
+        {STATUS_TABS.map(tab => {
+          const isActive = filters.status === tab.key;
+          const count = tab.key === 'all' ? (filters._total || 0)
+            : tab.key === 'active' ? (filters._statusCounts?.active || 0)
+            : (filters._statusCounts?.[tab.key] || 0);
+          return (
+            <button
+              key={tab.key}
+              onClick={() => update('status', tab.key)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                isActive
+                  ? `${tab.color} shadow-sm`
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              {tab.label}
+              <span className={`text-[10px] px-1.5 py-0 rounded-full ${
+                isActive ? 'bg-white/20' : 'bg-background'
+              }`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Row 1 */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1 max-w-xs">
@@ -27,17 +64,6 @@ export default function TaskFilters({ filters, setFilters, customers = [], users
             <SelectItem value="billing">{t('dept_billing')}</SelectItem>
             <SelectItem value="management">{t('dept_management')}</SelectItem>
             <SelectItem value="it">{t('dept_it')}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={filters.status} onValueChange={v => update('status', v)}>
-          <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs"><SelectValue placeholder="All Statuses" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="pending">{t('status_pending')}</SelectItem>
-            <SelectItem value="in_progress">{t('status_in_progress')}</SelectItem>
-            <SelectItem value="review">{t('status_review')}</SelectItem>
-            <SelectItem value="completed">{t('status_completed')}</SelectItem>
-            <SelectItem value="cancelled">{t('status_cancelled')}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filters.priority} onValueChange={v => update('priority', v)}>
