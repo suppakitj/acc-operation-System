@@ -80,6 +80,7 @@ export default function LineChat() {
   const [captureDialogOpen, setCaptureDialogOpen] = useState(false);
   const [sendingCapture, setSendingCapture] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
+  const [markAllLoading, setMarkAllLoading] = useState(false);
   // Message search
   const [showMsgSearch, setShowMsgSearch] = useState(false);
   const [msgSearchQuery, setMsgSearchQuery] = useState('');
@@ -489,15 +490,30 @@ export default function LineChat() {
               <div className="flex items-center gap-1.5">
                 {currentUser?.role === 'admin' && (globalUnreadCount > 0 || totalUnread > 0) && (
                   <Button variant="outline" size="sm" className="text-[10px] h-6 gap-1 px-2"
+                    disabled={markAllLoading}
                     onClick={async () => {
-                      const res = await base44.functions.invoke('markAllLineRead', {});
-                      toast.success(`ล้าง unread ${res.data?.marked || 0} ข้อความ`);
-                      queryClient.invalidateQueries({ queryKey: ['lineMessages'] });
-                      queryClient.invalidateQueries({ queryKey: ['lineUnreadCount'] });
-                      setAllMessages(prev => prev.map(m => ({ ...m, is_read: true })));
-                      queryClient.setQueryData(['lineUnreadCount'], 0);
+                      setMarkAllLoading(true);
+                      let totalMarked = 0;
+                      try {
+                        let hasMore = true;
+                        while (hasMore) {
+                          const res = await base44.functions.invoke('markAllLineRead', {});
+                          totalMarked += res.data?.marked || 0;
+                          hasMore = res.data?.remaining === 'more';
+                        }
+                        toast.success(`ล้าง unread ${totalMarked} ข้อความ`);
+                        queryClient.invalidateQueries({ queryKey: ['lineMessages'] });
+                        queryClient.invalidateQueries({ queryKey: ['lineUnreadCount'] });
+                        setAllMessages(prev => prev.map(m => ({ ...m, is_read: true })));
+                        queryClient.setQueryData(['lineUnreadCount'], 0);
+                      } catch (e) {
+                        toast.error('ล้าง unread ไม่สำเร็จ: ' + (e.message || ''));
+                      } finally {
+                        setMarkAllLoading(false);
+                      }
                     }}>
-                    <CheckCheck className="w-3 h-3" /> ล้าง unread
+                    {markAllLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCheck className="w-3 h-3" />}
+                    {markAllLoading ? 'กำลังล้าง...' : 'ล้าง unread'}
                   </Button>
                 )}
                 <Badge variant="outline" className="bg-green-50 text-green-700 text-[10px] gap-1.5 border-green-200">
