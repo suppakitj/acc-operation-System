@@ -226,8 +226,12 @@ export default function LineChat() {
       queryClient.setQueriesData({ queryKey: ['lineMessages'] }, (old) =>
         old ? old.map(m => idSet.has(m.id) ? { ...m, is_read: true } : m) : old
       );
+      setAllMessages(prev => prev.map(m => idSet.has(m.id) ? { ...m, is_read: true } : m));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lineMessages'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lineMessages'] });
+      queryClient.invalidateQueries({ queryKey: ['lineUnreadCount'] });
+    },
   });
 
   // Use allMessages (includes older loaded from server) merged with latest query
@@ -354,8 +358,8 @@ export default function LineChat() {
     if (selectedUserId) {
       scrollToBottom('instant');
     }
-    if (selectedUser) {
-      const unreadIds = selectedUser.messages.filter(m => !m.is_read && m.direction === 'incoming').map(m => m.id);
+    if (selectedUserId && allChatMessages.length > 0) {
+      const unreadIds = allChatMessages.filter(m => !m.is_read && m.direction === 'incoming').map(m => m.id);
       if (unreadIds.length > 0) markReadMutation.mutate(unreadIds);
     }
   }, [selectedUserId, allChatMessages.length]);
