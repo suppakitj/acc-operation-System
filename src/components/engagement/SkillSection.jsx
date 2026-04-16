@@ -4,6 +4,14 @@ import { GraduationCap, Users, BookOpen, Target } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLanguage } from '../LanguageContext';
 
+const CATEGORY_LABELS = {
+  accounting: 'บัญชี', tax: 'ภาษี', audit: 'ตรวจสอบ',
+  software: 'ซอฟต์แวร์', soft_skill: 'Soft Skill', other: 'อื่นๆ',
+};
+const LEVEL_LABELS = {
+  beginner: 'เริ่มต้น', intermediate: 'ปานกลาง', advanced: 'ก้าวหน้า', expert: 'เชี่ยวชาญ',
+};
+
 export default function SkillSection({ allSkills, deptFilter }) {
   const { t } = useLanguage();
 
@@ -100,6 +108,37 @@ export default function SkillSection({ allSkills, deptFilter }) {
             )}
           </div>
         </div>
+
+        {/* Detail: who wants to develop what */}
+        {goalSkills.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold mb-2">👤 รายชื่อพนักงานที่อยากพัฒนาทักษะ</p>
+            <div className="border rounded-lg overflow-hidden">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-muted/50">
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">พนักงาน</th>
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">ทักษะที่อยากพัฒนา</th>
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">หมวด</th>
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">ระดับปัจจุบัน</th>
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">หมายเหตุ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {goalSkills.map((s, i) => (
+                    <tr key={i} className="border-t hover:bg-muted/30 transition-colors">
+                      <td className="px-3 py-2 font-medium">{s.user_name || s.user_email}</td>
+                      <td className="px-3 py-2">{s.skill_name}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{CATEGORY_LABELS[s.category] || s.category || '-'}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{LEVEL_LABELS[s.level] || s.level || '-'}</td>
+                      <td className="px-3 py-2 text-muted-foreground truncate max-w-[200px]">{s.notes || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
