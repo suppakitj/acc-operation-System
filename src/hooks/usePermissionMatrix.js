@@ -52,6 +52,7 @@ const DEFAULT_MATRIX = {
   customer_summary:    { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no',  staff: 'no' },
   meeting_notes: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   findings_dashboard: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'no', staff: 'no' },
+  my_ideas: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
 };
 
 const PermissionMatrixContext = createContext(DEFAULT_MATRIX);

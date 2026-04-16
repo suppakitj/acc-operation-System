@@ -10,7 +10,6 @@ import MyStats from '../components/my-day/MyStats';
 import PulseSurvey from '../components/my-day/PulseSurvey';
 import QuickTimer from '../components/my-day/QuickTimer';
 import CompanyFeed from '../components/my-day/CompanyFeed';
-import IdeaBox from '../components/my-day/IdeaBox';
 import AppLauncher from '../components/my-day/AppLauncher';
 import MyTodoList from '../components/my-day/MyTodoList';
 import ReviewQueue from '../components/my-day/ReviewQueue';
@@ -207,7 +206,6 @@ export default function MyDay() {
         runningEntry={runningEntry}
       />
       <AppLauncher currentUser={currentUser} />
-      <IdeaBox currentUser={currentUser} />
     </div>
   );
 }

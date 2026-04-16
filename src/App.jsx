@@ -56,6 +56,7 @@ const CustomerMonthlySummary = lazy(() => import('./pages/CustomerMonthlySummary
 const MySkills = lazy(() => import('./pages/MySkills'));
 const MeetingNotes = lazy(() => import('./pages/MeetingNotes'));
 const FindingsDashboard = lazy(() => import('./pages/FindingsDashboard'));
+const MyIdeas = lazy(() => import('./pages/MyIdeas'));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -137,6 +138,7 @@ const AuthenticatedApp = () => {
           <Route path="/MySkills" element={<MySkills />} />
           <Route path="/MeetingNotes" element={<MeetingNotes />} />
           <Route path="/FindingsDashboard" element={<FindingsDashboard />} />
+          <Route path="/MyIdeas" element={<MyIdeas />} />
         </Route>
         <Route path="*" element={<PageNotFound />} />
       </Routes>
