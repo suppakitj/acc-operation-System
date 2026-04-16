@@ -123,6 +123,10 @@ export default function LineChat() {
     staleTime: 2 * 60_000,
   });
 
+  const { data: globalUnreadCount = 0 } = useQuery({
+    queryKey: ['lineUnreadCount'],
+  });
+
   const { data: configs = [] } = useQuery({
     queryKey: ['appConfig', 'line_oa'],
     queryFn: () => base44.entities.AppConfig.list(),
@@ -483,7 +487,7 @@ export default function LineChat() {
                 )}
               </div>
               <div className="flex items-center gap-1.5">
-                {currentUser?.role === 'admin' && totalUnread > 0 && (
+                {currentUser?.role === 'admin' && (globalUnreadCount > 0 || totalUnread > 0) && (
                   <Button variant="outline" size="sm" className="text-[10px] h-6 gap-1 px-2"
                     onClick={async () => {
                       const res = await base44.functions.invoke('markAllLineRead', {});
