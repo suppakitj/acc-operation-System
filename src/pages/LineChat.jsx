@@ -222,11 +222,14 @@ export default function LineChat() {
     },
     onMutate: async (messageIds) => {
       await queryClient.cancelQueries({ queryKey: ['lineMessages'] });
+      await queryClient.cancelQueries({ queryKey: ['lineUnreadCount'] });
       const idSet = new Set(messageIds);
       queryClient.setQueriesData({ queryKey: ['lineMessages'] }, (old) =>
         old ? old.map(m => idSet.has(m.id) ? { ...m, is_read: true } : m) : old
       );
       setAllMessages(prev => prev.map(m => idSet.has(m.id) ? { ...m, is_read: true } : m));
+      // Optimistic: ลด lineUnreadCount ทันที
+      queryClient.setQueryData(['lineUnreadCount'], (old) => Math.max(0, (old || 0) - messageIds.length));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lineMessages'] });

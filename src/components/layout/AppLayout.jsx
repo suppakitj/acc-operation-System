@@ -4,12 +4,13 @@ import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import SessionTimeout from '../auth/SessionTimeout';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -70,16 +71,19 @@ export default function AppLayout() {
   }, [lineUnreadCount]);
 
   useEffect(() => {
-    const handleFocus = () => {
-      if (lineUnreadCount === 0 && titleInterval.current) {
-        clearInterval(titleInterval.current);
-        titleInterval.current = null;
-        document.title = originalTitle.current;
+    const handleVisibility = () => {
+      if (!document.hidden) {
+        queryClient.invalidateQueries({ queryKey: ['lineUnreadCount'] });
+        if (titleInterval.current) {
+          clearInterval(titleInterval.current);
+          titleInterval.current = null;
+          document.title = originalTitle.current;
+        }
       }
     };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [lineUnreadCount]);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
 
   // Log login event once
   const loginLogged = useRef(false);
