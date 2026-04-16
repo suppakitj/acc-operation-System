@@ -1,5 +1,5 @@
 import React from 'react';
-import { ClipboardList, AlertTriangle, Clock, Timer, Pause, CheckCircle2 } from 'lucide-react';
+import { ClipboardList, AlertTriangle, Clock, Inbox, Search, CheckCircle2, PlayCircle } from 'lucide-react';
 import { differenceInDays, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -10,33 +10,38 @@ const VARIANTS = {
   orange: 'bg-orange-50 border-orange-200 text-orange-700',
   purple: 'bg-purple-50 border-purple-200 text-purple-700',
   green: 'bg-green-50 border-green-200 text-green-700',
+  slate: 'bg-slate-50 border-slate-200 text-slate-700',
 };
 const ICON_COLORS = {
   blue: 'text-blue-500', red: 'text-red-500', yellow: 'text-yellow-500',
   orange: 'text-orange-500', purple: 'text-purple-500', green: 'text-green-500',
+  slate: 'text-slate-500',
 };
 
 export default function TaskStatsRow({ tasks }) {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayStr = format(now, 'yyyy-MM-dd');
   const active = tasks.filter(t => t.status !== 'completed' && t.status !== 'cancelled');
+  const pending = tasks.filter(t => t.status === 'pending').length;
+  const inProgress = tasks.filter(t => t.status === 'in_progress').length;
   const overdue = active.filter(t => t.due_date && new Date(t.due_date) < todayStart).length;
   const due3 = active.filter(t => { if (!t.due_date) return false; const d = differenceInDays(new Date(t.due_date), todayStart); return d >= 0 && d <= 3; }).length;
-  const due7 = active.filter(t => { if (!t.due_date) return false; const d = differenceInDays(new Date(t.due_date), todayStart); return d >= 0 && d <= 7; }).length;
-  const waiting = tasks.filter(t => t.status === 'review').length;
-  const completedToday = tasks.filter(t => t.completed_date === format(now, 'yyyy-MM-dd')).length;
+  const waitingApprove = tasks.filter(t => t.status === 'review').length;
+  const completedToday = tasks.filter(t => t.completed_date === todayStr).length;
 
   const stats = [
-    { label: 'OPEN TASKS', value: active.length, icon: ClipboardList, variant: 'blue' },
-    { label: 'OVERDUE', value: overdue, icon: AlertTriangle, variant: 'red' },
-    { label: 'DUE IN 3 DAYS', value: due3, icon: Clock, variant: 'yellow' },
-    { label: 'DUE IN 7 DAYS', value: due7, icon: Timer, variant: 'orange' },
-    { label: 'WAITING', value: waiting, icon: Pause, variant: 'purple' },
-    { label: 'COMPLETED TODAY', value: completedToday, icon: CheckCircle2, variant: 'green' },
+    { label: 'งานทั้งหมด', value: active.length, icon: ClipboardList, variant: 'blue' },
+    { label: 'รอดำเนินการ', value: pending, icon: Inbox, variant: 'slate' },
+    { label: 'กำลังทำ', value: inProgress, icon: PlayCircle, variant: 'orange' },
+    { label: 'เลยกำหนด', value: overdue, icon: AlertTriangle, variant: 'red' },
+    { label: 'ใกล้กำหนด 3 วัน', value: due3, icon: Clock, variant: 'yellow' },
+    { label: 'รอ Approve', value: waitingApprove, icon: Search, variant: 'purple' },
+    { label: 'เสร็จวันนี้', value: completedToday, icon: CheckCircle2, variant: 'green' },
   ];
 
   return (
-    <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
+    <div className="grid grid-cols-4 lg:grid-cols-7 gap-2 md:gap-3">
       {stats.map(s => (
         <div key={s.label} className={cn('rounded-xl border p-2.5 md:p-3', VARIANTS[s.variant])}>
           <div className="flex items-center justify-between">
