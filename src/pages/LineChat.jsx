@@ -80,6 +80,12 @@ export default function LineChat() {
   const [captureDialogOpen, setCaptureDialogOpen] = useState(false);
   const [sendingCapture, setSendingCapture] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
+  // Message search
+  const [showMsgSearch, setShowMsgSearch] = useState(false);
+  const [msgSearchQuery, setMsgSearchQuery] = useState('');
+  const [msgSearchResults, setMsgSearchResults] = useState([]);
+  const [msgSearchIdx, setMsgSearchIdx] = useState(0);
+
   // Persist pinned messages per chat in localStorage
   const getPinnedKey = (chatId) => `line_pinned_${chatId}`;
   const loadPinnedIds = (chatId) => {
@@ -272,6 +278,57 @@ export default function LineChat() {
   });
 
   const allChatMessages = selectedUser?.messages?.sort((a, b) => parseUTCDate(a.created_date) - parseUTCDate(b.created_date)) || [];
+
+  // ค้นหาข้อความในห้องแชท
+  const handleMsgSearch = useCallback((query) => {
+    setMsgSearchQuery(query);
+    if (!query.trim()) {
+      setMsgSearchResults([]);
+      setMsgSearchIdx(0);
+      return;
+    }
+    const q = query.toLowerCase();
+    const results = allChatMessages
+      .filter(m => m.content?.toLowerCase().includes(q) || m.display_name?.toLowerCase().includes(q) || m.sender_name?.toLowerCase().includes(q))
+      .map(m => m.id);
+    setMsgSearchResults(results);
+    setMsgSearchIdx(0);
+    if (results.length > 0) scrollToMessage(results[0]);
+  }, [allChatMessages]);
+
+  const scrollToMessage = useCallback((msgId) => {
+    const idx = allChatMessages.findIndex(m => m.id === msgId);
+    if (idx >= 0 && idx < allChatMessages.length - visibleCount) {
+      setVisibleCount(allChatMessages.length - idx + 5);
+    }
+    setTimeout(() => {
+      const el = document.getElementById(`msg-${msgId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('bg-yellow-100');
+        setTimeout(() => el.classList.remove('bg-yellow-100'), 3000);
+      }
+    }, 150);
+  }, [allChatMessages, visibleCount]);
+
+  const goToNextResult = () => {
+    if (msgSearchResults.length === 0) return;
+    const next = (msgSearchIdx + 1) % msgSearchResults.length;
+    setMsgSearchIdx(next);
+    scrollToMessage(msgSearchResults[next]);
+  };
+  const goToPrevResult = () => {
+    if (msgSearchResults.length === 0) return;
+    const prev = (msgSearchIdx - 1 + msgSearchResults.length) % msgSearchResults.length;
+    setMsgSearchIdx(prev);
+    scrollToMessage(msgSearchResults[prev]);
+  };
+  const closeMsgSearch = () => {
+    setShowMsgSearch(false);
+    setMsgSearchQuery('');
+    setMsgSearchResults([]);
+    setMsgSearchIdx(0);
+  };
   const totalMessages = allChatMessages.length;
   const hasOlderMessages = totalMessages > visibleCount;
   const chatMessages = hasOlderMessages ? allChatMessages.slice(totalMessages - visibleCount) : allChatMessages;
@@ -279,6 +336,7 @@ export default function LineChat() {
   useEffect(() => {
     setVisibleCount(MESSAGES_PER_PAGE);
     setReplyTo(null);
+    closeMsgSearch();
     // Load pinned messages for this chat
     setPinnedIds(loadPinnedIds(selectedUserId));
   }, [selectedUserId]);
@@ -533,7 +591,53 @@ export default function LineChat() {
                     <Users className="w-3 h-3" /> กลุ่ม
                   </Badge>
                 )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  onClick={() => setShowMsgSearch(!showMsgSearch)}
+                  title="ค้นหาข้อความ"
+                >
+                  <Search className="w-4 h-4" />
+                </Button>
               </div>
+
+              {/* Message Search Bar */}
+              {showMsgSearch && (
+                <div className="flex items-center gap-2 px-4 py-2 border-b bg-yellow-50 shrink-0">
+                  <Search className="w-4 h-4 text-yellow-600 shrink-0" />
+                  <Input
+                    value={msgSearchQuery}
+                    onChange={e => handleMsgSearch(e.target.value)}
+                    placeholder="ค้นหาข้อความ..."
+                    className="flex-1 h-7 text-xs bg-white"
+                    autoFocus
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') goToNextResult();
+                      if (e.key === 'Escape') closeMsgSearch();
+                    }}
+                  />
+                  {msgSearchResults.length > 0 && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-[10px] text-yellow-700 font-medium">
+                        {msgSearchIdx + 1}/{msgSearchResults.length}
+                      </span>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={goToPrevResult}>
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={goToNextResult}>
+                        <ChevronUp className="w-3.5 h-3.5 rotate-180" />
+                      </Button>
+                    </div>
+                  )}
+                  {msgSearchQuery && msgSearchResults.length === 0 && (
+                    <span className="text-[10px] text-muted-foreground shrink-0">ไม่พบ</span>
+                  )}
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={closeMsgSearch}>
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              )}
 
               {/* Pinned Messages */}
               <PinnedMessages
