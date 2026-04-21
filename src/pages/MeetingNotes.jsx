@@ -64,6 +64,8 @@ export default function MeetingNotes() {
 
   const myNotes = useMemo(() => {
     if (!currentUser) return [];
+    const role = currentUser.role || '';
+    if (role === 'admin' || role === 'management') return allNotes;
     return allNotes.filter(n =>
       n.manager_email === currentUser.email ||
       n.staff_email === currentUser.email ||
