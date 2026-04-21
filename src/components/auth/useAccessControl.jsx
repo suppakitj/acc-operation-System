@@ -177,6 +177,8 @@ export function useAccessControl(user) {
       if (p('meeting_notes') !== 'no') menus.push('meeting_notes');
       if (p('findings_dashboard') !== 'no') menus.push('findings_dashboard');
       if (p('my_ideas') !== 'no') menus.push('my_ideas');
+      if (p('staff_scorecard') !== 'no') menus.push('staff_scorecard');
+      if (p('team_ranking') !== 'no') menus.push('team_ranking');
 
       return menus;
     };

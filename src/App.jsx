@@ -57,6 +57,8 @@ const MySkills = lazy(() => import('./pages/MySkills'));
 const MeetingNotes = lazy(() => import('./pages/MeetingNotes'));
 const FindingsDashboard = lazy(() => import('./pages/FindingsDashboard'));
 const MyIdeas = lazy(() => import('./pages/MyIdeas'));
+const StaffScorecardPage = lazy(() => import('./pages/StaffScorecard'));
+const TeamRanking = lazy(() => import('./pages/TeamRanking'));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -139,6 +141,8 @@ const AuthenticatedApp = () => {
           <Route path="/MeetingNotes" element={<MeetingNotes />} />
           <Route path="/FindingsDashboard" element={<FindingsDashboard />} />
           <Route path="/MyIdeas" element={<MyIdeas />} />
+          <Route path="/StaffScorecard" element={<StaffScorecardPage />} />
+          <Route path="/TeamRanking" element={<TeamRanking />} />
         </Route>
         <Route path="*" element={<PageNotFound />} />
       </Routes>
