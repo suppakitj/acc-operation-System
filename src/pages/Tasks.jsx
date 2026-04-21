@@ -18,6 +18,7 @@ import TablePagination, { paginateData } from '../components/shared/TablePaginat
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
 import { buildApprovePayload, buildRejectPayload, buildSubmitForReviewPayload } from '../utils/taskWorkflow';
+import DueDateReasonDialog from '../components/tasks/DueDateReasonDialog';
 
 export default function Tasks() {
   const { t } = useLanguage();
@@ -33,6 +34,8 @@ export default function Tasks() {
   // Approve Dialog state
   const [approveDialog, setApproveDialog] = useState({ open: false, taskId: null, task: null, customer: null });
   const [rejectDialog, setRejectDialog] = useState({ open: false, taskId: null, task: null });
+  // Due date reason dialog state
+  const [dueDateReasonDialog, setDueDateReasonDialog] = useState({ open: false, data: null, editingTask: null });
 
   const [filters, setFilters] = useState({
     search: '', department: 'all', status: 'active', priority: 'all',
@@ -484,24 +487,15 @@ export default function Tasks() {
       // Check if user must request approval instead of direct change
       const duePerm = ac.canChangeDueDate(editingTask);
       if (duePerm === 'request') {
-        // Should not happen (input is disabled), but safety check
         toast.error('ไม่สามารถเลื่อน due date ได้โดยตรง — กรุณาใช้ปุ่ม "ขอเลื่อน Due Date"');
-        data.due_date = oldDueNorm; // revert
+        data.due_date = oldDueNorm;
         setSubmitting(false);
         return;
       }
-      const currentHistory = Array.isArray(editingTask.due_date_change_history) ? editingTask.due_date_change_history : [];
-      const currentCount = editingTask.due_date_change_count || 0;
-      data.due_date_change_count = currentCount + 1;
-      data.due_date_change_history = [...currentHistory, {
-        changed_at: new Date().toISOString(),
-        changed_by: currentUser?.email || 'unknown',
-        changed_by_name: currentUser?.full_name || currentUser?.email || 'unknown',
-        changed_by_role: currentUser?.role || '',
-        old_due_date: oldDueNorm,
-        new_due_date: newDueNorm,
-        reason: 'ปรับโดยหัวหน้างาน',
-      }];
+      // Open reason dialog — pause submission
+      setDueDateReasonDialog({ open: true, data: { ...data }, editingTask });
+      setSubmitting(false);
+      return;
     }
 
     // Snapshot original_due_date on create
@@ -519,6 +513,41 @@ export default function Tasks() {
       updateMutation.mutate({ id: editingTask.id, data }, { onSettled: () => setSubmitting(false) });
     }
     else createMutation.mutate(data, { onSettled: () => setSubmitting(false) });
+  };
+
+  // ── Due Date Reason confirmed → continue saving ──
+  const handleDueDateReasonConfirm = (reason) => {
+    const { data, editingTask: et } = dueDateReasonDialog;
+    if (!data || !et) return;
+    setDueDateReasonDialog({ open: false, data: null, editingTask: null });
+
+    const oldDueNorm = et.due_date?.split('T')[0] || '';
+    const newDueNorm = data.due_date?.split('T')[0] || '';
+    const currentHistory = Array.isArray(et.due_date_change_history) ? et.due_date_change_history : [];
+    const currentCount = et.due_date_change_count || 0;
+    data.due_date_change_count = currentCount + 1;
+    data.due_date_change_history = [...currentHistory, {
+      changed_at: new Date().toISOString(),
+      changed_by: currentUser?.email || 'unknown',
+      changed_by_name: currentUser?.full_name || currentUser?.email || 'unknown',
+      changed_by_role: currentUser?.role || '',
+      old_due_date: oldDueNorm,
+      new_due_date: newDueNorm,
+      reason,
+    }];
+
+    // Snapshot original_due_date on create
+    if (!et && data.due_date) {
+      data.original_due_date = data.due_date;
+    }
+
+    // Auto time tracking on status change
+    if (et && currentUser && et.status !== data.status) {
+      autoTimeTrack(et, data.status, currentUser);
+    }
+
+    sendTaxStatusLine({ ...et, ...data }, et.checklist, data.checklist);
+    updateMutation.mutate({ id: et.id, data });
   };
 
   // ── 💾 Save Task as Template ──
@@ -738,6 +767,14 @@ export default function Tasks() {
           <TaskForm task={editingTask} onSubmit={handleSubmit} onSaveAsTemplate={editingTask ? handleSaveAsTemplate : undefined} isLoading={submitting || createMutation.isPending || updateMutation.isPending} permissions={ac} currentUser={currentUser} />
         </DialogContent>
       </Dialog>
+
+      <DueDateReasonDialog
+        open={dueDateReasonDialog.open}
+        onOpenChange={(open) => { if (!open) setDueDateReasonDialog({ open: false, data: null, editingTask: null }); }}
+        oldDate={dueDateReasonDialog.editingTask?.due_date?.split('T')[0] || ''}
+        newDate={dueDateReasonDialog.data?.due_date?.split('T')[0] || ''}
+        onConfirm={handleDueDateReasonConfirm}
+      />
     </div>
   );
 }
