@@ -48,10 +48,35 @@ export function useAccessControl(user) {
     const canEditAssignee = p('edit_assignee') !== 'no';
     const canAddTask      = p('add_task') !== 'no';
 
+    /**
+     * canChangeDueDate — returns 'direct' | 'request' | false
+     * - 'direct': can change due date directly (not own task, or admin)
+     * - 'request': must request approval (own task for super_supervisor/manager/management)
+     * - false: no permission at all
+     */
     const canChangeDueDate = (task) => {
       const v = p('change_due');
-      if (v === 'yes' || v === 'dept') return true;
-      if (v === 'own') return task?.assigned_to === email || task?.created_by === email;
+      if (v === 'no') return false;
+
+      const isOwn = task?.assigned_to === email || task?.created_by === email;
+
+      // Admin can always change directly
+      if (role === 'admin') return 'direct';
+
+      // For roles that have 'yes' or 'dept' permission
+      if (v === 'yes' || v === 'dept') {
+        // If it's their own task → must request approval from higher role
+        if (isOwn) return 'request';
+        // Not own task → can change directly
+        return 'direct';
+      }
+
+      // Staff with 'own' → must request approval
+      if (v === 'own') {
+        if (isOwn) return 'request';
+        return false;
+      }
+
       return false;
     };
 

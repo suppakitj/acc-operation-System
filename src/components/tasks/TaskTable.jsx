@@ -151,8 +151,12 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
                 <td className="px-2 py-2.5">
                   <p className={`text-xs font-medium ${isOverdue ? 'text-red-600' : ''}`}>
                     {task.due_date ? format(new Date(task.due_date), 'dd MMM yy') : '-'}
-
                   </p>
+                  {task.pending_due_change && (
+                    <Badge variant="outline" className="text-[9px] mt-0.5 bg-amber-50 text-amber-700 border-amber-200">
+                      ⏳ ขอเลื่อน → {task.pending_due_change.new_due_date ? format(new Date(task.pending_due_change.new_due_date + 'T00:00:00'), 'dd MMM') : ''}
+                    </Badge>
+                  )}
                 </td>
                 <td className="px-2 py-2.5 hidden lg:table-cell">
                   {(task.due_date_change_count || 0) > 0 ? (

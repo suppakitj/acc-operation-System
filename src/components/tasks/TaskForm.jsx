@@ -10,16 +10,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, ClipboardList, AlertTriangle, Camera, Paperclip, Loader2, X, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, ClipboardList, AlertTriangle, Camera, Paperclip, Loader2, X, Image as ImageIcon, Calendar } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import TaskTimeTracker from '../time-tracking/TaskTimeTracker';
 import DueDateChangeHistory from './DueDateChangeHistory';
+import RequestDueDateDialog from './RequestDueDateDialog';
 import { toast } from 'sonner';
 
 export default function TaskForm({ task, onSubmit, onSaveAsTemplate, isLoading, permissions, currentUser }) {
   const canEditAssignee = permissions?.canEditAssignee !== false;
-  const canEditDueDate = permissions ? permissions.canChangeDueDate(task) : true;
+  const dueDatePerm = permissions ? permissions.canChangeDueDate(task) : 'direct';
+  const canEditDueDate = dueDatePerm === 'direct';
+  const mustRequestDueDate = dueDatePerm === 'request';
   const canEditStatus = permissions ? permissions.canChangeStatus(task) : true;
+  const [showRequestDueDialog, setShowRequestDueDialog] = useState(false);
   const { t } = useLanguage();
   const [form, setForm] = useState({
     title: '', description: '', customer_id: '', customer_name: '',
@@ -273,7 +277,23 @@ export default function TaskForm({ task, onSubmit, onSaveAsTemplate, isLoading, 
         </div>
 
         <div className="space-y-1.5"><Label>{t('start_date')}</Label><Input type="date" value={form.start_date} onChange={e => update('start_date', e.target.value)} /></div>
-        <div className="space-y-1.5"><Label>{t('due_date')}</Label><Input type="date" value={form.due_date} onChange={e => update('due_date', e.target.value)} disabled={!canEditDueDate && !!task} /></div>
+        <div className="space-y-1.5">
+          <Label>{t('due_date')}</Label>
+          <Input type="date" value={form.due_date} onChange={e => update('due_date', e.target.value)} disabled={(!canEditDueDate && !!task) || (mustRequestDueDate && !!task)} />
+          {mustRequestDueDate && !!task && (
+            <div className="space-y-1">
+              <Button type="button" variant="outline" size="sm" className="text-xs h-7 gap-1 text-amber-700 border-amber-300 hover:bg-amber-50 w-full"
+                onClick={() => setShowRequestDueDialog(true)}>
+                <Calendar className="w-3 h-3" /> ขอเลื่อน Due Date (ต้องผ่านอนุมัติ)
+              </Button>
+              {task.pending_due_change && (
+                <p className="text-[10px] text-amber-600 bg-amber-50 rounded px-2 py-1">
+                  ⏳ รออนุมัติ: เลื่อนเป็น {task.pending_due_change.new_due_date}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
         <div className="md:col-span-2 space-y-1.5"><Label>{t('description')}</Label><Textarea value={form.description} onChange={e => update('description', e.target.value)} rows={3} /></div>
       </div>
 
@@ -477,6 +497,29 @@ export default function TaskForm({ task, onSubmit, onSaveAsTemplate, isLoading, 
 
       {/* Due Date Change History */}
       {task?.id && <DueDateChangeHistory task={task} />}
+
+      {/* Request Due Date Dialog */}
+      <RequestDueDateDialog
+        open={showRequestDueDialog}
+        onOpenChange={setShowRequestDueDialog}
+        task={task}
+        currentUser={currentUser}
+        onSubmit={async ({ newDueDate, reason }) => {
+          await base44.entities.Task.update(task.id, {
+            pending_due_change: {
+              requested_at: new Date().toISOString(),
+              requested_by: currentUser.email,
+              requested_by_name: currentUser.full_name || currentUser.email,
+              requested_by_role: currentUser.role || 'staff',
+              old_due_date: task.due_date?.split('T')[0] || '',
+              new_due_date: newDueDate,
+              reason,
+            },
+          });
+          toast.success('📨 ส่งคำขอเลื่อน Due Date แล้ว — รอหัวหน้าอนุมัติ');
+          setShowRequestDueDialog(false);
+        }}
+      />
 
       {/* Time Tracking — only for existing tasks */}
       {task?.id && currentUser && (

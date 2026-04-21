@@ -477,10 +477,19 @@ export default function Tasks() {
       autoTimeTrack(editingTask, data.status, currentUser);
     }
 
-    // Track due date change history when editing
+    // Track due date change history when editing (only if user has direct permission)
     const oldDueNorm = editingTask?.due_date?.split('T')[0] || '';
     const newDueNorm = data.due_date?.split('T')[0] || '';
     if (editingTask && newDueNorm && oldDueNorm && newDueNorm !== oldDueNorm) {
+      // Check if user must request approval instead of direct change
+      const duePerm = ac.canChangeDueDate(editingTask);
+      if (duePerm === 'request') {
+        // Should not happen (input is disabled), but safety check
+        toast.error('ไม่สามารถเลื่อน due date ได้โดยตรง — กรุณาใช้ปุ่ม "ขอเลื่อน Due Date"');
+        data.due_date = oldDueNorm; // revert
+        setSubmitting(false);
+        return;
+      }
       const currentHistory = Array.isArray(editingTask.due_date_change_history) ? editingTask.due_date_change_history : [];
       const currentCount = editingTask.due_date_change_count || 0;
       data.due_date_change_count = currentCount + 1;

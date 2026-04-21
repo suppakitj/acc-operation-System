@@ -13,6 +13,7 @@ import CompanyFeed from '../components/my-day/CompanyFeed';
 import AppLauncher from '../components/my-day/AppLauncher';
 import MyTodoList from '../components/my-day/MyTodoList';
 import ReviewQueue from '../components/my-day/ReviewQueue';
+import DueDateApprovalQueue from '../components/tasks/DueDateApprovalQueue';
 import RejectDialog from '../components/tasks/RejectDialog';
 import { buildApprovePayload, buildRejectPayload } from '../utils/taskWorkflow';
 
@@ -53,6 +54,14 @@ export default function MyDay() {
   const { data: reviewTasks = [] } = useQuery({
     queryKey: ['reviewTasks'],
     queryFn: () => base44.entities.Task.filter({ status: 'review' }, '-created_date', 50),
+    enabled: !!currentUser && isReviewer,
+    staleTime: 30_000,
+  });
+
+  // ดึงงานทั้งหมดที่มี pending_due_change (สำหรับ approval queue)
+  const { data: allActiveTasks = [] } = useQuery({
+    queryKey: ['allActiveTasks'],
+    queryFn: () => base44.entities.Task.list('-created_date', 500),
     enabled: !!currentUser && isReviewer,
     staleTime: 30_000,
   });
@@ -194,6 +203,75 @@ export default function MyDay() {
     setRejectDialog({ open: true, taskId: task.id, task });
   };
 
+  // Due Date Approval handlers
+  const handleApproveDueChange = async (taskId) => {
+    const task = allActiveTasks.find(t => t.id === taskId);
+    if (!task?.pending_due_change) return;
+
+    const req = task.pending_due_change;
+    const currentHistory = Array.isArray(task.due_date_change_history) ? task.due_date_change_history : [];
+
+    await base44.entities.Task.update(taskId, {
+      due_date: req.new_due_date,
+      pending_due_change: null,
+      due_date_change_count: (task.due_date_change_count || 0) + 1,
+      due_date_change_history: [...currentHistory, {
+        changed_at: new Date().toISOString(),
+        changed_by: req.requested_by,
+        changed_by_name: req.requested_by_name,
+        changed_by_role: req.requested_by_role,
+        old_due_date: req.old_due_date,
+        new_due_date: req.new_due_date,
+        reason: req.reason,
+        approved_by: currentUser.email,
+        approved_by_name: currentUser.full_name || currentUser.email,
+      }],
+    });
+
+    queryClient.invalidateQueries({ queryKey: ['allActiveTasks'] });
+    queryClient.invalidateQueries({ queryKey: ['myTasks'] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    toast.success('✅ อนุมัติเลื่อน Due Date แล้ว');
+
+    // Notify requester
+    if (req.requested_by && req.requested_by !== currentUser.email) {
+      base44.entities.Notification.create({
+        title: `✅ อนุมัติเลื่อน Due: ${task.title}`,
+        message: `${currentUser.full_name || currentUser.email} อนุมัติเลื่อน due date เป็น ${req.new_due_date}`,
+        type: 'task_assigned',
+        target_user: req.requested_by,
+        related_entity_type: 'Task',
+        related_entity_id: taskId,
+        customer_name: task.customer_name || '',
+      }).catch(() => {});
+    }
+  };
+
+  const handleRejectDueChange = async (taskId, note) => {
+    const task = allActiveTasks.find(t => t.id === taskId);
+    if (!task?.pending_due_change) return;
+
+    const req = task.pending_due_change;
+    await base44.entities.Task.update(taskId, { pending_due_change: null });
+
+    queryClient.invalidateQueries({ queryKey: ['allActiveTasks'] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    toast.success('❌ ปฏิเสธคำขอเลื่อน Due Date');
+
+    // Notify requester
+    if (req.requested_by && req.requested_by !== currentUser.email) {
+      base44.entities.Notification.create({
+        title: `❌ ปฏิเสธเลื่อน Due: ${task.title}`,
+        message: `${currentUser.full_name || currentUser.email} ปฏิเสธคำขอเลื่อน due date${note ? ` — ${note}` : ''}`,
+        type: 'task_assigned',
+        target_user: req.requested_by,
+        related_entity_type: 'Task',
+        related_entity_id: taskId,
+        customer_name: task.customer_name || '',
+      }).catch(() => {});
+    }
+  };
+
   const handleConfirmReject = async ({ note, newDueDate, severity, category }) => {
     if (!rejectDialog.taskId) return;
     await handleReviewReject(rejectDialog.taskId, { note, newDueDate, severity, category });
@@ -228,6 +306,12 @@ export default function MyDay() {
         onApprove={handleReviewApprove}
         onReject={openRejectDialog}
         currentUser={currentUser}
+      />
+      <DueDateApprovalQueue
+        tasks={allActiveTasks}
+        currentUser={currentUser}
+        onApprove={handleApproveDueChange}
+        onReject={handleRejectDueChange}
       />
       <MyTodoList currentUser={currentUser} />
       <MyStats myTasks={myTasks} myTimeEntries={myTimeEntries} currentUser={currentUser} />
