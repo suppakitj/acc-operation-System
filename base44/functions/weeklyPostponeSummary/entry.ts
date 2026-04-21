@@ -121,22 +121,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Send LINE to accounting group
-    try {
-      const configs = await base44.asServiceRole.entities.AppConfig.list();
-      const groupId = configs.find(c => c.key === 'line_group_dept_accounting')?.value;
-      if (groupId) {
-        await base44.asServiceRole.functions.invoke('lineSendMessage', {
-          line_user_id: groupId,
-          message: msg,
-          display_name: 'ACC Precision Hub',
-          chat_type: 'group',
-        });
-      }
-    } catch (e) {
-      console.warn('LINE weekly summary failed:', e.message);
-    }
-
     return Response.json({
       message: 'Weekly postpone summary sent',
       sent: true,
