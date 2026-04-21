@@ -2,8 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { BarChart3, Shield } from 'lucide-react';
+import { BarChart3, Shield, HelpCircle } from 'lucide-react';
+import ScoringMethodDialog from '@/components/analytics/ScoringMethodDialog';
 import { startOfQuarter, format } from 'date-fns';
 import StaffScorecardComponent from '@/components/analytics/StaffScorecard';
 import { Link } from 'react-router-dom';
@@ -54,6 +56,8 @@ export default function StaffScorecard() {
     return [];
   }, [allUsers, isAdmin, isManager, currentUser]);
 
+  const [showMethod, setShowMethod] = useState(false);
+
   if (!currentUser) return null;
 
   if (!canView) {
@@ -79,6 +83,9 @@ export default function StaffScorecard() {
           <p className="text-sm text-muted-foreground mt-0.5">{targetUser?.full_name || email}</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => setShowMethod(true)}>
+            <HelpCircle className="w-3.5 h-3.5" /> วิธีวัดผล
+          </Button>
           <Input type="date" value={from} onChange={e => setFrom(e.target.value)} className="h-8 text-xs w-[140px]" />
           <span className="text-xs text-muted-foreground">ถึง</span>
           <Input type="date" value={to} onChange={e => setTo(e.target.value)} className="h-8 text-xs w-[140px]" />
@@ -100,6 +107,8 @@ export default function StaffScorecard() {
           </div>
         </Card>
       )}
+
+      <ScoringMethodDialog open={showMethod} onOpenChange={setShowMethod} />
 
       <StaffScorecardComponent
         email={email}

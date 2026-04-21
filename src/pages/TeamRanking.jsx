@@ -2,7 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trophy, Shield } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Trophy, Shield, HelpCircle } from 'lucide-react';
+import ScoringMethodDialog from '@/components/analytics/ScoringMethodDialog';
 import TeamRanking3E from '@/components/analytics/TeamRanking3E';
 
 const DEPARTMENTS = [
@@ -24,6 +26,7 @@ export default function TeamRanking() {
   const myDepts = currentUser?.departments?.length ? currentUser.departments : currentUser?.department ? [currentUser.department] : [];
   const defaultDept = isAdmin ? 'all' : (myDepts[0] || 'all');
   const [dept, setDept] = useState(defaultDept);
+  const [showMethod, setShowMethod] = useState(false);
 
   // Staff cannot access
   if (currentUser && !isAdmin && !isManager) {
@@ -49,13 +52,20 @@ export default function TeamRanking() {
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">3E Execution Framework — เปรียบเทียบผลงานทีม</p>
         </div>
+        <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => setShowMethod(true)}>
+          <HelpCircle className="w-3.5 h-3.5" /> วิธีวัดผล
+        </Button>
         <Select value={dept} onValueChange={setDept}>
           <SelectTrigger className="w-[180px] h-8 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             {availableDepts.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
           </SelectContent>
         </Select>
+        </div>
       </div>
+
+      <ScoringMethodDialog open={showMethod} onOpenChange={setShowMethod} />
 
       <TeamRanking3E department={dept === 'all' ? undefined : dept} />
     </div>
