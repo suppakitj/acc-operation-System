@@ -33,7 +33,6 @@ const HolidayMaster = lazy(() => import('./pages/HolidayMaster'));
 const TeamAnalytics = lazy(() => import('./pages/TeamAnalytics'));
 const StaffDashboard = lazy(() => import('./pages/StaffDashboard'));
 const TaskCalendar = lazy(() => import('./pages/TaskCalendar'));
-const OcrProcessing = lazy(() => import('./pages/OcrProcessing'));
 const LineFiles = lazy(() => import('./pages/LineFiles'));
 const ReferralCommission = lazy(() => import('./pages/ReferralCommission'));
 const TaskGeneration = lazy(() => import('./pages/TaskGeneration'));
@@ -118,7 +117,6 @@ const AuthenticatedApp = () => {
           <Route path="/StaffDashboard" element={<StaffDashboard />} />
           <Route path="/TaskCalendar" element={<TaskCalendar />} />
           <Route path="/DatabaseBackup" element={<DatabaseBackup />} />
-          <Route path="/OcrProcessing" element={<OcrProcessing />} />
           <Route path="/LineFiles" element={<LineFiles />} />
           <Route path="/ReferralCommission" element={<ReferralCommission />} />
           <Route path="/TaskGeneration" element={<TaskGeneration />} />

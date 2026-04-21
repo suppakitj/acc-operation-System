@@ -29,7 +29,6 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     // ─── งาน & ตารางงาน ───
     { id: 'tasks', label: t('menu_tasks'), icon: CheckSquare, path: '/Tasks' },
     { id: 'task_calendar', label: 'Task Calendar', icon: CalendarDays, path: '/TaskCalendar' },
-    { id: 'ocr', label: 'OCR', icon: ScanLine, path: '/OcrProcessing' },
     { id: 'schedule', label: t('menu_schedule'), icon: Calendar, path: '/Schedule' },
     { id: 'tax_calendar', label: 'ปฏิทินภาษี', icon: CalendarClock, path: '/TaxCalendar' },
     { id: 'templates', label: t('menu_templates'), icon: ClipboardList, path: '/TaskTemplates' },
@@ -82,7 +81,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const menuGroups = [
     { key: 'personal', label: 'ส่วนตัว', icon: Home, ids: ['my_day', 'my_skills', 'my_ideas'] },
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
-    { key: 'daily_work', label: 'งานประจำวัน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'time_tracking', 'meeting_notes', 'ocr'] },
+    { key: 'daily_work', label: 'งานประจำวัน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'time_tracking', 'meeting_notes'] },
     { key: 'work_setup', label: 'เทมเพลต & ความรู้', icon: ClipboardList, ids: ['templates', 'task_generation', 'tax_calendar', 'knowledge_base', 'knowledge_manage'] },
     { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault', 'director_vault'] },
     { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },

@@ -119,8 +119,6 @@ export function useAccessControl(user) {
       if (p('audit_log') !== 'no')       menus.push('audit');
       if (p('db_backup') !== 'no')       menus.push('backup');
 
-      // OCR
-      if (p('ocr') !== 'no') menus.push('ocr');
 
       // Task Generation
       if (p('task_generation') !== 'no') menus.push('task_generation');
