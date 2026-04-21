@@ -51,17 +51,22 @@ export function computeExecution({ tasks, timeEntries = [], user, email, from, t
   const capacity = user?.max_tasks || 10;
   const throughput_vs_capacity = completed / capacity;
 
-  // Score: completion_rate 60% + utilization sweet-spot 25% + throughput 15%
   const completionScore = completion_rate * 100;
-  // Utilization sweet spot 70-95%
-  let utilScore;
-  if (utilization_rate >= 0.70 && utilization_rate <= 0.95) utilScore = 100;
-  else if (utilization_rate < 0.70) utilScore = (utilization_rate / 0.70) * 100;
-  else utilScore = Math.max(0, 100 - (utilization_rate - 0.95) * 500);
-
   const throughputScore = clamp(throughput_vs_capacity * 100, 0, 100);
 
-  const score = clamp(Math.round(completionScore * 0.60 + utilScore * 0.25 + throughputScore * 0.15), 0, 100);
+  // If has time data, include utilization; otherwise skip it
+  let score;
+  if (total_hours > 0) {
+    // Utilization sweet spot 70-95%
+    let utilScore;
+    if (utilization_rate >= 0.70 && utilization_rate <= 0.95) utilScore = 100;
+    else if (utilization_rate < 0.70) utilScore = (utilization_rate / 0.70) * 100;
+    else utilScore = Math.max(0, 100 - (utilization_rate - 0.95) * 500);
+    score = clamp(Math.round(completionScore * 0.60 + utilScore * 0.25 + throughputScore * 0.15), 0, 100);
+  } else {
+    // No time data → Completion 75% + Throughput 25%
+    score = clamp(Math.round(completionScore * 0.75 + throughputScore * 0.25), 0, 100);
+  }
 
   return {
     score, total_assigned, completed, cancelled, in_flight,
