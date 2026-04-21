@@ -8,12 +8,12 @@ import { BarChart3, Shield, HelpCircle } from 'lucide-react';
 import ScoringMethodDialog from '@/components/analytics/ScoringMethodDialog';
 import { startOfQuarter, format } from 'date-fns';
 import StaffScorecardComponent from '@/components/analytics/StaffScorecard';
-import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useUserList } from '@/hooks/useUserList';
 
 export default function StaffScorecard() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const emailParam = urlParams.get('email');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const emailParam = searchParams.get('email');
 
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
   const { data: allUsers = [] } = useUserList();
@@ -93,16 +93,18 @@ export default function StaffScorecard() {
       </div>
 
       {/* Browse staff list */}
-      {browseUsers.length > 1 && !emailParam && (
+      {browseUsers.length > 1 && (
         <Card className="p-3">
           <p className="text-xs font-semibold mb-2">เลือกดู Scorecard</p>
           <div className="flex flex-wrap gap-1.5">
             {browseUsers.map(u => (
-              <Link key={u.email} to={`/StaffScorecard?email=${encodeURIComponent(u.email)}`}>
-                <span className={`inline-block text-[11px] px-2.5 py-1 rounded-full cursor-pointer transition-colors ${u.email === email ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}>
-                  {u.full_name || u.email}
-                </span>
-              </Link>
+              <button
+                key={u.email}
+                onClick={() => setSearchParams(u.email === currentUser?.email ? {} : { email: u.email })}
+                className={`inline-block text-[11px] px-2.5 py-1 rounded-full cursor-pointer transition-colors ${u.email === email ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
+              >
+                {u.full_name || u.email}
+              </button>
             ))}
           </div>
         </Card>
