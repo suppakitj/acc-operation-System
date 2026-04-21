@@ -1,26 +1,27 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAccessControl } from '../components/auth/useAccessControl';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-  FileText, Plus, Search, Pencil, Trash2, CalendarDays,
-  CheckCircle2, Circle, X, Users
-} from 'lucide-react';
+import { FileText, Plus, Search, Pencil, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserList } from '../hooks/useUserList';
 import StaffMultiSelect from '../components/meeting/StaffMultiSelect';
 import SearchableSelect from '../components/ui/SearchableSelect';
+import ActionItemCard from '../components/meeting/ActionItemCard';
+import PostponeDialog from '../components/meeting/PostponeDialog';
+import PostponeHistoryDialog from '../components/meeting/PostponeHistoryDialog';
+import RejectPostponeDialog from '../components/meeting/RejectPostponeDialog';
+import { normalizeNote, generateId, getNoteBorderClass, getItemPermissions } from '../components/meeting/meetingNoteUtils';
 
 export default function MeetingNotes() {
   const queryClient = useQueryClient();
@@ -32,13 +33,21 @@ export default function MeetingNotes() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
 
-  // ดึง meeting notes — manager เห็นที่ตัวเองสร้าง + staff เห็นที่ถูกสั่ง
-  const { data: allNotes = [], isLoading } = useQuery({
+  // Dialog states
+  const [postponeTarget, setPostponeTarget] = useState(null); // { note, item }
+  const [historyTarget, setHistoryTarget] = useState(null); // item
+  const [rejectTarget, setRejectTarget] = useState(null); // { note, item }
+  const [actionPending, setActionPending] = useState(false);
+
+  const { data: rawNotes = [], isLoading } = useQuery({
     queryKey: ['meetingNotes'],
     queryFn: () => base44.entities.MeetingNote.list('-meeting_date', 200),
     staleTime: 30_000,
   });
-  
+
+  // Normalize all notes (lazy backfill)
+  const allNotes = useMemo(() => rawNotes.map(normalizeNote), [rawNotes]);
+
   const { data: allCustomers = [] } = useQuery({
     queryKey: ['customers'],
     queryFn: () => base44.entities.Customer.list('-created_date', 500),
@@ -77,6 +86,7 @@ export default function MeetingNotes() {
     return notes;
   }, [myNotes, statusFilter, search]);
 
+  // ─── Form state ───
   const emptyForm = {
     title: '', meeting_date: format(new Date(), 'yyyy-MM-dd'),
     staff_emails: [], staff_names: [], notes: '', customer_name: '',
@@ -85,10 +95,11 @@ export default function MeetingNotes() {
   const [form, setForm] = useState(emptyForm);
   const [newActionText, setNewActionText] = useState('');
   const [newActionDue, setNewActionDue] = useState('');
+  const [newActionAssignee, setNewActionAssignee] = useState('');
 
+  // ─── Mutations ───
   const createMutation = useMutation({
     mutationFn: (data) => {
-      // backward compat: set staff_email/staff_name from first item
       const staffEmails = data.staff_emails || [];
       const staffNames = data.staff_names || [];
       return base44.entities.MeetingNote.create({
@@ -103,44 +114,9 @@ export default function MeetingNotes() {
       queryClient.invalidateQueries({ queryKey: ['meetingNotes'] });
       setShowForm(false); setEditing(null); setForm(emptyForm);
       toast.success('บันทึกเรียบร้อย');
-
-      // ── แจ้งเตือน staff ──
-      try {
-        const managerName = currentUser.full_name || currentUser.email;
-        const actionCount = (variables.action_items || []).length;
-        const actionList = (variables.action_items || []).map((a, i) => `${i + 1}. ${a.text}${a.due_date ? ` (กำหนด ${a.due_date})` : ''}`).join('\n');
-        const staffEmails = variables.staff_emails || [];
-        const staffNamesArr = variables.staff_names || [];
-
-        // Notification ในระบบ — ส่งให้ทุกคน
-        staffEmails.forEach(email => {
-          base44.entities.Notification.create({
-            title: `📝 สั่งงานใหม่: ${variables.title}`,
-            message: `${managerName} สั่งงาน "${variables.title}"${actionCount > 0 ? ` — ${actionCount} action items` : ''}`,
-            type: 'task_assigned',
-            target_user: email,
-            customer_name: variables.customer_name || '',
-          }).catch(e => console.warn('Notification failed:', e.message));
-        });
-
-        // LINE กลุ่มบัญชี
-        const groupId = getConfig('line_group_dept_accounting') || getConfig('line_group_id');
-        if (groupId) {
-          const lineMsg = `📝 Meeting Note ใหม่\n━━━━━━━━━━━━━━━━\n📄 ${variables.title}\n👤 หัวหน้า: ${managerName}\n👥 พนักงาน: ${staffNamesArr.join(', ') || ''}${variables.customer_name ? `\n🏢 ${variables.customer_name}` : ''}${actionCount > 0 ? `\n\n📋 Action Items (${actionCount}):\n${actionList}` : ''}${variables.follow_up_date ? `\n\n🔔 Follow-up: ${variables.follow_up_date}` : ''}\n━━━━━━━━━━━━━━━━`;
-          base44.functions.invoke('lineSendMessage', {
-            line_user_id: groupId,
-            message: lineMsg,
-            display_name: 'ACC Precision Hub',
-            chat_type: 'group',
-          }).catch(e => console.warn('LINE send failed:', e.message));
-        }
-      } catch (e) {
-        console.warn('Meeting notification error:', e.message);
-      }
+      sendCreateNotifications(variables);
     },
-    onError: (err) => {
-      toast.error('สร้างไม่สำเร็จ: ' + (err.message || ''));
-    },
+    onError: (err) => toast.error('สร้างไม่สำเร็จ: ' + (err.message || '')),
   });
 
   const updateMutation = useMutation({
@@ -158,9 +134,7 @@ export default function MeetingNotes() {
       setShowForm(false); setEditing(null); setForm(emptyForm);
       toast.success('อัปเดตเรียบร้อย');
     },
-    onError: (err) => {
-      toast.error('อัปเดตไม่สำเร็จ: ' + (err.message || ''));
-    },
+    onError: (err) => toast.error('อัปเดตไม่สำเร็จ: ' + (err.message || '')),
   });
 
   const deleteMutation = useMutation({
@@ -171,65 +145,269 @@ export default function MeetingNotes() {
     },
   });
 
-  // Toggle action item done
-  const toggleAction = async (noteId, actionIdx) => {
-    const note = allNotes.find(n => n.id === noteId);
-    if (!note) return;
-    const items = [...(note.action_items || [])];
-    items[actionIdx] = { ...items[actionIdx], done: !items[actionIdx].done };
-    // ถ้า action items ครบหมด → auto close
-    const allDone = items.every(i => i.done);
+  const sendCreateNotifications = (variables) => {
+    try {
+      const managerName = currentUser.full_name || currentUser.email;
+      const actionCount = (variables.action_items || []).length;
+      const actionList = (variables.action_items || []).map((a, i) => `${i + 1}. ${a.text}${a.due_date ? ` (กำหนด ${a.due_date})` : ''}`).join('\n');
+      const staffEmails = variables.staff_emails || [];
+      const staffNamesArr = variables.staff_names || [];
+
+      staffEmails.forEach(email => {
+        base44.entities.Notification.create({
+          title: `📝 สั่งงานใหม่: ${variables.title}`,
+          message: `${managerName} สั่งงาน "${variables.title}"${actionCount > 0 ? ` — ${actionCount} action items` : ''}`,
+          type: 'task_assigned',
+          target_user: email,
+          customer_name: variables.customer_name || '',
+        }).catch(() => {});
+      });
+
+      const groupId = getConfig('line_group_dept_accounting') || getConfig('line_group_id');
+      if (groupId) {
+        const lineMsg = `📝 Meeting Note ใหม่\n━━━━━━━━━━━━━━━━\n📄 ${variables.title}\n👤 หัวหน้า: ${managerName}\n👥 พนักงาน: ${staffNamesArr.join(', ') || ''}${variables.customer_name ? `\n🏢 ${variables.customer_name}` : ''}${actionCount > 0 ? `\n\n📋 Action Items (${actionCount}):\n${actionList}` : ''}${variables.follow_up_date ? `\n\n🔔 Follow-up: ${variables.follow_up_date}` : ''}\n━━━━━━━━━━━━━━━━`;
+        base44.functions.invoke('lineSendMessage', {
+          line_user_id: groupId, message: lineMsg,
+          display_name: 'ACC Precision Hub', chat_type: 'group',
+        }).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Meeting notification error:', e.message);
+    }
+  };
+
+  // ─── Action item helpers ───
+
+  /** Persist updated action_items back to note, auto-close/open */
+  const persistItems = useCallback(async (noteId, items) => {
+    const allDone = items.length > 0 && items.every(i => i.done);
     await base44.entities.MeetingNote.update(noteId, {
       action_items: items,
       status: allDone ? 'closed' : 'open',
     });
     queryClient.invalidateQueries({ queryKey: ['meetingNotes'] });
-  };
+  }, [queryClient]);
 
-  // Add action item
-  const addActionItem = () => {
-    if (!newActionText.trim()) return;
-    setForm(prev => ({
-      ...prev,
-      action_items: [...prev.action_items, { text: newActionText.trim(), done: false, due_date: newActionDue || '' }],
-    }));
-    setNewActionText(''); setNewActionDue('');
-  };
+  /** Toggle done/undone on an action item */
+  const toggleAction = useCallback(async (noteId, itemId) => {
+    const note = allNotes.find(n => n.id === noteId);
+    if (!note) return;
+    const items = (note.action_items || []).map(item => {
+      if (item.id !== itemId) return item;
+      const nowDone = !item.done;
+      return {
+        ...item,
+        done: nowDone,
+        closed_at: nowDone ? new Date().toISOString() : '',
+        closed_by: nowDone ? currentUser.email : '',
+        closed_by_name: nowDone ? (currentUser.full_name || currentUser.email) : '',
+      };
+    });
+    await persistItems(noteId, items);
+  }, [allNotes, currentUser, persistItems]);
 
-  // Remove action item
-  const removeActionItem = (idx) => {
-    setForm(prev => ({
-      ...prev,
-      action_items: prev.action_items.filter((_, i) => i !== idx),
-    }));
-  };
+  /** Handle postpone submit */
+  const handlePostponeSubmit = useCallback(async ({ newDueDate, reason }) => {
+    if (!postponeTarget) return;
+    const { note, item } = postponeTarget;
+    const perms = getItemPermissions(note, item, currentUser);
+    setActionPending(true);
 
-  // Select staff helper — multi
+    try {
+      const now = new Date().toISOString();
+      const requesterRole = perms.isAdmin ? 'admin' : perms.isManager ? 'manager' : 'assignee';
+      const items = (note.action_items || []).map(a => {
+        if (a.id !== item.id) return a;
+
+        if (perms.isAutoApprover) {
+          // Auto-approve: apply immediately
+          const evt = {
+            requested_at: now, requested_by: currentUser.email,
+            requested_by_name: currentUser.full_name || currentUser.email,
+            requested_by_role: requesterRole,
+            old_due_date: a.due_date, new_due_date: newDueDate, reason,
+            decision: 'auto_approved', decided_at: now,
+            decided_by: currentUser.email, decided_by_name: currentUser.full_name || currentUser.email,
+            decision_note: '',
+          };
+          return {
+            ...a,
+            due_date: newDueDate,
+            postpone_count: (a.postpone_count || 0) + 1,
+            postpone_history: [...(a.postpone_history || []), evt],
+            pending_postpone: null,
+          };
+        } else {
+          // Assignee: set pending
+          return {
+            ...a,
+            pending_postpone: {
+              requested_at: now, requested_by: currentUser.email,
+              requested_by_name: currentUser.full_name || currentUser.email,
+              old_due_date: a.due_date, new_due_date: newDueDate, reason,
+            },
+          };
+        }
+      });
+
+      await persistItems(note.id, items);
+
+      // Notifications
+      if (perms.isAutoApprover) {
+        // Notify assignee if different person
+        const targetItem = items.find(a => a.id === item.id);
+        const assigneeEmail = targetItem?.assignee_email;
+        if (assigneeEmail && assigneeEmail !== currentUser.email) {
+          base44.entities.Notification.create({
+            title: '📅 Due date ถูกเลื่อน',
+            message: `${currentUser.full_name || currentUser.email} เลื่อน due date ของ "${item.text}" เป็น ${newDueDate} (เหตุผล: ${reason})`,
+            type: 'system', target_user: assigneeEmail,
+          }).catch(() => {});
+        }
+        toast.success('เลื่อน due date เรียบร้อย');
+      } else {
+        // Notify manager
+        if (note.manager_email && note.manager_email !== currentUser.email) {
+          base44.entities.Notification.create({
+            title: '⏳ คำขอเลื่อน due date',
+            message: `${currentUser.full_name || currentUser.email} ขอเลื่อน "${item.text}" เป็น ${newDueDate} (เหตุผล: ${reason})`,
+            type: 'system', target_user: note.manager_email,
+          }).catch(() => {});
+        }
+        toast.success('ส่งคำขอเลื่อนเรียบร้อย');
+      }
+      setPostponeTarget(null);
+    } finally {
+      setActionPending(false);
+    }
+  }, [postponeTarget, currentUser, persistItems]);
+
+  /** Handle approve */
+  const handleApprove = useCallback(async (note, item) => {
+    setActionPending(true);
+    try {
+      const pending = item.pending_postpone;
+      if (!pending) return;
+      const now = new Date().toISOString();
+      const evt = {
+        requested_at: pending.requested_at, requested_by: pending.requested_by,
+        requested_by_name: pending.requested_by_name, requested_by_role: 'assignee',
+        old_due_date: pending.old_due_date, new_due_date: pending.new_due_date,
+        reason: pending.reason, decision: 'approved', decided_at: now,
+        decided_by: currentUser.email, decided_by_name: currentUser.full_name || currentUser.email,
+        decision_note: '',
+      };
+      const items = (note.action_items || []).map(a => {
+        if (a.id !== item.id) return a;
+        return {
+          ...a,
+          due_date: pending.new_due_date,
+          postpone_count: (a.postpone_count || 0) + 1,
+          postpone_history: [...(a.postpone_history || []), evt],
+          pending_postpone: null,
+        };
+      });
+      await persistItems(note.id, items);
+      // Notify requester
+      if (pending.requested_by && pending.requested_by !== currentUser.email) {
+        base44.entities.Notification.create({
+          title: '✅ คำขอเลื่อนได้รับอนุมัติ',
+          message: `${currentUser.full_name || currentUser.email} อนุมัติเลื่อน "${item.text}" เป็น ${pending.new_due_date}`,
+          type: 'system', target_user: pending.requested_by,
+        }).catch(() => {});
+      }
+      toast.success('อนุมัติเรียบร้อย');
+    } finally {
+      setActionPending(false);
+    }
+  }, [currentUser, persistItems]);
+
+  /** Handle reject */
+  const handleReject = useCallback(async (decisionNote) => {
+    if (!rejectTarget) return;
+    const { note, item } = rejectTarget;
+    setActionPending(true);
+    try {
+      const pending = item.pending_postpone;
+      if (!pending) return;
+      const now = new Date().toISOString();
+      const evt = {
+        requested_at: pending.requested_at, requested_by: pending.requested_by,
+        requested_by_name: pending.requested_by_name, requested_by_role: 'assignee',
+        old_due_date: pending.old_due_date, new_due_date: pending.new_due_date,
+        reason: pending.reason, decision: 'rejected', decided_at: now,
+        decided_by: currentUser.email, decided_by_name: currentUser.full_name || currentUser.email,
+        decision_note: decisionNote || '',
+      };
+      const items = (note.action_items || []).map(a => {
+        if (a.id !== item.id) return a;
+        return {
+          ...a,
+          postpone_history: [...(a.postpone_history || []), evt],
+          pending_postpone: null,
+        };
+      });
+      await persistItems(note.id, items);
+      // Notify requester
+      if (pending.requested_by && pending.requested_by !== currentUser.email) {
+        base44.entities.Notification.create({
+          title: '❌ คำขอเลื่อนถูกปฏิเสธ',
+          message: `${currentUser.full_name || currentUser.email} ปฏิเสธเลื่อน "${item.text}"${decisionNote ? ` (${decisionNote})` : ''}`,
+          type: 'system', target_user: pending.requested_by,
+        }).catch(() => {});
+      }
+      toast.success('ปฏิเสธเรียบร้อย');
+      setRejectTarget(null);
+    } finally {
+      setActionPending(false);
+    }
+  }, [rejectTarget, currentUser, persistItems]);
+
+  // ─── Form handlers ───
   const handleStaffChange = (emails) => {
     const names = emails.map(e => users.find(u => u.email === e)?.full_name || e);
     setForm(prev => ({ ...prev, staff_emails: emails, staff_names: names }));
   };
 
+  const addActionItem = () => {
+    if (!newActionText.trim()) return;
+    const assigneeUser = users.find(u => u.email === newActionAssignee);
+    setForm(prev => ({
+      ...prev,
+      action_items: [...prev.action_items, {
+        id: generateId(),
+        text: newActionText.trim(),
+        done: false,
+        due_date: newActionDue || '',
+        original_due_date: newActionDue || '',
+        assignee_email: newActionAssignee || '',
+        assignee_name: assigneeUser?.full_name || newActionAssignee || '',
+        postpone_count: 0,
+        postpone_history: [],
+        pending_postpone: null,
+      }],
+    }));
+    setNewActionText(''); setNewActionDue(''); setNewActionAssignee('');
+  };
+
+  const removeActionItem = (idx) => {
+    setForm(prev => ({ ...prev, action_items: prev.action_items.filter((_, i) => i !== idx) }));
+  };
+
   const handleSave = () => {
-    console.log('handleSave called', { title: form.title, staff_emails: form.staff_emails, action_items: form.action_items });
-    if (!form.title.trim()) {
-      toast.error('กรุณากรอกหัวข้อ');
-      return;
-    }
-    if ((form.staff_emails || []).length === 0) {
-      toast.error('กรุณาเลือกพนักงานอย่างน้อย 1 คน');
-      return;
-    }
-    // Clean action_items — ensure proper format
+    if (!form.title.trim()) { toast.error('กรุณากรอกหัวข้อ'); return; }
+    if ((form.staff_emails || []).length === 0) { toast.error('กรุณาเลือกพนักงานอย่างน้อย 1 คน'); return; }
     const cleanedForm = {
       ...form,
       action_items: (form.action_items || []).map(item => ({
+        ...item,
+        id: item.id || generateId(),
         text: String(item.text || ''),
         done: !!item.done,
         due_date: String(item.due_date || ''),
+        original_due_date: String(item.original_due_date || item.due_date || ''),
       })),
     };
-    console.log('Submitting cleanedForm', cleanedForm);
     if (editing) {
       updateMutation.mutate({ id: editing.id, data: cleanedForm });
     } else {
@@ -239,7 +417,6 @@ export default function MeetingNotes() {
 
   const handleEdit = (note) => {
     setEditing(note);
-    // backward compat: migrate old single staff to arrays
     const staffEmails = note.staff_emails?.length ? note.staff_emails : (note.staff_email ? [note.staff_email] : []);
     const staffNames = note.staff_names?.length ? note.staff_names : (note.staff_name ? [note.staff_name] : []);
     setForm({
@@ -249,11 +426,18 @@ export default function MeetingNotes() {
       follow_up_date: note.follow_up_date || '',
       action_items: note.action_items || [], status: note.status || 'open',
     });
-    setNewActionText(''); setNewActionDue('');
+    setNewActionText(''); setNewActionDue(''); setNewActionAssignee('');
     setShowForm(true);
   };
 
-  // Permission: ทุก role เข้าถึงได้ (เห็นเฉพาะของตัวเอง)
+  // Assignee options for form — from selected staff_emails
+  const assigneeOptions = useMemo(() => {
+    return (form.staff_emails || []).map(email => {
+      const u = users.find(u => u.email === email);
+      return { value: email, label: u?.full_name || email };
+    });
+  }, [form.staff_emails, users]);
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -265,7 +449,7 @@ export default function MeetingNotes() {
           </h1>
           <p className="text-xs text-muted-foreground mt-1">บันทึกการสั่งงาน/ประชุม 1-on-1 — กันลืมเวลาสั่งงานปากเปล่า</p>
         </div>
-        <Button size="sm" className="gap-1.5 self-start" onClick={() => { setEditing(null); setForm(emptyForm); setNewActionText(''); setNewActionDue(''); setShowForm(true); }}>
+        <Button size="sm" className="gap-1.5 self-start" onClick={() => { setEditing(null); setForm(emptyForm); setNewActionText(''); setNewActionDue(''); setNewActionAssignee(''); setShowForm(true); }}>
           <Plus className="w-4 h-4" /> สร้างบันทึกใหม่
         </Button>
       </div>
@@ -301,10 +485,9 @@ export default function MeetingNotes() {
             const isManager = note.manager_email === currentUser?.email;
             const actionItems = note.action_items || [];
             const doneCount = actionItems.filter(a => a.done).length;
-            const hasOverdue = actionItems.some(a => !a.done && a.due_date && new Date(a.due_date) < new Date());
 
             return (
-              <Card key={note.id} className={`shadow-sm border ${note.status === 'closed' ? 'opacity-60' : hasOverdue ? 'border-l-4 border-l-red-400' : 'border-l-4 border-l-indigo-400'}`}>
+              <Card key={note.id} className={`shadow-sm border ${getNoteBorderClass(note)}`}>
                 <CardContent className="p-4">
                   {/* Header */}
                   <div className="flex items-start justify-between gap-2 mb-2">
@@ -344,24 +527,22 @@ export default function MeetingNotes() {
                     <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 mb-2 whitespace-pre-wrap">{note.notes}</p>
                   )}
 
-                  {/* Action items — ทั้ง manager และ staff กด check ได้ */}
+                  {/* Action items */}
                   {actionItems.length > 0 && (
-                    <div className="space-y-1 mb-2">
+                    <div className="space-y-1.5 mb-2">
                       <p className="text-[10px] font-semibold text-muted-foreground">Action Items ({doneCount}/{actionItems.length})</p>
-                      {actionItems.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2 py-0.5">
-                          <Checkbox
-                            checked={item.done}
-                            onCheckedChange={() => toggleAction(note.id, idx)}
-                            disabled={note.status === 'closed'}
-                          />
-                          <span className={`text-xs flex-1 ${item.done ? 'line-through text-muted-foreground' : ''}`}>{item.text}</span>
-                          {item.due_date && (
-                            <span className={`text-[10px] ${!item.done && new Date(item.due_date) < new Date() ? 'text-red-600 font-semibold' : 'text-muted-foreground'}`}>
-                              {format(new Date(item.due_date), 'd MMM', { locale: th })}
-                            </span>
-                          )}
-                        </div>
+                      {actionItems.map(item => (
+                        <ActionItemCard
+                          key={item.id}
+                          note={note}
+                          item={item}
+                          currentUser={currentUser}
+                          onToggleDone={() => toggleAction(note.id, item.id)}
+                          onPostpone={() => setPostponeTarget({ note, item })}
+                          onApprove={() => handleApprove(note, item)}
+                          onReject={() => setRejectTarget({ note, item })}
+                          onShowHistory={() => setHistoryTarget(item)}
+                        />
                       ))}
                     </div>
                   )}
@@ -377,6 +558,39 @@ export default function MeetingNotes() {
             );
           })}
         </div>
+      )}
+
+      {/* ═══ Dialogs ═══ */}
+
+      {/* Postpone Dialog */}
+      {postponeTarget && (
+        <PostponeDialog
+          open={!!postponeTarget}
+          onOpenChange={v => { if (!v) setPostponeTarget(null); }}
+          item={postponeTarget.item}
+          isAutoApprover={getItemPermissions(postponeTarget.note, postponeTarget.item, currentUser).isAutoApprover}
+          onSubmit={handlePostponeSubmit}
+          isPending={actionPending}
+        />
+      )}
+
+      {/* History Dialog */}
+      {historyTarget && (
+        <PostponeHistoryDialog
+          open={!!historyTarget}
+          onOpenChange={v => { if (!v) setHistoryTarget(null); }}
+          item={historyTarget}
+        />
+      )}
+
+      {/* Reject Dialog */}
+      {rejectTarget && (
+        <RejectPostponeDialog
+          open={!!rejectTarget}
+          onOpenChange={v => { if (!v) setRejectTarget(null); }}
+          onReject={handleReject}
+          isPending={actionPending}
+        />
       )}
 
       {/* Create/Edit Dialog */}
@@ -426,22 +640,37 @@ export default function MeetingNotes() {
             <div className="space-y-2">
               <Label>Action Items — สิ่งที่ต้องทำ</Label>
               {form.action_items.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1.5">
-                  <span className="text-xs flex-1">{item.text}</span>
-                  {item.due_date && <span className="text-[10px] text-muted-foreground">{item.due_date}</span>}
-                  <Button type="button" variant="ghost" size="icon" className="h-5 w-5" onClick={() => removeActionItem(idx)}>
+                <div key={item.id || idx} className="flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1.5">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs">{item.text}</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {item.due_date && <span className="text-[10px] text-muted-foreground">📅 {item.due_date}</span>}
+                      {item.assignee_name && <span className="text-[10px] text-muted-foreground">👤 {item.assignee_name}</span>}
+                    </div>
+                  </div>
+                  <Button type="button" variant="ghost" size="icon" className="h-5 w-5 shrink-0" onClick={() => removeActionItem(idx)}>
                     <X className="w-3 h-3" />
                   </Button>
                 </div>
               ))}
-              <div className="flex gap-2">
-                <Input value={newActionText} onChange={e => setNewActionText(e.target.value)} placeholder="เพิ่มสิ่งที่ต้องทำ..."
-                  className="text-xs h-8 flex-1"
-                  onKeyDown={e => e.key === 'Enter' && addActionItem()} />
-                <Input type="date" value={newActionDue} onChange={e => setNewActionDue(e.target.value)} className="text-xs h-8 w-[140px]" />
-                <Button type="button" variant="outline" size="sm" className="h-8" onClick={addActionItem}>
-                  <Plus className="w-3 h-3" />
-                </Button>
+              <div className="space-y-1.5 bg-muted/30 rounded-lg p-2">
+                <div className="flex gap-2">
+                  <Input value={newActionText} onChange={e => setNewActionText(e.target.value)} placeholder="เพิ่มสิ่งที่ต้องทำ..."
+                    className="text-xs h-8 flex-1"
+                    onKeyDown={e => e.key === 'Enter' && addActionItem()} />
+                  <Button type="button" variant="outline" size="sm" className="h-8 shrink-0" onClick={addActionItem}>
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Input type="date" value={newActionDue} onChange={e => setNewActionDue(e.target.value)} className="text-xs h-7 flex-1" placeholder="กำหนด" />
+                  <Select value={newActionAssignee} onValueChange={setNewActionAssignee}>
+                    <SelectTrigger className="h-7 text-[11px] flex-1"><SelectValue placeholder="ผู้รับผิดชอบ" /></SelectTrigger>
+                    <SelectContent>
+                      {assigneeOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
@@ -449,7 +678,6 @@ export default function MeetingNotes() {
               <Label>วัน Follow-up (optional)</Label>
               <Input type="date" value={form.follow_up_date} onChange={e => setForm(p => ({ ...p, follow_up_date: e.target.value }))} />
             </div>
-
           </div>
           <div className="flex justify-end gap-2 pt-3 border-t mt-2 shrink-0">
             <Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditing(null); setForm(emptyForm); }}>ยกเลิก</Button>
