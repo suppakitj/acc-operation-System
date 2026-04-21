@@ -511,7 +511,7 @@ export default function MeetingNotes() {
                       <Badge variant="outline" className={`text-[9px] ${note.status === 'closed' ? 'bg-green-50 text-green-700' : 'bg-indigo-50 text-indigo-700'}`}>
                         {note.status === 'closed' ? '✅ ปิดแล้ว' : '📝 เปิดอยู่'}
                       </Badge>
-                      {isManager && (
+                      {(isManager || currentUser?.role === 'admin' || currentUser?.role === 'management') && (
                         <>
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEdit(note)}>
                             <Pencil className="w-3 h-3 text-muted-foreground" />
