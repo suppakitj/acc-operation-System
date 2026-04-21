@@ -182,6 +182,7 @@ export default function MyDay() {
   return (
     <div className="space-y-5 max-w-3xl">
       <GreetingHeader user={currentUser} />
+      <CompanyFeed currentUser={currentUser} />
       <TodayFocus
         activeTasks={activeTasks}
         dueToday={dueToday}
@@ -198,7 +199,6 @@ export default function MyDay() {
       />
       <MyTodoList currentUser={currentUser} />
       <MyStats myTasks={myTasks} myTimeEntries={myTimeEntries} />
-      <CompanyFeed currentUser={currentUser} />
       <PulseSurvey currentUser={currentUser} />
       <QuickTimer
         currentUser={currentUser}
