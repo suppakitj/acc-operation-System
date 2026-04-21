@@ -50,14 +50,14 @@ export default function PostponeByCustomerTable({ customerStats }) {
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left table-fixed">
             <thead className="border-y bg-muted/30">
               <tr>
-                <th className="px-3 py-2 text-[10px] font-semibold text-muted-foreground uppercase">ลูกค้า</th>
-                <th className="px-2 py-2 text-[10px] font-semibold text-muted-foreground uppercase text-center w-20">งานทั้งหมด</th>
-                <th className="px-2 py-2 text-[10px] font-semibold text-muted-foreground uppercase text-center w-28">งานที่เลื่อน</th>
-                <th className="px-2 py-2 text-[10px] font-semibold text-muted-foreground uppercase text-center w-32">ครั้งที่เลื่อน</th>
-                <th className="px-2 py-2 text-[10px] font-semibold text-muted-foreground uppercase w-40">เหตุผลบ่อยสุด</th>
+                <th className="px-3 py-2 text-[10px] font-semibold text-muted-foreground uppercase w-[30%] min-w-[140px]">ลูกค้า</th>
+                <th className="px-2 py-2 text-[10px] font-semibold text-muted-foreground uppercase text-center w-[12%] min-w-[70px]">งานทั้งหมด</th>
+                <th className="px-2 py-2 text-[10px] font-semibold text-muted-foreground uppercase text-center w-[14%] min-w-[90px]">งานที่เลื่อน</th>
+                <th className="px-2 py-2 text-[10px] font-semibold text-muted-foreground uppercase text-center w-[20%] min-w-[120px]">ครั้งที่เลื่อน</th>
+                <th className="px-2 py-2 text-[10px] font-semibold text-muted-foreground uppercase w-[24%] min-w-[140px]">เหตุผลบ่อยสุด</th>
               </tr>
             </thead>
             <tbody>
