@@ -83,11 +83,11 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { key: 'personal', label: 'ส่วนตัว', icon: Home, ids: ['my_day', 'my_skills', 'my_ideas'] },
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
     { key: 'daily_work', label: 'งานประจำวัน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'time_tracking', 'meeting_notes'] },
+    { key: 'comms', label: 'LINE', icon: MessageCircle, ids: ['line_chat', 'line_files'] },
     { key: 'work_setup', label: 'เทมเพลต & ความรู้', icon: ClipboardList, ids: ['templates', 'task_generation', 'tax_calendar', 'knowledge_base', 'knowledge_manage'] },
     { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault', 'director_vault'] },
     { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },
     { key: 'reports', label: 'ทีม & รายงาน', icon: BarChart3, ids: ['staff_dashboard', 'team_analytics', 'staff_scorecard', 'team_ranking', 'rework_analytics', 'postpone_analytics', 'engagement_insights', 'obligation_dashboard', 'customer_summary', 'findings_dashboard', 'workload', 'staff_cost_report', 'forecast_risk'] },
-    { key: 'comms', label: 'LINE', icon: MessageCircle, ids: ['line_chat', 'line_files'] },
     { key: 'system', label: 'ตั้งค่า & ระบบ', icon: Cog, ids: ['service_master', 'external_service', 'holiday_master', 'users', 'roles', 'audit', 'backup', 'settings'] },
   ];
 
