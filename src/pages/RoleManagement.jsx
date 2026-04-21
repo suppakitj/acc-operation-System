@@ -118,6 +118,7 @@ const PERMISSION_GROUPS = [
       { key: 'my_ideas', label: 'ไอเดียของฉัน' },
       { key: 'staff_scorecard', label: 'Performance Scorecard' },
       { key: 'team_ranking', label: 'Team Ranking' },
+      { key: 'rework_analytics', label: 'Rework Analytics' },
     ],
   },
 ];
@@ -175,6 +176,7 @@ const DEFAULT_PERMS = {
   my_ideas:        { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   staff_scorecard: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   team_ranking:    { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
+  rework_analytics:{ admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
 };
 
 function PermValue({ value }) {

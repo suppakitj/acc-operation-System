@@ -179,6 +179,7 @@ export function useAccessControl(user) {
       if (p('my_ideas') !== 'no') menus.push('my_ideas');
       if (p('staff_scorecard') !== 'no') menus.push('staff_scorecard');
       if (p('team_ranking') !== 'no') menus.push('team_ranking');
+      if (p('rework_analytics') !== 'no') menus.push('rework_analytics');
 
       return menus;
     };
