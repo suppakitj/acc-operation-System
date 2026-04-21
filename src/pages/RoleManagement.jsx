@@ -114,6 +114,10 @@ const PERMISSION_GROUPS = [
       { key: 'meeting_notes', label: 'Meeting Notes (สั่งงาน/บันทึกประชุม)' },
       { key: 'announcement_manage', label: 'สร้าง/จัดการข่าวสาร' },
       { key: 'shoutout', label: 'ส่ง Shout-out ชมเชย' },
+      { key: 'findings_dashboard', label: 'Findings Dashboard' },
+      { key: 'my_ideas', label: 'ไอเดียของฉัน' },
+      { key: 'staff_scorecard', label: 'Performance Scorecard' },
+      { key: 'team_ranking', label: 'Team Ranking' },
     ],
   },
 ];
@@ -167,6 +171,10 @@ const DEFAULT_PERMS = {
   announcement_manage: { admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
   shoutout:        { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   meeting_notes:   { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  findings_dashboard: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  my_ideas:        { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  staff_scorecard: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  team_ranking:    { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
 };
 
 function PermValue({ value }) {
