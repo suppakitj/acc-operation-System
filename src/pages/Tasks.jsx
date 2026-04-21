@@ -500,7 +500,7 @@ export default function Tasks() {
         changed_by_role: currentUser?.role || '',
         old_due_date: oldDueNorm,
         new_due_date: newDueNorm,
-        reason: 'แก้ไขจากหน้า Task Control Center',
+        reason: 'ปรับโดยหัวหน้างาน',
       }];
     }
 

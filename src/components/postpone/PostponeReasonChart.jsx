@@ -9,9 +9,10 @@ const COLORS = ['#f59e0b', '#3b82f6', '#ef4444', '#10b981', '#8b5cf6', '#ec4899'
 export default function PostponeReasonChart({ postpones }) {
   const data = useMemo(() => {
     const map = {};
+    const EXCLUDED = ['แก้ไขจากหน้า task control center', 'ปรับโดยหัวหน้างาน'];
     postpones.forEach(p => {
       const reason = (p.reason || 'ไม่ระบุเหตุผล').trim();
-      // Normalize by keywords
+      if (EXCLUDED.some(ex => reason.toLowerCase().includes(ex))) return;
       const key = normalizeReason(reason);
       map[key] = (map[key] || 0) + 1;
     });
