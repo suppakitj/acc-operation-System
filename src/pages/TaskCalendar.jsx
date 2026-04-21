@@ -16,6 +16,7 @@ import TaskCalendarWeekView from '../components/task-calendar/TaskCalendarWeekVi
 import TaskCalendarDayView from '../components/task-calendar/TaskCalendarDayView';
 import TaskDetailPopup from '../components/task-calendar/TaskDetailPopup';
 import DayTaskListPopup from '../components/task-calendar/DayTaskListPopup';
+import DueDateReasonDialog from '../components/tasks/DueDateReasonDialog';
 
 const PRIORITY_COLORS = {
   urgent: 'bg-red-100 border-red-400 text-red-700',
@@ -53,6 +54,7 @@ export default function TaskCalendar() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [dayListDate, setDayListDate] = useState(null);
   const [dayListTasks, setDayListTasks] = useState([]);
+  const [pendingDrag, setPendingDrag] = useState(null); // { task, oldDate, newDate }
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
@@ -144,30 +146,37 @@ export default function TaskCalendar() {
     const task = tasks.find(t => t.id === draggableId);
     if (!task) return;
 
+    // Show reason dialog before saving
+    setPendingDrag({ task, oldDate: oldDueDate, newDate: newDueDate });
+  };
+
+  const handleDragReasonConfirm = (reason) => {
+    if (!pendingDrag) return;
+    const { task, oldDate, newDate } = pendingDrag;
+    setPendingDrag(null);
+
     // Optimistic update
     queryClient.setQueryData(['tasks'], (old) =>
-      old.map(t => t.id === draggableId ? { ...t, due_date: newDueDate } : t)
+      old.map(t => t.id === task.id ? { ...t, due_date: newDate } : t)
     );
 
-    // Build history entry with current user info (pre-loaded via query)
     const currentHistory = Array.isArray(task.due_date_change_history) ? task.due_date_change_history : [];
     const currentCount = task.due_date_change_count || 0;
-    const entry = {
-      changed_at: new Date().toISOString(),
-      changed_by: currentUser?.email || 'unknown',
-      changed_by_name: currentUser?.full_name || 'unknown',
-      changed_by_role: currentUser?.role || '',
-      old_due_date: oldDueDate,
-      new_due_date: newDueDate,
-      reason: 'ลากเปลี่ยนจาก Task Calendar',
-    };
 
     updateTaskMutation.mutate({
-      id: draggableId,
+      id: task.id,
       data: {
-        due_date: newDueDate,
+        due_date: newDate,
         due_date_change_count: currentCount + 1,
-        due_date_change_history: [...currentHistory, entry],
+        due_date_change_history: [...currentHistory, {
+          changed_at: new Date().toISOString(),
+          changed_by: currentUser?.email || 'unknown',
+          changed_by_name: currentUser?.full_name || 'unknown',
+          changed_by_role: currentUser?.role || '',
+          old_due_date: oldDate,
+          new_due_date: newDate,
+          reason,
+        }],
       },
     });
   };
@@ -400,6 +409,15 @@ export default function TaskCalendar() {
         open={!!dayListDate}
         onOpenChange={(v) => { if (!v) setDayListDate(null); }}
         onTaskClick={(task) => { setDayListDate(null); setSelectedTask(task); }}
+      />
+
+      {/* Due Date Reason Dialog */}
+      <DueDateReasonDialog
+        open={!!pendingDrag}
+        onOpenChange={(open) => { if (!open) setPendingDrag(null); }}
+        oldDate={pendingDrag?.oldDate || ''}
+        newDate={pendingDrag?.newDate || ''}
+        onConfirm={handleDragReasonConfirm}
       />
 
       {/* Legend */}
