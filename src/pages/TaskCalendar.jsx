@@ -17,6 +17,8 @@ import TaskCalendarDayView from '../components/task-calendar/TaskCalendarDayView
 import TaskDetailPopup from '../components/task-calendar/TaskDetailPopup';
 import DayTaskListPopup from '../components/task-calendar/DayTaskListPopup';
 import DueDateReasonDialog from '../components/tasks/DueDateReasonDialog';
+import RequestDueDateDialog from '../components/tasks/RequestDueDateDialog';
+import { useAccessControl } from '../components/auth/useAccessControl';
 
 const PRIORITY_COLORS = {
   urgent: 'bg-red-100 border-red-400 text-red-700',
@@ -55,6 +57,8 @@ export default function TaskCalendar() {
   const [dayListDate, setDayListDate] = useState(null);
   const [dayListTasks, setDayListTasks] = useState([]);
   const [pendingDrag, setPendingDrag] = useState(null); // { task, oldDate, newDate }
+  const [requestDueDrag, setRequestDueDrag] = useState(null); // { task } for staff request flow
+  const ac = useAccessControl(currentUser);
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
@@ -146,7 +150,19 @@ export default function TaskCalendar() {
     const task = tasks.find(t => t.id === draggableId);
     if (!task) return;
 
-    // Show reason dialog before saving
+    // Check permission hierarchy
+    const duePerm = ac.canChangeDueDate(task);
+    if (!duePerm) {
+      toast.error('คุณไม่มีสิทธิ์เลื่อน Due Date ของงานนี้');
+      return;
+    }
+    if (duePerm === 'request') {
+      // Staff must request approval — open request dialog with pre-filled date
+      setRequestDueDrag({ task, newDate: newDueDate });
+      return;
+    }
+
+    // duePerm === 'direct' — show reason dialog
     setPendingDrag({ task, oldDate: oldDueDate, newDate: newDueDate });
   };
 
@@ -411,13 +427,64 @@ export default function TaskCalendar() {
         onTaskClick={(task) => { setDayListDate(null); setSelectedTask(task); }}
       />
 
-      {/* Due Date Reason Dialog */}
+      {/* Due Date Reason Dialog — direct permission */}
       <DueDateReasonDialog
         open={!!pendingDrag}
         onOpenChange={(open) => { if (!open) setPendingDrag(null); }}
         oldDate={pendingDrag?.oldDate || ''}
         newDate={pendingDrag?.newDate || ''}
         onConfirm={handleDragReasonConfirm}
+      />
+
+      {/* Request Due Date Dialog — must request approval */}
+      <RequestDueDateDialog
+        open={!!requestDueDrag}
+        onOpenChange={(open) => { if (!open) setRequestDueDrag(null); }}
+        task={requestDueDrag?.task || null}
+        currentUser={currentUser}
+        defaultNewDate={requestDueDrag?.newDate || ''}
+        onSubmit={async ({ newDueDate, reason }) => {
+          const task = requestDueDrag?.task;
+          if (!task) return;
+          await base44.entities.Task.update(task.id, {
+            pending_due_change: {
+              requested_at: new Date().toISOString(),
+              requested_by: currentUser.email,
+              requested_by_name: currentUser.full_name || currentUser.email,
+              requested_by_role: currentUser.role || 'staff',
+              old_due_date: task.due_date?.split('T')[0] || '',
+              new_due_date: newDueDate,
+              reason,
+            },
+          });
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          toast.success('📨 ส่งคำขอเลื่อน Due Date แล้ว — รอหัวหน้าอนุมัติ');
+          setRequestDueDrag(null);
+
+          // Notify approvers
+          try {
+            const APPROVER_ROLES = {
+              staff: ['super_supervisor', 'manager', 'management', 'admin'],
+              super_supervisor: ['manager', 'management', 'admin'],
+              manager: ['management', 'admin'],
+              management: ['admin'],
+            };
+            const targetRoles = APPROVER_ROLES[currentUser.role || 'staff'] || ['admin'];
+            const allUsers = await base44.entities.User.list('-created_date', 200);
+            const approvers = allUsers.filter(u => targetRoles.includes(u.role) && u.email !== currentUser.email);
+            for (const approver of approvers.slice(0, 10)) {
+              base44.entities.Notification.create({
+                title: `📅 ขอเลื่อน Due: ${task.title}`,
+                message: `${currentUser.full_name || currentUser.email} ขอเลื่อน due date "${task.title}" จาก ${task.due_date?.split('T')[0] || '-'} → ${newDueDate} เหตุผล: ${reason}`,
+                type: 'system',
+                target_user: approver.email,
+                related_entity_type: 'Task',
+                related_entity_id: task.id,
+                customer_name: task.customer_name || '',
+              }).catch(() => {});
+            }
+          } catch (e) { console.warn('Notify error:', e.message); }
+        }}
       />
 
       {/* Legend */}

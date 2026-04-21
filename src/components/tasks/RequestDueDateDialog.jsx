@@ -22,16 +22,16 @@ const APPROVER_LABEL = {
   management: 'Admin',
 };
 
-export default function RequestDueDateDialog({ open, onOpenChange, task, currentUser, onSubmit }) {
+export default function RequestDueDateDialog({ open, onOpenChange, task, currentUser, onSubmit, defaultNewDate }) {
   const [newDueDate, setNewDueDate] = useState('');
   const [reason, setReason] = useState('');
 
   useEffect(() => {
     if (open && task) {
-      setNewDueDate(format(addDays(new Date(task.due_date || new Date()), 3), 'yyyy-MM-dd'));
+      setNewDueDate(defaultNewDate || format(addDays(new Date(task.due_date || new Date()), 3), 'yyyy-MM-dd'));
       setReason('');
     }
-  }, [open, task]);
+  }, [open, task, defaultNewDate]);
 
   if (!task) return null;
 
