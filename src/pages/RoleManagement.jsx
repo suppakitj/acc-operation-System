@@ -119,6 +119,7 @@ const PERMISSION_GROUPS = [
       { key: 'staff_scorecard', label: 'Performance Scorecard' },
       { key: 'team_ranking', label: 'Team Ranking' },
       { key: 'rework_analytics', label: 'Rework Analytics' },
+      { key: 'postpone_analytics', label: 'Postpone Analytics' },
     ],
   },
 ];
@@ -177,6 +178,7 @@ const DEFAULT_PERMS = {
   staff_scorecard: { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   team_ranking:    { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
   rework_analytics:{ admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
+  postpone_analytics:{ admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
 };
 
 function PermValue({ value }) {
