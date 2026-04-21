@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
 import { startOfMonth, endOfMonth } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle, Timer, Flame, TrendingUp } from 'lucide-react';
+import { CheckCircle, Timer, Flame, TrendingUp, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
+import { Link } from 'react-router-dom';
 
-export default function MyStats({ myTasks, myTimeEntries }) {
+export default function MyStats({ myTasks, myTimeEntries, currentUser }) {
   const { t } = useLanguage();
 
   const stats = useMemo(() => {
@@ -19,11 +20,12 @@ export default function MyStats({ myTasks, myTimeEntries }) {
       new Date(task.completed_date) <= monthEnd
     );
 
-    // On-time rate
-    const onTime = completedThisMonth.filter(task =>
-      task.completed_date && task.due_date &&
-      task.completed_date.slice(0, 10) <= task.due_date.slice(0, 10)
-    );
+    // On-time rate (use original_due_date for 3E accuracy)
+    const onTime = completedThisMonth.filter(task => {
+      const baseline = task.original_due_date || task.due_date;
+      return task.completed_date && baseline &&
+        task.completed_date.slice(0, 10) <= baseline.slice(0, 10);
+    });
     const onTimeRate = completedThisMonth.length > 0
       ? Math.round((onTime.length / completedThisMonth.length) * 100)
       : 100;
@@ -40,7 +42,8 @@ export default function MyStats({ myTasks, myTimeEntries }) {
       .sort((a, b) => (b.completed_date || '').localeCompare(a.completed_date || ''));
     let streak = 0;
     for (const task of sortedCompleted) {
-      if (task.completed_date.slice(0, 10) <= task.due_date.slice(0, 10)) {
+      const baseline = task.original_due_date || task.due_date;
+      if (baseline && task.completed_date.slice(0, 10) <= baseline.slice(0, 10)) {
         streak++;
       } else {
         break;
@@ -75,6 +78,14 @@ export default function MyStats({ myTasks, myTimeEntries }) {
           </Card>
         ))}
       </div>
+      {currentUser?.email && (
+        <Link
+          to={`/StaffScorecard?email=${encodeURIComponent(currentUser.email)}`}
+          className="flex items-center justify-end gap-1 text-xs text-primary hover:underline mt-1"
+        >
+          ดู Performance Scorecard ของฉัน <ChevronRight className="w-3 h-3" />
+        </Link>
+      )}
     </div>
   );
 }

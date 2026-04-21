@@ -13,9 +13,12 @@ import CompanyFeed from '../components/my-day/CompanyFeed';
 import AppLauncher from '../components/my-day/AppLauncher';
 import MyTodoList from '../components/my-day/MyTodoList';
 import ReviewQueue from '../components/my-day/ReviewQueue';
+import RejectDialog from '../components/tasks/RejectDialog';
+import { buildApprovePayload, buildRejectPayload } from '../utils/taskWorkflow';
 
 export default function MyDay() {
   const queryClient = useQueryClient();
+  const [rejectDialog, setRejectDialog] = React.useState({ open: false, taskId: null, task: null });
 
   const { data: currentUser, isLoading: isLoadingUser } = useQuery({
     queryKey: ['currentUser'],
@@ -127,7 +130,7 @@ export default function MyDay() {
     updateTaskStatus.mutate({ id: taskId, newStatus, extraData });
   };
 
-  // Approve/Reject สำหรับ ReviewQueue
+  // Approve/Reject สำหรับ ReviewQueue — uses shared helpers
   const handleReviewApprove = async (taskId) => {
     const task = reviewTasks.find(t => t.id === taskId);
     if (task) {
@@ -138,34 +141,63 @@ export default function MyDay() {
         return;
       }
     }
-    const today = format(new Date(), 'yyyy-MM-dd');
-    await base44.entities.Task.update(taskId, {
-      status: 'completed',
-      completed_date: today,
-      review_status: 'approved',
-      reviewer_email: currentUser.email,
-      reviewer_name: currentUser.full_name || currentUser.email,
-      reviewed_date: today,
-    });
+    const payload = buildApprovePayload(task, currentUser);
+    await base44.entities.Task.update(taskId, payload);
     queryClient.invalidateQueries({ queryKey: ['reviewTasks'] });
     queryClient.invalidateQueries({ queryKey: ['myTasks'] });
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
     toast.success('✅ Approve เรียบร้อย');
+
+    // Notification
+    try {
+      if (task?.assigned_to && task.assigned_to !== currentUser.email) {
+        base44.entities.Notification.create({
+          title: `✅ งาน Approved: ${task.title}`,
+          message: `${currentUser.full_name || currentUser.email} approve งาน "${task.title}" เรียบร้อย`,
+          type: 'task_completed',
+          target_user: task.assigned_to,
+          related_entity_type: 'Task',
+          related_entity_id: taskId,
+          customer_name: task.customer_name || '',
+        }).catch(() => {});
+      }
+    } catch (e) { console.warn(e.message); }
   };
 
-  const handleReviewReject = async (taskId, note) => {
-    await base44.entities.Task.update(taskId, {
-      status: 'in_progress',
-      review_status: 'rejected',
-      reviewer_email: currentUser.email,
-      reviewer_name: currentUser.full_name || currentUser.email,
-      reviewed_date: format(new Date(), 'yyyy-MM-dd'),
-      review_note: note || '',
-    });
+  const handleReviewReject = async (taskId, { note, newDueDate, severity, category }) => {
+    const task = reviewTasks.find(t => t.id === taskId);
+    if (!task) return;
+    const updateData = buildRejectPayload(task, currentUser, { note, newDueDate, severity, category });
+    await base44.entities.Task.update(taskId, updateData);
     queryClient.invalidateQueries({ queryKey: ['reviewTasks'] });
     queryClient.invalidateQueries({ queryKey: ['myTasks'] });
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
     toast.success('📤 ส่งกลับแล้ว');
+
+    // Notification
+    try {
+      if (task?.assigned_to) {
+        base44.entities.Notification.create({
+          title: `⚠️ งานถูกส่งกลับ: ${task.title}`,
+          message: `${currentUser.full_name || currentUser.email} ส่งกลับงาน "${task.title}" [${severity}]${note ? ` — ${note}` : ''}`,
+          type: 'task_assigned',
+          target_user: task.assigned_to,
+          related_entity_type: 'Task',
+          related_entity_id: taskId,
+          customer_name: task.customer_name || '',
+        }).catch(() => {});
+      }
+    } catch (e) { console.warn(e.message); }
+  };
+
+  const openRejectDialog = (task) => {
+    setRejectDialog({ open: true, taskId: task.id, task });
+  };
+
+  const handleConfirmReject = async ({ note, newDueDate, severity, category }) => {
+    if (!rejectDialog.taskId) return;
+    await handleReviewReject(rejectDialog.taskId, { note, newDueDate, severity, category });
+    setRejectDialog({ open: false, taskId: null, task: null });
   };
 
   if (isLoadingUser || isLoadingTasks) {
@@ -194,11 +226,11 @@ export default function MyDay() {
       <ReviewQueue
         reviewTasks={reviewTasks}
         onApprove={handleReviewApprove}
-        onReject={handleReviewReject}
+        onReject={openRejectDialog}
         currentUser={currentUser}
       />
       <MyTodoList currentUser={currentUser} />
-      <MyStats myTasks={myTasks} myTimeEntries={myTimeEntries} />
+      <MyStats myTasks={myTasks} myTimeEntries={myTimeEntries} currentUser={currentUser} />
       <PulseSurvey currentUser={currentUser} />
       <QuickTimer
         currentUser={currentUser}
@@ -206,6 +238,12 @@ export default function MyDay() {
         runningEntry={runningEntry}
       />
       <AppLauncher currentUser={currentUser} />
+      <RejectDialog
+        open={rejectDialog.open}
+        onOpenChange={(open) => { if (!open) setRejectDialog({ open: false, taskId: null, task: null }); }}
+        task={rejectDialog.task}
+        onConfirm={handleConfirmReject}
+      />
     </div>
   );
 }

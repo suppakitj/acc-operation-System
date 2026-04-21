@@ -13,12 +13,6 @@ export default function ReviewQueue({ reviewTasks = [], onApprove, onReject, cur
   if (!isReviewer) return null;
   if (reviewTasks.length === 0) return null;
 
-  const handleReject = (task) => {
-    const note = prompt('เหตุผลที่ส่งกลับ:');
-    if (note === null) return;
-    onReject(task.id, note);
-  };
-
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -91,7 +85,7 @@ export default function ReviewQueue({ reviewTasks = [], onApprove, onReject, cur
                       size="sm"
                       variant="outline"
                       className="h-7 text-[11px] gap-1 text-red-600 border-red-200 hover:bg-red-50 px-2"
-                      onClick={() => handleReject(task)}
+                      onClick={() => onReject(task)}
                     >
                       <X className="w-3 h-3" /> กลับ
                     </Button>

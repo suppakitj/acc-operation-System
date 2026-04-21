@@ -17,6 +17,7 @@ import RejectDialog from '../components/tasks/RejectDialog';
 import TablePagination, { paginateData } from '../components/shared/TablePagination';
 import { useLanguage } from '../components/LanguageContext';
 import { useAccessControl } from '../components/auth/useAccessControl';
+import { buildApprovePayload, buildRejectPayload, buildSubmitForReviewPayload } from '../utils/taskWorkflow';
 
 export default function Tasks() {
   const { t } = useLanguage();
@@ -168,18 +169,8 @@ export default function Tasks() {
   // Approve จริง (ใช้ทั้งกรณีมี/ไม่มี findings)
   const doApprove = async (taskId) => {
     const task = tasks.find(t => t.id === taskId);
-    const today = format(new Date(), 'yyyy-MM-dd');
-    // Explicitly preserve findings + checklist so partial update doesn't accidentally clear them
-    await base44.entities.Task.update(taskId, {
-      status: 'completed',
-      completed_date: today,
-      review_status: 'approved',
-      reviewer_email: currentUser.email,
-      reviewer_name: currentUser.full_name || currentUser.email,
-      reviewed_date: today,
-      findings: task?.findings || [],
-      checklist: task?.checklist || [],
-    });
+    const payload = buildApprovePayload(task, currentUser);
+    await base44.entities.Task.update(taskId, payload);
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
     toast.success('✅ Approve เรียบร้อย');
 
@@ -294,44 +285,11 @@ export default function Tasks() {
     setRejectDialog({ open: true, taskId, task });
   };
 
-  const doReject = async ({ note, newDueDate }) => {
+  const doReject = async ({ note, newDueDate, severity = 'major', category = 'other' }) => {
     const { taskId, task } = rejectDialog;
     if (!taskId) return;
 
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const oldDue = task.due_date?.split('T')[0] || '';
-    const newDue = newDueDate?.split('T')[0] || '';
-    const dueChanged = newDue && oldDue && newDue !== oldDue;
-
-    const updateData = {
-      status: 'in_progress',
-      review_status: 'rejected',
-      reviewer_email: currentUser.email,
-      reviewer_name: currentUser.full_name || currentUser.email,
-      reviewed_date: today,
-      review_note: note || '',
-      review_deadline: null,
-      findings: task.findings || [],
-      checklist: task.checklist || [],
-    };
-
-    if (newDue) {
-      updateData.due_date = newDue;
-      if (dueChanged) {
-        const currentHistory = Array.isArray(task.due_date_change_history) ? task.due_date_change_history : [];
-        updateData.due_date_change_count = (task.due_date_change_count || 0) + 1;
-        updateData.due_date_change_history = [...currentHistory, {
-          changed_at: new Date().toISOString(),
-          changed_by: currentUser?.email || '',
-          changed_by_name: currentUser?.full_name || '',
-          changed_by_role: currentUser?.role || '',
-          old_due_date: oldDue,
-          new_due_date: newDue,
-          reason: `ส่งกลับ: ${note || 'ไม่ระบุเหตุผล'}`,
-        }];
-      }
-    }
-
+    const updateData = buildRejectPayload(task, currentUser, { note, newDueDate, severity, category });
     await base44.entities.Task.update(taskId, updateData);
     queryClient.invalidateQueries({ queryKey: ['tasks'] });
     setRejectDialog({ open: false, taskId: null, task: null });
@@ -339,11 +297,11 @@ export default function Tasks() {
 
     try {
       const reviewerName = currentUser.full_name || currentUser.email;
-      const dueDateMsg = newDue ? `\n📅 กำหนดส่งใหม่: ${newDue}` : '';
+      const dueDateMsg = newDueDate ? `\n📅 กำหนดส่งใหม่: ${newDueDate}` : '';
       if (task?.assigned_to) {
         base44.entities.Notification.create({
-          title: `⚠️ งานถูกส่งกลับ: ${task.title}`,
-          message: `${reviewerName} ส่งกลับงาน "${task.title}"${note ? ` — เหตุผล: ${note}` : ''}${newDue ? ` — กำหนดส่งใหม่: ${newDue}` : ''} กรุณาแก้ไขแล้วส่งตรวจใหม่`,
+          title: `⚠️ งานถูกส่งกลับ [${severity}]: ${task.title}`,
+          message: `${reviewerName} ส่งกลับงาน "${task.title}"${note ? ` — เหตุผล: ${note}` : ''}${newDueDate ? ` — กำหนดส่งใหม่: ${newDueDate}` : ''} กรุณาแก้ไขแล้วส่งตรวจใหม่`,
           type: 'task_assigned',
           target_user: task.assigned_to,
           related_entity_type: 'Task',
@@ -406,6 +364,12 @@ export default function Tasks() {
       // Auto คำนวณ review_deadline = due_date + 2 วันทำการ
       if (!data.review_deadline) {
         data.review_deadline = calcReviewDeadline(data.due_date || editingTask?.due_date);
+      }
+
+      // Track submission cycle
+      if (statusChangedToReview) {
+        const cyclePl = buildSubmitForReviewPayload(editingTask, currentUser);
+        Object.assign(data, cyclePl);
       }
 
       // แจ้งเตือน reviewer เฉพาะเมื่อ status เปลี่ยนเป็น review ครั้งแรก
@@ -529,6 +493,11 @@ export default function Tasks() {
         new_due_date: newDueNorm,
         reason: 'แก้ไขจากหน้า Task Control Center',
       }];
+    }
+
+    // Snapshot original_due_date on create
+    if (!editingTask && data.due_date) {
+      data.original_due_date = data.due_date;
     }
 
     if (editingTask) {

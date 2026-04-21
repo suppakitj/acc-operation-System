@@ -75,6 +75,11 @@
       "format": "date",
       "description": "\u0e01\u0e33\u0e2b\u0e19\u0e14\u0e2a\u0e48\u0e07"
     },
+    "original_due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "due_date \u0e15\u0e2d\u0e19\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e04\u0e23\u0e31\u0e49\u0e07\u0e41\u0e23\u0e01 (snapshot, immutable)"
+    },
     "start_date": {
       "type": "string",
       "format": "date",
@@ -246,32 +251,98 @@
         "type": "object",
         "properties": {
           "changed_at": {
-            "type": "string",
-            "description": "\u0e27\u0e31\u0e19\u0e40\u0e27\u0e25\u0e32\u0e17\u0e35\u0e48\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19"
+            "type": "string"
           },
           "changed_by": {
-            "type": "string",
-            "description": "email \u0e1c\u0e39\u0e49\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19"
+            "type": "string"
           },
           "changed_by_name": {
-            "type": "string",
-            "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19"
+            "type": "string"
           },
           "changed_by_role": {
-            "type": "string",
-            "description": "\u0e15\u0e33\u0e41\u0e2b\u0e19\u0e48\u0e07\u0e1c\u0e39\u0e49\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19"
+            "type": "string"
           },
           "old_due_date": {
-            "type": "string",
-            "description": "due date \u0e40\u0e14\u0e34\u0e21"
+            "type": "string"
           },
           "new_due_date": {
-            "type": "string",
-            "description": "due date \u0e43\u0e2b\u0e21\u0e48"
+            "type": "string"
           },
           "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "rework_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u0e08\u0e33\u0e19\u0e27\u0e19\u0e04\u0e23\u0e31\u0e49\u0e07\u0e17\u0e35\u0e48\u0e16\u0e39\u0e01 reject (major/critical)"
+    },
+    "rework_count_weighted": {
+      "type": "number",
+      "default": 0,
+      "description": "\u0e04\u0e30\u0e41\u0e19\u0e19\u0e16\u0e48\u0e27\u0e07\u0e19\u0e49\u0e33\u0e2b\u0e19\u0e31\u0e01 rework (minor=0.5, major=1, critical=2)"
+    },
+    "first_time_right": {
+      "type": "boolean",
+      "description": "true \u0e16\u0e49\u0e32 approved \u0e04\u0e23\u0e31\u0e49\u0e07\u0e41\u0e23\u0e01\u0e42\u0e14\u0e22\u0e44\u0e21\u0e48\u0e40\u0e04\u0e22\u0e16\u0e39\u0e01 reject"
+    },
+    "last_submitted_at": {
+      "type": "string",
+      "description": "ISO datetime \u0e15\u0e2d\u0e19 submit for review \u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14"
+    },
+    "submission_cycles": {
+      "type": "array",
+      "description": "\u0e1b\u0e23\u0e30\u0e27\u0e31\u0e15\u0e34\u0e17\u0e38\u0e01 review cycle",
+      "items": {
+        "type": "object",
+        "properties": {
+          "cycle_no": {
+            "type": "number"
+          },
+          "submitted_at": {
+            "type": "string"
+          },
+          "submitted_by": {
+            "type": "string"
+          },
+          "submitted_by_name": {
+            "type": "string"
+          },
+          "decided_at": {
+            "type": "string"
+          },
+          "decided_by": {
+            "type": "string"
+          },
+          "decided_by_name": {
+            "type": "string"
+          },
+          "decision": {
             "type": "string",
-            "description": "\u0e40\u0e2b\u0e15\u0e38\u0e1c\u0e25"
+            "enum": [
+              "approved",
+              "rejected",
+              "pending"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "minor",
+              "major",
+              "critical"
+            ]
+          },
+          "category": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "turnaround_hours": {
+            "type": "number"
           }
         }
       }
