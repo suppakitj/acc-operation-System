@@ -518,6 +518,32 @@ export default function TaskForm({ task, onSubmit, onSaveAsTemplate, isLoading, 
           });
           toast.success('📨 ส่งคำขอเลื่อน Due Date แล้ว — รอหัวหน้าอนุมัติ');
           setShowRequestDueDialog(false);
+
+          // ข้อ 4: แจ้งเตือนหัวหน้าทันทีเมื่อมีคำขอเลื่อน
+          try {
+            const APPROVER_ROLES = {
+              staff: ['super_supervisor', 'manager', 'management', 'admin'],
+              super_supervisor: ['manager', 'management', 'admin'],
+              manager: ['management', 'admin'],
+              management: ['admin'],
+            };
+            const myRole = currentUser.role || 'staff';
+            const targetRoles = APPROVER_ROLES[myRole] || ['admin'];
+            const allUsers = await base44.entities.User.list('-created_date', 200);
+            const approvers = allUsers.filter(u => targetRoles.includes(u.role) && u.email !== currentUser.email);
+            const staffName = currentUser.full_name || currentUser.email;
+            for (const approver of approvers.slice(0, 10)) {
+              base44.entities.Notification.create({
+                title: `📅 ขอเลื่อน Due: ${task.title}`,
+                message: `${staffName} ขอเลื่อน due date "${task.title}" จาก ${task.due_date?.split('T')[0] || '-'} → ${newDueDate} เหตุผล: ${reason}`,
+                type: 'system',
+                target_user: approver.email,
+                related_entity_type: 'Task',
+                related_entity_id: task.id,
+                customer_name: task.customer_name || '',
+              }).catch(() => {});
+            }
+          } catch (e) { console.warn('Postpone notification error:', e.message); }
         }}
       />
 

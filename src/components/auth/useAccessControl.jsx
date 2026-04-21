@@ -203,6 +203,7 @@ export function useAccessControl(user) {
       if (p('staff_scorecard') !== 'no') menus.push('staff_scorecard');
       if (p('team_ranking') !== 'no') menus.push('team_ranking');
       if (p('rework_analytics') !== 'no') menus.push('rework_analytics');
+      if (p('postpone_analytics') !== 'no') menus.push('postpone_analytics');
 
       return menus;
     };

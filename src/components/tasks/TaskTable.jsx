@@ -160,9 +160,14 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
                 </td>
                 <td className="px-2 py-2.5 hidden lg:table-cell">
                   {(task.due_date_change_count || 0) > 0 ? (
-                    <Badge variant="outline" className={`text-[10px] ${task.due_date_change_count >= 3 ? 'bg-red-50 text-red-700 border-red-300' : 'bg-amber-50 text-amber-700 border-amber-300'}`}>
-                      {task.due_date_change_count}x
-                    </Badge>
+                    <div className="flex items-center gap-1">
+                      <Badge variant="outline" className={`text-[10px] ${task.due_date_change_count >= 3 ? 'bg-red-50 text-red-700 border-red-300' : 'bg-amber-50 text-amber-700 border-amber-300'}`}>
+                        {task.due_date_change_count}x
+                      </Badge>
+                      {task.due_date_change_count >= 3 && (
+                        <span className="text-[9px] font-bold text-red-600" title="เลื่อน ≥3 ครั้ง — ต้องดูแลพิเศษ">🚩</span>
+                      )}
+                    </div>
                   ) : (
                     <span className="text-[10px] text-muted-foreground">-</span>
                   )}
