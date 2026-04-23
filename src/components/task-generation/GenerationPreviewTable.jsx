@@ -29,52 +29,13 @@ export default function GenerationPreviewTable({ tasks, selectedIndices, onSelec
     }
   };
 
-  // Group tasks by title for "select by title" feature
-  const titleGroups = {};
-  tasks.forEach((task, i) => {
-    if (!titleGroups[task.title]) titleGroups[task.title] = [];
-    titleGroups[task.title].push(i);
-  });
-
-  const toggleByTitle = (title) => {
-    const indices = titleGroups[title];
-    const allInGroup = indices.every(i => selectedIndices.includes(i));
-    if (allInGroup) {
-      onSelectionChange(selectedIndices.filter(i => !indices.includes(i)));
-    } else {
-      const merged = new Set([...selectedIndices, ...indices]);
-      onSelectionChange([...merged]);
-    }
-  };
-
   return (
     <div className="space-y-2">
-      {/* Selection summary & title toggles */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-2">
         <span className="text-xs text-muted-foreground">
           เลือก {selectedIndices?.length || 0}/{tasks.length} งาน
         </span>
-        <span className="text-xs text-muted-foreground">|</span>
-        <span className="text-xs font-medium text-muted-foreground">เลือกตามชื่องาน:</span>
-        {Object.entries(titleGroups).map(([title, indices]) => {
-          const allIn = indices.every(i => selectedIndices.includes(i));
-          return (
-            <button
-              key={title}
-              onClick={() => toggleByTitle(title)}
-              className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                allIn
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-muted/50 text-muted-foreground border-border hover:border-primary/40'
-              }`}
-            >
-              {title} ({indices.length})
-            </button>
-          );
-        })}
       </div>
-
-      {/* Table */}
       <div className="bg-card rounded-lg border overflow-x-auto max-h-[400px] overflow-y-auto">
         <table className="w-full text-left">
           <thead className="border-b bg-muted/30 sticky top-0 z-10">
