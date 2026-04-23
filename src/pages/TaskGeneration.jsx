@@ -17,6 +17,7 @@ export default function TaskGeneration() {
   const [month, setMonth] = useState(String(now.getMonth() + 1));
   const [year, setYear] = useState(String(now.getFullYear()));
   const [previewResult, setPreviewResult] = useState(null);
+  const [selectedIndices, setSelectedIndices] = useState([]);
   const [generating, setGenerating] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [lastGenerated, setLastGenerated] = useState(null);
@@ -32,6 +33,7 @@ export default function TaskGeneration() {
   const handlePreview = async () => {
     setPreviewing(true);
     setPreviewResult(null);
+    setSelectedIndices([]);
     setLastGenerated(null);
     try {
       const res = await base44.functions.invoke('generateMonthlyTasks', {
@@ -40,6 +42,10 @@ export default function TaskGeneration() {
         dry_run: true,
       });
       setPreviewResult(res.data);
+      // Select all by default
+      if (res.data?.tasks?.length > 0) {
+        setSelectedIndices(res.data.tasks.map((_, i) => i));
+      }
     } catch (err) {
       toast.error('Preview ล้มเหลว: ' + (err.response?.data?.error || err.message));
     } finally {
@@ -48,19 +54,23 @@ export default function TaskGeneration() {
   };
 
   const handleGenerate = async () => {
-    if (!previewResult || previewResult.total_tasks === 0) {
-      toast.error('ไม่มี task ที่จะสร้าง กรุณา Preview ก่อน');
+    if (!previewResult || selectedIndices.length === 0) {
+      toast.error('กรุณาเลือก task ที่ต้องการสร้างก่อน');
       return;
     }
     setGenerating(true);
     try {
+      // Send only selected tasks to backend
+      const selectedTasks = selectedIndices.map(i => previewResult.tasks[i]);
       const res = await base44.functions.invoke('generateMonthlyTasks', {
         target_month: parseInt(month),
         target_year: parseInt(year),
         dry_run: false,
+        selected_tasks: selectedTasks,
       });
       setLastGenerated(res.data);
       setPreviewResult(null);
+      setSelectedIndices([]);
       toast.success(`สร้าง ${res.data.total_tasks} tasks สำเร็จ!`);
     } catch (err) {
       toast.error('Generate ล้มเหลว: ' + (err.response?.data?.error || err.message));
@@ -95,7 +105,7 @@ export default function TaskGeneration() {
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">เดือน</label>
-              <Select value={month} onValueChange={v => { setMonth(v); setPreviewResult(null); setLastGenerated(null); }}>
+              <Select value={month} onValueChange={v => { setMonth(v); setPreviewResult(null); setSelectedIndices([]); setLastGenerated(null); }}>
                 <SelectTrigger className="w-[180px] h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
@@ -108,7 +118,7 @@ export default function TaskGeneration() {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">ปี</label>
-              <Select value={year} onValueChange={v => { setYear(v); setPreviewResult(null); setLastGenerated(null); }}>
+              <Select value={year} onValueChange={v => { setYear(v); setPreviewResult(null); setSelectedIndices([]); setLastGenerated(null); }}>
                 <SelectTrigger className="w-[120px] h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
@@ -122,9 +132,9 @@ export default function TaskGeneration() {
                 {previewing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Eye className="w-3.5 h-3.5" />}
                 Preview
               </Button>
-              <Button size="sm" onClick={handleGenerate} disabled={generating || !previewResult || previewResult.total_tasks === 0} className="gap-1.5">
+              <Button size="sm" onClick={handleGenerate} disabled={generating || !previewResult || selectedIndices.length === 0} className="gap-1.5">
                 {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-                สร้างงานจริง
+                สร้างงานจริง {selectedIndices.length > 0 ? `(${selectedIndices.length})` : ''}
               </Button>
             </div>
           </div>
@@ -139,7 +149,7 @@ export default function TaskGeneration() {
             <Badge variant="outline" className="text-[10px]">Dry Run</Badge>
           </div>
           <GenerationStats result={previewResult} />
-          <GenerationPreviewTable tasks={previewResult.tasks} />
+          <GenerationPreviewTable tasks={previewResult.tasks} selectedIndices={selectedIndices} onSelectionChange={setSelectedIndices} />
         </div>
       )}
 

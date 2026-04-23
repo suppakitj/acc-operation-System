@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { target_month, target_year, dry_run = false, template_ids } = await req.json();
+    const { target_month, target_year, dry_run = false, template_ids, selected_tasks } = await req.json();
 
     if (!target_month || !target_year) {
       return Response.json({ error: 'target_month and target_year are required' }, { status: 400 });
@@ -92,6 +92,32 @@ Deno.serve(async (req) => {
       }
     });
 
+    // ── Mode: create from selected_tasks (user picked specific tasks from preview) ──
+    if (!dry_run && selected_tasks && selected_tasks.length > 0) {
+      const created = [];
+      for (const taskData of selected_tasks) {
+        // Build clean task data (strip preview-only fields)
+        const { template_code, template_name, ...cleanData } = taskData;
+        const newTask = await base44.asServiceRole.entities.Task.create(cleanData);
+        created.push(newTask);
+      }
+
+      console.log(`Created ${created.length} selected tasks for ${month}/${year}`);
+
+      return Response.json({
+        target_month: month,
+        target_year: year,
+        dry_run: false,
+        total_templates: templates.length,
+        total_tasks: created.length,
+        skipped_duplicate: 0,
+        skipped_no_match: 0,
+        tasks: created,
+        generated_by: user.full_name || user.email,
+      });
+    }
+
+    // ── Mode: preview (dry_run) or legacy full generation ──
     const preview = [];
     const created = [];
     let skippedDuplicate = 0;
@@ -103,12 +129,10 @@ Deno.serve(async (req) => {
 
       let matchingCustomers;
       if (matchType === 'obligation' && tmpl.obligation_type) {
-        // Match by obligation — ดูจาก customer.obligations[]
         matchingCustomers = customers.filter(c =>
           c.obligations && c.obligations.includes(tmpl.obligation_type)
         );
       } else {
-        // Match by service (default) — ดูจาก customer.services[] เหมือนเดิม
         matchingCustomers = customers.filter(c =>
           c.services && c.services.includes(tmpl.service_type)
         );
@@ -120,31 +144,25 @@ Deno.serve(async (req) => {
       }
 
       for (const customer of matchingCustomers) {
-        // Calculate due date
         const dueDay = Math.min(tmpl.due_date_rule || 15, 28);
         const dueDate = `${year}-${monthStr}-${String(dueDay).padStart(2, '0')}`;
         const dueDateMonth = `${year}-${monthStr}`;
-
-        // Check for duplicate
         const dedupKey = `${tmpl.id}_${customer.id}_${dueDateMonth}`;
         if (existingKeys.has(dedupKey)) {
           skippedDuplicate++;
           continue;
         }
 
-        // Determine assigned person
         let assignedTo = '';
         let assignedName = '';
         if (tmpl.default_owner_type === 'specific_user' && tmpl.default_owner) {
           assignedTo = tmpl.default_owner;
           assignedName = tmpl.default_owner_name || '';
         } else {
-          // From customer profile — primary_officer
           assignedTo = customer.primary_officer || '';
           assignedName = customer.primary_officer_name || '';
         }
 
-        // Calculate start date (due_date - estimated_days)
         let startDate = '';
         if (tmpl.estimated_days) {
           const due = new Date(dueDate);
@@ -180,7 +198,7 @@ Deno.serve(async (req) => {
         if (!dry_run) {
           const newTask = await base44.asServiceRole.entities.Task.create(taskData);
           created.push(newTask);
-          existingKeys.add(dedupKey); // Prevent duplicates within same batch
+          existingKeys.add(dedupKey);
         }
       }
     }
