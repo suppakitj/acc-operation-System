@@ -403,6 +403,32 @@ export default function LineChat() {
     }
   };
 
+  const handlePaste = async (e) => {
+    const items = e.clipboardData?.items;
+    if (!items || !selectedUserId) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) return;
+        setUploadingFile(true);
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          sendMutation.mutate({
+            line_user_id: selectedUserId, message: 'Pasted Image',
+            display_name: selectedUser?.name, chat_type: selectedUser?.chatType || 'user',
+            file_url, file_type: 'image',
+          });
+        } catch (err) {
+          toast.error('อัปโหลดรูปไม่สำเร็จ: ' + err.message);
+        } finally {
+          setUploadingFile(false);
+        }
+        return;
+      }
+    }
+  };
+
   const handleSend = () => {
     if (!newMessage.trim() || !selectedUserId) return;
     const msgText = replyTo
@@ -804,6 +830,7 @@ export default function LineChat() {
                       chatType={selectedUser?.chatType || 'user'}
                       onMentionsChange={setActiveMentions}
                       triggerMentionName={triggerMentionName}
+                      onPaste={handlePaste}
                     />
                   </div>
                   <Button

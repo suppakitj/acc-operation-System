@@ -13,7 +13,7 @@ import { AtSign, Users } from 'lucide-react';
 export default function MentionInput({
   value, onChange, onKeyDown, placeholder, disabled,
   users = [], lineMembers = [], chatType = 'user', onMentionsChange,
-  triggerMentionName
+  triggerMentionName, onPaste
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const [menuFilter, setMenuFilter] = useState('');
@@ -217,6 +217,7 @@ export default function MentionInput({
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
+        onPaste={onPaste}
         placeholder={placeholder}
         disabled={disabled}
         className="flex h-9 w-full rounded-full border border-input bg-muted/40 px-4 py-1 text-[13px] transition-colors placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-500/30 focus-visible:bg-background disabled:cursor-not-allowed disabled:opacity-50"
