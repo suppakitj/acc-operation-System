@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    if (user.role !== 'admin' && user.role !== 'management' && user.role !== 'manager') {
+    if (!['admin', 'management', 'manager', 'super_supervisor'].includes(user.role)) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
