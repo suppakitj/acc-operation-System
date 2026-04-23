@@ -136,7 +136,7 @@ const DEFAULT_PERMS = {
   change_due:     { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
   change_status:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'own' },
   template:       { admin: 'yes', management: 'yes', manager: 'dept', super_supervisor: 'dept', staff: 'no' },
-  task_generation:{ admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
+  task_generation:{ admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
   task_calendar:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   cross_group:    { admin: 'yes', management: 'no',  manager: 'no',  super_supervisor: 'no',  staff: 'no' },
   view_schedule:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'dept', staff: 'dept' },
