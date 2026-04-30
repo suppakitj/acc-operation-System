@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { FileText, Plus, Search, Pencil, Trash2, X } from 'lucide-react';
+import { FileText, Plus, Search, Pencil, Trash2, X, CheckCircle2, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserList } from '../hooks/useUserList';
 import StaffMultiSelect from '../components/meeting/StaffMultiSelect';
@@ -513,6 +513,17 @@ export default function MeetingNotes() {
                       </Badge>
                       {(isManager || currentUser?.role === 'admin' || currentUser?.role === 'management') && (
                         <>
+                          {note.status === 'open' ? (
+                            <Button variant="ghost" size="icon" className="h-6 w-6" title="ปิดงาน"
+                              onClick={() => { updateMutation.mutate({ id: note.id, data: { status: 'closed' } }); }}>
+                              <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                            </Button>
+                          ) : (
+                            <Button variant="ghost" size="icon" className="h-6 w-6" title="เปิดงานอีกครั้ง"
+                              onClick={() => { updateMutation.mutate({ id: note.id, data: { status: 'open' } }); }}>
+                              <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+                            </Button>
+                          )}
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEdit(note)}>
                             <Pencil className="w-3 h-3 text-muted-foreground" />
                           </Button>
