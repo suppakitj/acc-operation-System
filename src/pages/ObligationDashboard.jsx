@@ -16,18 +16,23 @@ import {
 } from 'lucide-react';
 
 const OBLIGATIONS = [
-  { value: 'pnd1_monthly', label: 'ภงด.1', freq: 'monthly', dueDay: 7 },
+  { value: 'pnd1_monthly', label: 'ภงด.1', freq: 'monthly', dueDay: 15 },
   { value: 'pnd1k_yearly', label: 'ภงด.1ก', freq: 'yearly', dueMonth: 2 },
-  { value: 'pnd3_monthly', label: 'ภงด.3', freq: 'monthly', dueDay: 7 },
-  { value: 'pnd53_monthly', label: 'ภงด.53', freq: 'monthly', dueDay: 7 },
-  { value: 'pp30_monthly', label: 'ภ.พ.30', freq: 'monthly', dueDay: 15 },
-  { value: 'sso_monthly', label: 'ประกันสังคม', freq: 'monthly', dueDay: 15 },
+  { value: 'pnd3_monthly', label: 'ภงด.3', freq: 'monthly', dueDay: 15 },
+  { value: 'pnd53_monthly', label: 'ภงด.53', freq: 'monthly', dueDay: 15 },
+  { value: 'pnd54_monthly', label: 'ภงด.54', freq: 'monthly', dueDay: 15 },
+  { value: 'pp30_monthly', label: 'ภ.พ.30', freq: 'monthly', dueDay: 23 },
+  { value: 'pp36_monthly', label: 'ภ.พ.36', freq: 'monthly', dueDay: 15 },
+  { value: 'sso_monthly', label: 'ประกันสังคม', freq: 'monthly', dueDay: 25 },
   { value: 'pnd90_director', label: 'ภงด.90', freq: 'yearly', dueMonth: 3 },
   { value: 'pnd91_director', label: 'ภงด.91', freq: 'yearly', dueMonth: 3 },
   { value: 'pnd50_half', label: 'ภงด.50(ครึ่งปี)', freq: 'yearly', dueMonth: 8 },
+  { value: 'pnd51_half', label: 'ภงด.51(ครึ่งปี)', freq: 'yearly', dueMonth: 8 },
   { value: 'pnd50_annual', label: 'ภงด.50(ปี)', freq: 'yearly', dueMonth: 5 },
   { value: 'audit_annual', label: 'ตรวจสอบงบ', freq: 'yearly', dueMonth: 5 },
   { value: 'dbd_filing', label: 'ยื่นงบDBD', freq: 'yearly', dueMonth: 5 },
+  { value: 'disclosure_form', label: 'Disclosure Form', freq: 'yearly', dueMonth: 5 },
+  { value: 'boj5_annual', label: 'บอจ.5', freq: 'yearly', dueMonth: 5 },
 ];
 
 const CELL_CONFIG = {
