@@ -46,7 +46,7 @@ export default function WorkloadBalancer() {
           name: u.full_name || u.nickname || u.email.split('@')[0],
           department: u.department,
           position: u.position,
-          maxTasks: u.max_tasks || 10,
+          maxTasks: u.max_tasks || 50,
           activeTasks: myTasks,
           overdueTasks,
         };
