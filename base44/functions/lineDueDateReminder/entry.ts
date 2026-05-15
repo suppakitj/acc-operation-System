@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const PRIORITY_EMOJI = { urgent: '🔴', high: '🟠', medium: '🟡', low: '🟢' };
 const PRIORITY_LABEL = { urgent: 'เร่งด่วน', high: 'สูง', medium: 'ปานกลาง', low: 'ต่ำ' };
@@ -151,11 +151,13 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'skipped', reason });
     }
 
-    // Fetch all active tasks
-    const allTasks = await base44.asServiceRole.entities.Task.filter({});
-    const activeTasks = allTasks.filter(t =>
-      t.due_date && t.status !== 'completed' && t.status !== 'cancelled'
-    );
+    // Fetch active tasks (only pending/in_progress/review with due dates)
+    const [pendingTasks, inProgressTasks, reviewTasks] = await Promise.all([
+      base44.asServiceRole.entities.Task.filter({ status: 'pending' }, '-due_date', 500),
+      base44.asServiceRole.entities.Task.filter({ status: 'in_progress' }, '-due_date', 500),
+      base44.asServiceRole.entities.Task.filter({ status: 'review' }, '-due_date', 500),
+    ]);
+    const activeTasks = [...pendingTasks, ...inProgressTasks, ...reviewTasks].filter(t => t.due_date);
 
     // Categorize
     const overdueTasks = [];
@@ -208,10 +210,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Save notification records
-    const notifPromises = [];
+    // Save notification records — bulkCreate in batches to avoid rate limits
+    const notifData = [];
     for (const t of overdueTasks) {
-      notifPromises.push(base44.asServiceRole.entities.Notification.create({
+      notifData.push({
         title: `🚨 งานเกินกำหนด: ${t.title}`,
         message: `งาน "${t.title}" เกินกำหนด ${t._daysOver} วัน (กำหนด ${formatDate(t.due_date)})`,
         type: 'overdue',
@@ -220,10 +222,10 @@ Deno.serve(async (req) => {
         related_entity_id: t.id,
         customer_name: t.customer_name || '',
         sent_via_line: true,
-      }));
+      });
     }
     for (const t of due3Days) {
-      notifPromises.push(base44.asServiceRole.entities.Notification.create({
+      notifData.push({
         title: `⚠️ งานใกล้ครบกำหนด: ${t.title}`,
         message: `งาน "${t.title}" จะครบกำหนดในอีก ${t._daysLeft} วัน (${formatDate(t.due_date)})`,
         type: 'due_3days',
@@ -232,10 +234,10 @@ Deno.serve(async (req) => {
         related_entity_id: t.id,
         customer_name: t.customer_name || '',
         sent_via_line: true,
-      }));
+      });
     }
     for (const t of due7Days) {
-      notifPromises.push(base44.asServiceRole.entities.Notification.create({
+      notifData.push({
         title: `📋 งานใกล้ครบกำหนด: ${t.title}`,
         message: `งาน "${t.title}" จะครบกำหนดในอีก ${t._daysLeft} วัน (${formatDate(t.due_date)})`,
         type: 'due_7days',
@@ -244,9 +246,14 @@ Deno.serve(async (req) => {
         related_entity_id: t.id,
         customer_name: t.customer_name || '',
         sent_via_line: true,
-      }));
+      });
     }
-    await Promise.all(notifPromises);
+    // Bulk create in batches of 20
+    for (let i = 0; i < notifData.length; i += 20) {
+      const batch = notifData.slice(i, i + 20);
+      await base44.asServiceRole.entities.Notification.bulkCreate(batch);
+      if (i + 20 < notifData.length) await new Promise(r => setTimeout(r, 1500));
+    }
 
     console.log(`Due date reminder sent to: ${sentTargets.join(', ')} — total ${totalAlerts} alerts`);
     return Response.json({
