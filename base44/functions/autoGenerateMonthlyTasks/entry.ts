@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
@@ -66,8 +66,8 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Generate tasks
-    const created = [];
+    // Generate tasks — collect all, then bulkCreate in batches to avoid rate limits
+    const taskDataList = [];
     let skippedDuplicate = 0;
 
     for (const tmpl of templates) {
@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
           startDate = due.toISOString().split('T')[0];
         }
 
-        const taskData = {
+        taskDataList.push({
           title: tmpl.name,
           description: tmpl.description || '',
           customer_id: customer.id,
@@ -124,13 +124,24 @@ Deno.serve(async (req) => {
           recurring_type: tmpl.recurring_type,
           template_id: tmpl.id,
           checklist: tmpl.default_checklist || [],
-        };
-
-        const newTask = await base44.asServiceRole.entities.Task.create(taskData);
-        created.push(newTask);
+        });
         existingKeys.add(dedupKey);
       }
     }
+
+    // Bulk create in batches of 20 with delay to avoid rate limits
+    const BATCH_SIZE = 20;
+    const BATCH_DELAY_MS = 1500;
+    const created = [];
+    for (let i = 0; i < taskDataList.length; i += BATCH_SIZE) {
+      const batch = taskDataList.slice(i, i + BATCH_SIZE);
+      const results = await base44.asServiceRole.entities.Task.bulkCreate(batch);
+      created.push(...results);
+      if (i + BATCH_SIZE < taskDataList.length) {
+        await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
+      }
+    }
+    console.log(`Created ${created.length} tasks in ${Math.ceil(taskDataList.length / BATCH_SIZE)} batches`);
 
     // Save last_auto_generate
     if (configs.length > 0) {
@@ -167,12 +178,12 @@ Deno.serve(async (req) => {
             { type: 'sso',   label: 'ประกันสังคม', category: 'sso',             onlineDay: 25 },
           ];
 
+          const taxBatch = [];
           for (let month = 1; month <= 12; month++) {
             for (const rule of TAX_RULES) {
               const key = `${rule.type}_${month}_${currentYear}`;
               if (existingKeys.has(key)) continue;
-
-              await base44.asServiceRole.entities.TaxDeadline.create({
+              taxBatch.push({
                 tax_type: rule.type,
                 tax_label: rule.label,
                 category: rule.category,
@@ -181,9 +192,15 @@ Deno.serve(async (req) => {
                 deadline: `${currentYear}-${String(month).padStart(2, '0')}-${String(rule.onlineDay).padStart(2, '0')}`,
                 original_day: rule.onlineDay,
               });
-              taxCalendarGenerated++;
             }
           }
+          // Bulk create tax deadlines in batches of 20
+          for (let i = 0; i < taxBatch.length; i += 20) {
+            const batch = taxBatch.slice(i, i + 20);
+            await base44.asServiceRole.entities.TaxDeadline.bulkCreate(batch);
+            if (i + 20 < taxBatch.length) await new Promise(r => setTimeout(r, 1500));
+          }
+          taxCalendarGenerated = taxBatch.length;
 
           if (taxConfigs.length > 0) {
             await base44.asServiceRole.entities.AppConfig.update(taxConfigs[0].id, { value: String(currentYear) });
