@@ -57,6 +57,10 @@ const DEFAULT_MATRIX = {
   rework_analytics:{ admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
   team_ranking:    { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
   postpone_analytics:{ admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
+  taxqa_intake:     { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
+  taxqa_review:     { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
+  taxqa_dashboard:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
+  taxqa_config:     { admin: 'yes', management: 'yes', manager: 'no',  super_supervisor: 'no',  staff: 'no' },
 };
 
 const PermissionMatrixContext = createContext(DEFAULT_MATRIX);

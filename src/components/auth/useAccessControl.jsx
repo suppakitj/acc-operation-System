@@ -205,12 +205,11 @@ export function useAccessControl(user) {
       if (p('rework_analytics') !== 'no') menus.push('rework_analytics');
       if (p('postpone_analytics') !== 'no') menus.push('postpone_analytics');
 
-      // Tax QA — visible to all authenticated users (permission can be refined later)
-      menus.push('taxqa_intake');
-      menus.push('taxqa_review');
-      menus.push('taxqa_dashboard');
-      // Config only for admin/partner/management
-      if (role === 'admin' || role === 'partner' || role === 'management') menus.push('taxqa_config');
+      // Tax QA
+      if (p('taxqa_intake') !== 'no') menus.push('taxqa_intake');
+      if (p('taxqa_review') !== 'no') menus.push('taxqa_review');
+      if (p('taxqa_dashboard') !== 'no') menus.push('taxqa_dashboard');
+      if (p('taxqa_config') !== 'no') menus.push('taxqa_config');
 
       return menus;
     };
