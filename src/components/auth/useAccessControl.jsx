@@ -205,6 +205,9 @@ export function useAccessControl(user) {
       if (p('rework_analytics') !== 'no') menus.push('rework_analytics');
       if (p('postpone_analytics') !== 'no') menus.push('postpone_analytics');
 
+      // Tax QA — visible to all authenticated users (permission can be refined later)
+      menus.push('taxqa_intake');
+
       return menus;
     };
 
