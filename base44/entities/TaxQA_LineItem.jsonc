@@ -1,0 +1,129 @@
+{
+  "name": "TaxQA_LineItem",
+  "type": "object",
+  "properties": {
+    "filing_id": {
+      "type": "string",
+      "description": "ref TaxQA_Filing ID"
+    },
+    "seq_in_file": {
+      "type": "number",
+      "description": "\u0e25\u0e33\u0e14\u0e31\u0e1a\u0e43\u0e19\u0e44\u0e1f\u0e25\u0e4c (\u0e0b\u0e49\u0e33\u0e44\u0e14\u0e49 \u0e2b\u0e49\u0e32\u0e21\u0e43\u0e0a\u0e49\u0e40\u0e1b\u0e47\u0e19 key)"
+    },
+    "ref_doc_1": {
+      "type": "string",
+      "description": "\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 1"
+    },
+    "ref_doc_2": {
+      "type": "string",
+      "description": "\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 2"
+    },
+    "branch": {
+      "type": "string",
+      "description": "\u0e2a\u0e32\u0e02\u0e32/\u0e2a\u0e33\u0e19\u0e31\u0e01\u0e07\u0e32\u0e19\u0e43\u0e2b\u0e0d\u0e48"
+    },
+    "raw_status": {
+      "type": "string",
+      "description": "\u0e2a\u0e16\u0e32\u0e19\u0e30\u0e08\u0e32\u0e01\u0e44\u0e1f\u0e25\u0e4c\u0e15\u0e49\u0e19\u0e17\u0e32\u0e07"
+    },
+    "cert_no": {
+      "type": "string",
+      "description": "\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48\u0e2b\u0e19\u0e31\u0e07\u0e2a\u0e37\u0e2d\u0e23\u0e31\u0e1a\u0e23\u0e2d\u0e07\u0e2b\u0e31\u0e01 \u0e13 \u0e17\u0e35\u0e48\u0e08\u0e48\u0e32\u0e22 (\u0e04\u0e35\u0e22\u0e4c group \u0e1a\u0e23\u0e23\u0e17\u0e31\u0e14 WHT \u0e43\u0e19\u0e43\u0e1a\u0e40\u0e14\u0e35\u0e22\u0e27\u0e01\u0e31\u0e19)"
+    },
+    "pay_date": {
+      "type": "string",
+      "description": "\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e2b\u0e31\u0e01 \u0e13 \u0e17\u0e35\u0e48\u0e08\u0e48\u0e32\u0e22"
+    },
+    "payee_code": {
+      "type": "string",
+      "description": "\u0e23\u0e2b\u0e31\u0e2a\u0e1c\u0e39\u0e49\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d"
+    },
+    "payee_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e40\u0e07\u0e34\u0e19"
+    },
+    "payee_tax_id": {
+      "type": "string",
+      "description": "\u0e40\u0e25\u0e02\u0e17\u0e30\u0e40\u0e1a\u0e35\u0e22\u0e19\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35 13 \u0e2b\u0e25\u0e31\u0e01"
+    },
+    "pnd_type": {
+      "type": "string",
+      "description": "\u0e1b\u0e23\u0e30\u0e40\u0e20\u0e17 \u0e20.\u0e07.\u0e14."
+    },
+    "income_desc": {
+      "type": "string",
+      "description": "\u0e1b\u0e23\u0e30\u0e40\u0e20\u0e17\u0e40\u0e07\u0e34\u0e19\u0e44\u0e14\u0e49"
+    },
+    "wht_rate": {
+      "type": "number",
+      "description": "\u0e2d\u0e31\u0e15\u0e23\u0e32\u0e20\u0e32\u0e29\u0e35 (%)"
+    },
+    "tax_base": {
+      "type": "number",
+      "description": "\u0e08\u0e33\u0e19\u0e27\u0e19\u0e40\u0e07\u0e34\u0e19\u0e17\u0e35\u0e48\u0e08\u0e48\u0e32\u0e22 (\u0e10\u0e32\u0e19\u0e20\u0e32\u0e29\u0e35)"
+    },
+    "wht_amount": {
+      "type": "number",
+      "description": "\u0e20\u0e32\u0e29\u0e35\u0e2b\u0e31\u0e01 \u0e13 \u0e17\u0e35\u0e48\u0e08\u0e48\u0e32\u0e22"
+    },
+    "wht_condition": {
+      "type": "string",
+      "description": "\u0e40\u0e07\u0e37\u0e48\u0e2d\u0e19\u0e44\u0e02\u0e01\u0e32\u0e23\u0e2b\u0e31\u0e01\u0e20\u0e32\u0e29\u0e35"
+    },
+    "tax_invoice_no": {
+      "type": "string",
+      "description": "\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48\u0e43\u0e1a\u0e01\u0e33\u0e01\u0e31\u0e1a\u0e20\u0e32\u0e29\u0e35 (VAT)"
+    },
+    "tax_invoice_date": {
+      "type": "string",
+      "description": "\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e43\u0e1a\u0e01\u0e33\u0e01\u0e31\u0e1a\u0e20\u0e32\u0e29\u0e35 (VAT)"
+    },
+    "invoice_type": {
+      "type": "string",
+      "description": "\u0e1b\u0e23\u0e30\u0e40\u0e20\u0e17\u0e43\u0e1a\u0e01\u0e33\u0e01\u0e31\u0e1a (VAT)"
+    },
+    "contact_code": {
+      "type": "string",
+      "description": "\u0e23\u0e2b\u0e31\u0e2a\u0e1c\u0e39\u0e49\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d (VAT)"
+    },
+    "counterparty_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e04\u0e39\u0e48\u0e04\u0e49\u0e32 (VAT)"
+    },
+    "counterparty_tax_id": {
+      "type": "string",
+      "description": "\u0e40\u0e25\u0e02\u0e17\u0e30\u0e40\u0e1a\u0e35\u0e22\u0e19\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35\u0e04\u0e39\u0e48\u0e04\u0e49\u0e32 (VAT)"
+    },
+    "exempt_amount": {
+      "type": "number",
+      "description": "\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e22\u0e01\u0e40\u0e27\u0e49\u0e19\u0e20\u0e32\u0e29\u0e35"
+    },
+    "vat0_amount": {
+      "type": "number",
+      "description": "\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e20\u0e32\u0e29\u0e35 0%"
+    },
+    "vat7_base": {
+      "type": "number",
+      "description": "\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e20\u0e32\u0e29\u0e35 7% (\u0e10\u0e32\u0e19 VAT)"
+    },
+    "vat_amount": {
+      "type": "number",
+      "description": "\u0e20\u0e32\u0e29\u0e35\u0e21\u0e39\u0e25\u0e04\u0e48\u0e32\u0e40\u0e1e\u0e34\u0e48\u0e21"
+    },
+    "total_incl_vat": {
+      "type": "number",
+      "description": "\u0e21\u0e39\u0e25\u0e04\u0e48\u0e32\u0e23\u0e27\u0e21\u0e20\u0e32\u0e29\u0e35"
+    },
+    "vat_direction": {
+      "type": "string",
+      "enum": [
+        "output",
+        "input"
+      ],
+      "description": "\u0e20\u0e32\u0e29\u0e35\u0e02\u0e32\u0e22 (output) \u0e2b\u0e23\u0e37\u0e2d\u0e20\u0e32\u0e29\u0e35\u0e0b\u0e37\u0e49\u0e2d (input)"
+    }
+  },
+  "required": [
+    "filing_id"
+  ]
+}

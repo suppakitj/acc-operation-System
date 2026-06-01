@@ -1,0 +1,123 @@
+{
+  "name": "TaxQA_Filing",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "description": "ref Customer ID"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32 (denormalized)"
+    },
+    "form_type": {
+      "type": "string",
+      "enum": [
+        "PND1",
+        "PND3",
+        "PND53",
+        "PND54",
+        "PP36",
+        "PP30"
+      ],
+      "description": "\u0e1b\u0e23\u0e30\u0e40\u0e20\u0e17\u0e41\u0e1a\u0e1a\u0e20\u0e32\u0e29\u0e35"
+    },
+    "tax_period": {
+      "type": "string",
+      "description": "\u0e07\u0e27\u0e14\u0e20\u0e32\u0e29\u0e35 YYYY-MM"
+    },
+    "tax_deadline_id": {
+      "type": "string",
+      "description": "ref TaxDeadline ID"
+    },
+    "version": {
+      "type": "number",
+      "default": 1,
+      "description": "\u0e40\u0e27\u0e2d\u0e23\u0e4c\u0e0a\u0e31\u0e19 (1=\u0e09\u0e1a\u0e31\u0e1a\u0e1b\u0e01\u0e15\u0e34, 2+=\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e40\u0e15\u0e34\u0e21)"
+    },
+    "supersedes_id": {
+      "type": "string",
+      "description": "ref TaxQA_Filing ID \u0e17\u0e35\u0e48\u0e09\u0e1a\u0e31\u0e1a\u0e19\u0e35\u0e49\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "validating",
+        "flagged",
+        "clean",
+        "under_review",
+        "approved",
+        "rejected",
+        "filed"
+      ],
+      "default": "draft",
+      "description": "\u0e2a\u0e16\u0e32\u0e19\u0e30\u0e41\u0e1a\u0e1a"
+    },
+    "header_total_tax": {
+      "type": "number",
+      "description": "\u0e22\u0e2d\u0e14\u0e23\u0e27\u0e21\u0e20\u0e32\u0e29\u0e35\u0e08\u0e32\u0e01\u0e2b\u0e31\u0e27\u0e41\u0e1a\u0e1a"
+    },
+    "prepared_by": {
+      "type": "string",
+      "description": "email \u0e1c\u0e39\u0e49\u0e08\u0e31\u0e14\u0e17\u0e33 (ref User)"
+    },
+    "prepared_by_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e08\u0e31\u0e14\u0e17\u0e33"
+    },
+    "reviewed_by": {
+      "type": "string",
+      "description": "email \u0e1c\u0e39\u0e49\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a (ref User)"
+    },
+    "reviewed_by_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a"
+    },
+    "submitted_at": {
+      "type": "string",
+      "description": "\u0e27\u0e31\u0e19\u0e40\u0e27\u0e25\u0e32\u0e2a\u0e48\u0e07\u0e15\u0e23\u0e27\u0e08 (ISO datetime)"
+    },
+    "approved_at": {
+      "type": "string",
+      "description": "\u0e27\u0e31\u0e19\u0e40\u0e27\u0e25\u0e32\u0e2d\u0e19\u0e38\u0e21\u0e31\u0e15\u0e34 (ISO datetime)"
+    },
+    "rejected_at": {
+      "type": "string",
+      "description": "\u0e27\u0e31\u0e19\u0e40\u0e27\u0e25\u0e32\u0e15\u0e35\u0e01\u0e25\u0e31\u0e1a (ISO datetime)"
+    },
+    "rejection_note": {
+      "type": "string",
+      "description": "\u0e40\u0e2b\u0e15\u0e38\u0e1c\u0e25\u0e17\u0e35\u0e48\u0e15\u0e35\u0e01\u0e25\u0e31\u0e1a"
+    },
+    "source_batch_id": {
+      "type": "string",
+      "description": "ref TaxQA_IngestionBatch ID"
+    },
+    "filed_ref": {
+      "type": "string",
+      "description": "\u0e40\u0e25\u0e02\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u0e01\u0e32\u0e23\u0e22\u0e37\u0e48\u0e19 \u0e40\u0e0a\u0e48\u0e19 PND53-202604"
+    },
+    "filed_at": {
+      "type": "string",
+      "description": "\u0e27\u0e31\u0e19\u0e40\u0e27\u0e25\u0e32\u0e22\u0e37\u0e19\u0e22\u0e31\u0e19\u0e22\u0e37\u0e48\u0e19 (ISO datetime)"
+    },
+    "flag_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u0e08\u0e33\u0e19\u0e27\u0e19 exception flags"
+    },
+    "line_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u0e08\u0e33\u0e19\u0e27\u0e19\u0e1a\u0e23\u0e23\u0e17\u0e31\u0e14\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23"
+    }
+  },
+  "required": [
+    "customer_id",
+    "customer_name",
+    "form_type",
+    "tax_period",
+    "status"
+  ]
+}

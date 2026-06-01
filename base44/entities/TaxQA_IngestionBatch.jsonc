@@ -1,0 +1,86 @@
+{
+  "name": "TaxQA_IngestionBatch",
+  "type": "object",
+  "properties": {
+    "source_filename": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e44\u0e1f\u0e25\u0e4c\u0e15\u0e49\u0e19\u0e17\u0e32\u0e07"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL \u0e44\u0e1f\u0e25\u0e4c\u0e17\u0e35\u0e48\u0e2d\u0e31\u0e1b\u0e42\u0e2b\u0e25\u0e14"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "ref Customer ID"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32 (denormalized)"
+    },
+    "tax_period": {
+      "type": "string",
+      "description": "\u0e07\u0e27\u0e14\u0e20\u0e32\u0e29\u0e35 YYYY-MM"
+    },
+    "form_type": {
+      "type": "string",
+      "enum": [
+        "PND1",
+        "PND3",
+        "PND53",
+        "PND54",
+        "PP36",
+        "PP30"
+      ],
+      "description": "\u0e1b\u0e23\u0e30\u0e40\u0e20\u0e17\u0e41\u0e1a\u0e1a\u0e20\u0e32\u0e29\u0e35\u0e17\u0e35\u0e48\u0e15\u0e23\u0e27\u0e08\u0e1e\u0e1a"
+    },
+    "detected_layout": {
+      "type": "string",
+      "enum": [
+        "layout_a_vat",
+        "layout_b_wht",
+        "manual"
+      ],
+      "description": "layout \u0e17\u0e35\u0e48\u0e15\u0e23\u0e27\u0e08\u0e1e\u0e1a"
+    },
+    "parsed_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u0e08\u0e33\u0e19\u0e27\u0e19\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e17\u0e35\u0e48 parse \u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08"
+    },
+    "error_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u0e08\u0e33\u0e19\u0e27\u0e19 error"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "uploaded",
+        "validating",
+        "parsed",
+        "failed"
+      ],
+      "default": "uploaded",
+      "description": "\u0e2a\u0e16\u0e32\u0e19\u0e30 batch"
+    },
+    "error_detail": {
+      "type": "string",
+      "description": "\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14 error"
+    },
+    "imported_by": {
+      "type": "string",
+      "description": "email \u0e1c\u0e39\u0e49\u0e2d\u0e31\u0e1b\u0e42\u0e2b\u0e25\u0e14 (ref User)"
+    },
+    "imported_by_name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e2d\u0e31\u0e1b\u0e42\u0e2b\u0e25\u0e14"
+    }
+  },
+  "required": [
+    "source_filename",
+    "customer_id",
+    "customer_name",
+    "status"
+  ]
+}
