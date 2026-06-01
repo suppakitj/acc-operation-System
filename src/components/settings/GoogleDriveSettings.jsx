@@ -5,10 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { HardDrive, Save, FolderOpen, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { HardDrive, Save, FolderOpen, CheckCircle2, XCircle, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 function GoogleDriveOAuthStatus() {
+  const queryClient = useQueryClient();
+  const [checking, setChecking] = useState(false);
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ['gdrive-connection'],
     queryFn: async () => {
@@ -17,6 +20,12 @@ function GoogleDriveOAuthStatus() {
     },
     retry: 1,
   });
+
+  const handleRecheck = async () => {
+    setChecking(true);
+    await queryClient.invalidateQueries({ queryKey: ['gdrive-connection'] });
+    setChecking(false);
+  };
 
   if (isLoading) {
     return (
@@ -35,6 +44,10 @@ function GoogleDriveOAuthStatus() {
           <span className="text-sm font-medium text-amber-700">ไม่สามารถตรวจสอบสถานะได้</span>
           <p className="text-xs text-amber-500">กรุณาใช้ production URL เพื่อดูสถานะ Google Drive</p>
         </div>
+        <Button variant="outline" size="sm" className="shrink-0 text-xs h-7 gap-1" onClick={handleRecheck} disabled={checking}>
+          {checking ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+          ตรวจสอบอีกครั้ง
+        </Button>
       </div>
     );
   }
@@ -47,6 +60,10 @@ function GoogleDriveOAuthStatus() {
           <span className="text-sm font-medium text-green-700">เชื่อมต่อ Google Drive แล้ว</span>
           <p className="text-xs text-green-600">{data.displayName} ({data.email})</p>
         </div>
+        <Button variant="outline" size="sm" className="shrink-0 text-xs h-7 gap-1" onClick={handleRecheck} disabled={checking}>
+          {checking ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+          ตรวจสอบ
+        </Button>
       </div>
     );
   }
@@ -63,16 +80,35 @@ function GoogleDriveOAuthStatus() {
           <span className="text-sm font-medium text-amber-700">ไม่สามารถตรวจสอบสถานะได้</span>
           <p className="text-xs text-amber-500">Session อาจหมดอายุ — ลอง refresh หน้าหรือ login ใหม่</p>
         </div>
+        <Button variant="outline" size="sm" className="shrink-0 text-xs h-7 gap-1" onClick={handleRecheck} disabled={checking}>
+          {checking ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+          ตรวจสอบอีกครั้ง
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
-      <XCircle className="w-4 h-4 text-red-500" />
-      <div className="flex-1">
-        <span className="text-sm font-medium text-red-700">ยังไม่ได้เชื่อมต่อ Google Drive</span>
-        <p className="text-xs text-red-500">กรุณาติดต่อ Admin เพื่อเชื่อมต่อ OAuth</p>
+    <div className="p-3 rounded-lg bg-red-50 border border-red-200 space-y-2">
+      <div className="flex items-center gap-2">
+        <XCircle className="w-4 h-4 text-red-500" />
+        <div className="flex-1">
+          <span className="text-sm font-medium text-red-700">ยังไม่ได้เชื่อมต่อ Google Drive</span>
+          <p className="text-xs text-red-500">กรุณาเชื่อมต่อ OAuth เพื่อใช้งานฟีเจอร์ Google Drive</p>
+        </div>
+        <Button variant="outline" size="sm" className="shrink-0 text-xs h-7 gap-1" onClick={handleRecheck} disabled={checking}>
+          {checking ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+          ตรวจสอบอีกครั้ง
+        </Button>
+      </div>
+      <div className="bg-white/70 rounded p-2.5 text-xs text-red-600 space-y-1">
+        <p className="font-medium">วิธีเชื่อมต่อ:</p>
+        <ol className="list-decimal list-inside space-y-0.5 text-red-500">
+          <li>ไปที่ <span className="font-medium">Base44 Dashboard → Settings → Integrations</span></li>
+          <li>เลือก <span className="font-medium">Google Drive</span> แล้วกด Connect</li>
+          <li>เข้าสู่ระบบ Google แล้วอนุญาตสิทธิ์</li>
+          <li>กลับมากด <span className="font-medium">"ตรวจสอบอีกครั้ง"</span> ด้านบน</li>
+        </ol>
       </div>
     </div>
   );
