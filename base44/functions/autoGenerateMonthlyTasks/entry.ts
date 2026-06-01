@@ -30,6 +30,8 @@ Deno.serve(async (req) => {
     }
 
     // === Replicate generateMonthlyTasks logic (dry_run: false) ===
+    const delay = (ms) => new Promise(r => setTimeout(r, ms));
+
     // Fetch active templates
     const allTemplates = await base44.asServiceRole.entities.TaskTemplate.filter(
       { status: 'active' }, '-created_date', 500
@@ -49,22 +51,43 @@ Deno.serve(async (req) => {
       return true;
     });
 
-    // Fetch active customers
-    const customers = await base44.asServiceRole.entities.Customer.filter(
-      { status: 'active' }, '-created_date', 1000
-    );
+    await delay(500);
 
-    // Fetch existing tasks for dedup
+    // Fetch active customers (paginated)
+    let customers = [];
+    let custSkip = 0;
+    while (true) {
+      const page = await base44.asServiceRole.entities.Customer.filter(
+        { status: 'active' }, '-created_date', 100, custSkip
+      );
+      if (!Array.isArray(page) || page.length === 0) break;
+      customers = customers.concat(page);
+      if (page.length < 100) break;
+      custSkip += 100;
+      await delay(500);
+    }
+
+    await delay(500);
+
+    // Fetch existing recurring tasks for dedup (paginated)
     const monthStr = String(currentMonth).padStart(2, '0');
-    const existingTasks = await base44.asServiceRole.entities.Task.filter(
-      { is_recurring: true }, '-created_date', 5000
-    );
     const existingKeys = new Set();
-    existingTasks.forEach(t => {
-      if (t.template_id && t.customer_id && t.due_date) {
-        existingKeys.add(`${t.template_id}_${t.customer_id}_${t.due_date.substring(0, 7)}`);
-      }
-    });
+    let taskSkip = 0;
+    while (true) {
+      const page = await base44.asServiceRole.entities.Task.filter(
+        { is_recurring: true }, '-created_date', 100, taskSkip
+      );
+      if (!Array.isArray(page) || page.length === 0) break;
+      page.forEach(t => {
+        if (t.template_id && t.customer_id && t.due_date) {
+          existingKeys.add(`${t.template_id}_${t.customer_id}_${t.due_date.substring(0, 7)}`);
+        }
+      });
+      if (page.length < 100) break;
+      taskSkip += 100;
+      await delay(500);
+    }
+    console.log(`Loaded ${templates.length} templates, ${customers.length} customers, ${existingKeys.size} existing dedup keys`);
 
     // Generate tasks — collect all, then bulkCreate in batches to avoid rate limits
     const taskDataList = [];
@@ -129,9 +152,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Bulk create in batches of 20 with delay to avoid rate limits
-    const BATCH_SIZE = 20;
-    const BATCH_DELAY_MS = 1500;
+    // Bulk create in batches of 10 with delay to avoid rate limits
+    const BATCH_SIZE = 10;
+    const BATCH_DELAY_MS = 2000;
     const created = [];
     for (let i = 0; i < taskDataList.length; i += BATCH_SIZE) {
       const batch = taskDataList.slice(i, i + BATCH_SIZE);
@@ -194,11 +217,11 @@ Deno.serve(async (req) => {
               });
             }
           }
-          // Bulk create tax deadlines in batches of 20
-          for (let i = 0; i < taxBatch.length; i += 20) {
-            const batch = taxBatch.slice(i, i + 20);
+          // Bulk create tax deadlines in batches of 10
+          for (let i = 0; i < taxBatch.length; i += 10) {
+            const batch = taxBatch.slice(i, i + 10);
             await base44.asServiceRole.entities.TaxDeadline.bulkCreate(batch);
-            if (i + 20 < taxBatch.length) await new Promise(r => setTimeout(r, 1500));
+            if (i + 10 < taxBatch.length) await delay(2000);
           }
           taxCalendarGenerated = taxBatch.length;
 
