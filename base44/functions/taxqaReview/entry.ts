@@ -35,6 +35,34 @@ Deno.serve(async (req) => {
         approved_at: new Date().toISOString(),
       });
 
+      // PP30 approved → commit VatPeriodRegister
+      if (f.form_type === 'PP30') {
+        const lineItems = await base44.asServiceRole.entities.TaxQA_LineItem.filter({ filing_id: fid }, 'seq_in_file', 2000);
+        const outputVat = lineItems.filter(l => l.vat_direction === 'output').reduce((s, l) => s + (l.vat_amount || 0), 0);
+        const inputVat = lineItems.filter(l => l.vat_direction === 'input').reduce((s, l) => s + (l.vat_amount || 0), 0);
+        const creditBf = f.credit_brought_forward || 0;
+        const netCalc = outputVat - inputVat - creditBf;
+        const netPayable = netCalc > 0 ? Math.round(netCalc * 100) / 100 : 0;
+        const creditCf = netCalc < 0 ? Math.round(Math.abs(netCalc) * 100) / 100 : 0;
+        const existingRegs = await base44.asServiceRole.entities.TaxQA_VatPeriodRegister.filter({
+          customer_id: f.customer_id, tax_period: f.tax_period
+        }, '-version', 1);
+        if (existingRegs.length > 0) {
+          await base44.asServiceRole.entities.TaxQA_VatPeriodRegister.update(existingRegs[0].id, {
+            output_vat: Math.round(outputVat * 100) / 100, input_vat: Math.round(inputVat * 100) / 100,
+            credit_brought_forward: creditBf, credit_carried_forward: creditCf, net_payable: netPayable,
+            source_filing_id: fid,
+          });
+        } else {
+          await base44.asServiceRole.entities.TaxQA_VatPeriodRegister.create({
+            customer_id: f.customer_id, customer_name: f.customer_name, tax_period: f.tax_period,
+            output_vat: Math.round(outputVat * 100) / 100, input_vat: Math.round(inputVat * 100) / 100,
+            credit_brought_forward: creditBf, credit_carried_forward: creditCf, net_payable: netPayable,
+            source_filing_id: fid, status: 'filed',
+          });
+        }
+      }
+
       writeLog({
         action: 'approve',
         entity_type: 'TaxQA_Filing',
@@ -130,6 +158,45 @@ Deno.serve(async (req) => {
       approved_at: new Date().toISOString(),
     });
 
+    // PP30 approved → commit VatPeriodRegister
+    if (f.form_type === 'PP30') {
+      const lineItems = await base44.asServiceRole.entities.TaxQA_LineItem.filter({ filing_id }, 'seq_in_file', 2000);
+      const outputVat = lineItems.filter(l => l.vat_direction === 'output').reduce((s, l) => s + (l.vat_amount || 0), 0);
+      const inputVat = lineItems.filter(l => l.vat_direction === 'input').reduce((s, l) => s + (l.vat_amount || 0), 0);
+      const creditBf = f.credit_brought_forward || 0;
+      const netCalc = outputVat - inputVat - creditBf;
+      const netPayable = netCalc > 0 ? Math.round(netCalc * 100) / 100 : 0;
+      const creditCf = netCalc < 0 ? Math.round(Math.abs(netCalc) * 100) / 100 : 0;
+
+      // Find or create register
+      const existingRegs = await base44.asServiceRole.entities.TaxQA_VatPeriodRegister.filter({
+        customer_id: f.customer_id, tax_period: f.tax_period
+      }, '-version', 1);
+      if (existingRegs.length > 0) {
+        await base44.asServiceRole.entities.TaxQA_VatPeriodRegister.update(existingRegs[0].id, {
+          output_vat: Math.round(outputVat * 100) / 100,
+          input_vat: Math.round(inputVat * 100) / 100,
+          credit_brought_forward: creditBf,
+          credit_carried_forward: creditCf,
+          net_payable: netPayable,
+          source_filing_id: filing_id,
+        });
+      } else {
+        await base44.asServiceRole.entities.TaxQA_VatPeriodRegister.create({
+          customer_id: f.customer_id,
+          customer_name: f.customer_name,
+          tax_period: f.tax_period,
+          output_vat: Math.round(outputVat * 100) / 100,
+          input_vat: Math.round(inputVat * 100) / 100,
+          credit_brought_forward: creditBf,
+          credit_carried_forward: creditCf,
+          net_payable: netPayable,
+          source_filing_id: filing_id,
+          status: 'filed',
+        });
+      }
+    }
+
     writeLog({
       action: 'approve',
       entity_type: 'TaxQA_Filing',
@@ -193,7 +260,11 @@ Deno.serve(async (req) => {
       details: `ส่งตรวจใหม่: ${f.form_type} งวด ${f.tax_period} ลูกค้า "${f.customer_name}"`,
       changes: { status: { from: 'rejected', to: 'validating' } },
     });
-    return Response.json({ success: true });
+
+    // Re-validate immediately — never leave as 'validating'
+    const valRes = await base44.functions.invoke('taxqaValidate', { filing_id });
+
+    return Response.json({ success: true, validation: valRes.data || null });
   }
 
   // ─── MARK FILED (approved → filed) ───

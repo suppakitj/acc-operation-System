@@ -135,16 +135,33 @@ Deno.serve(async (req) => {
         if (deadlines.length > 0) taxDeadlineId = deadlines[0].id;
       }
 
-      // Create Filing
-      const filing = await base44.asServiceRole.entities.TaxQA_Filing.create({
-        customer_id, customer_name: customer_name || '',
-        form_type: detectedFormType, tax_period,
-        tax_deadline_id: taxDeadlineId,
-        status: 'validating',
-        source_batch_id: batch.id, filed_ref: filedRef,
-        prepared_by: user.email, prepared_by_name: user.full_name || '',
-        line_count: dataRows.length,
-      });
+      // PP30 find-or-create: reuse existing filing if not yet filed
+      const existingPP30 = await base44.asServiceRole.entities.TaxQA_Filing.filter({
+        customer_id, tax_period, form_type: 'PP30'
+      }, '-created_date', 10);
+      const reusable = existingPP30.find(f => f.status !== 'filed');
+
+      let filing;
+      if (reusable) {
+        // Reuse existing filing — update batch ref + line_count
+        filing = reusable;
+        await base44.asServiceRole.entities.TaxQA_Filing.update(filing.id, {
+          status: 'validating',
+          line_count: (filing.line_count || 0) + dataRows.length,
+          source_batch_id: batch.id,
+        });
+        filing.line_count = (filing.line_count || 0) + dataRows.length;
+      } else {
+        filing = await base44.asServiceRole.entities.TaxQA_Filing.create({
+          customer_id, customer_name: customer_name || '',
+          form_type: detectedFormType, tax_period,
+          tax_deadline_id: taxDeadlineId,
+          status: 'validating',
+          source_batch_id: batch.id, filed_ref: filedRef,
+          prepared_by: user.email, prepared_by_name: user.full_name || '',
+          line_count: dataRows.length,
+        });
+      }
 
       // Create LineItems in batches
       const lineItems = dataRows.map((r, i) => ({
