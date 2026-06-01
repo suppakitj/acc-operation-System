@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    // Find all incoming image/file messages that failed (drive_saved=false, retry >= 10)
+    // Find all incoming image/file messages that failed (drive_saved=false, retry >= 1)
     // Paginate to find all
     let allUnsaved = [];
     let skip = 0;
@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     const toRetry = allUnsaved.filter(m =>
       m.file_url &&
       (m.message_type === 'image' || m.message_type === 'file') &&
-      (m.drive_retry_count || 0) >= 10
+      (m.drive_retry_count || 0) >= 1
     );
 
     if (toRetry.length === 0) {
