@@ -17,16 +17,27 @@ Deno.serve(async (req) => {
     const currentYear = now.getFullYear();
     const monthKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
 
+    // Support force_retry param (skip last_auto_generate check but still dedup tasks)
+    let forceRetry = false;
+    try {
+      const body = await req.clone().json();
+      if (body?.force_retry === true) forceRetry = true;
+    } catch {}
+
     // Check if already generated this month
     const configs = await base44.asServiceRole.entities.AppConfig.filter({ key: 'last_auto_generate' });
     const lastGenerated = configs.length > 0 ? configs[0].value : '';
 
-    if (lastGenerated === monthKey) {
+    if (lastGenerated === monthKey && !forceRetry) {
       return Response.json({
         success: true,
         skipped: true,
         message: `เดือน ${monthKey} สร้างงานไปแล้ว — ข้าม`,
       });
+    }
+
+    if (forceRetry) {
+      console.log(`Force retry mode — bypassing last_auto_generate check for ${monthKey}`);
     }
 
     // === Replicate generateMonthlyTasks logic (dry_run: false) ===
