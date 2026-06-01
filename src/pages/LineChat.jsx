@@ -152,14 +152,14 @@ export default function LineChat() {
   };
 
   // Chat list for sidebar — fetches ALL chats from server
-  const { data: chatList = [] } = useQuery({
+  const { data: chatList = [], isLoading: chatListLoading } = useQuery({
     queryKey: ['lineChats'],
     queryFn: async () => {
       const res = await base44.functions.invoke('listLineChats', {});
       return res.data?.chats || [];
     },
-    refetchInterval: 30_000,
-    staleTime: 25_000,
+    refetchInterval: 60_000,
+    staleTime: 50_000,
   });
 
   const { data: messages = [] } = useQuery({
@@ -586,7 +586,12 @@ export default function LineChat() {
 
           {/* Contact List */}
           <ScrollArea className="flex-1">
-            {userList.length === 0 ? (
+            {chatListLoading && userList.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mb-3" />
+                <p className="text-sm text-muted-foreground">กำลังโหลดรายชื่อแชท...</p>
+              </div>
+            ) : userList.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
                 <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mb-3">
                   <MessageCircle className="w-6 h-6 text-muted-foreground/40" />
