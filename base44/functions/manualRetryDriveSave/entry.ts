@@ -2,10 +2,32 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 /**
  * Manual retry for failed Drive saves.
- * Resets retry count for messages that exceeded MAX_RETRIES,
- * then immediately processes them in batches.
+ * Resets retry count for messages that have failed (retry >= 1),
+ * then lets the scheduled retryDriveSave pick them up.
  * Admin only.
  */
+
+const BATCH_SIZE = 5;
+const DELAY_BETWEEN = 1500; // ms between batches
+
+async function updateWithRetry(base44, id, data, maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await base44.asServiceRole.entities.LineMessage.update(id, data);
+      return true;
+    } catch (e) {
+      const is429 = e?.message?.includes('Rate limit') || e?.response?.status === 429;
+      if (is429 && attempt < maxAttempts) {
+        await new Promise(r => setTimeout(r, 2000 * attempt));
+        continue;
+      }
+      console.error(`Failed to reset message ${id}: ${e.message}`);
+      return false;
+    }
+  }
+  return false;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -16,7 +38,6 @@ Deno.serve(async (req) => {
     }
 
     // Find all incoming image/file messages that failed (drive_saved=false, retry >= 1)
-    // Paginate to find all
     let allUnsaved = [];
     let skip = 0;
     const PAGE_SIZE = 100;
@@ -32,6 +53,7 @@ Deno.serve(async (req) => {
       if (page.length < PAGE_SIZE) break;
       skip += PAGE_SIZE;
       if (allUnsaved.length >= 1000) break;
+      await new Promise(r => setTimeout(r, 500));
     }
 
     const toRetry = allUnsaved.filter(m =>
@@ -46,29 +68,30 @@ Deno.serve(async (req) => {
 
     console.log(`Manual retry: found ${toRetry.length} failed messages — resetting retry counts`);
 
-    // Reset retry counts in batches of 20 using sequential updates with delay
-    for (let i = 0; i < toRetry.length; i += 20) {
-      const batch = toRetry.slice(i, i + 20);
-      await Promise.all(batch.map(msg =>
-        base44.asServiceRole.entities.LineMessage.update(msg.id, { drive_retry_count: 0 })
-      ));
-      if (i + 20 < toRetry.length) await new Promise(r => setTimeout(r, 1000));
+    // Reset retry counts sequentially in small batches with delay
+    let resetOk = 0;
+    let resetFail = 0;
+    for (let i = 0; i < toRetry.length; i += BATCH_SIZE) {
+      const batch = toRetry.slice(i, i + BATCH_SIZE);
+      // Process each item in the batch sequentially to avoid rate limits
+      for (const msg of batch) {
+        const ok = await updateWithRetry(base44, msg.id, { drive_retry_count: 0 });
+        if (ok) resetOk++;
+        else resetFail++;
+      }
+      if (i + BATCH_SIZE < toRetry.length) {
+        await new Promise(r => setTimeout(r, DELAY_BETWEEN));
+      }
     }
 
-    // Trigger retryDriveSave to process them now
-    let retryResult = null;
-    try {
-      const res = await base44.asServiceRole.functions.invoke('retryDriveSave', {});
-      retryResult = res?.data || res;
-    } catch (e) {
-      console.warn('retryDriveSave invoke failed:', e.message);
-    }
+    console.log(`Reset complete: ${resetOk} success, ${resetFail} failed`);
 
     return Response.json({
-      retried: toRetry.length,
-      success: retryResult?.success || 0,
-      failed: retryResult?.failed || 0,
-      message: `รีเซ็ต ${toRetry.length} ไฟล์แล้ว${retryResult ? ` — ประมวลผลแล้ว ${retryResult.success || 0} สำเร็จ` : ' — ระบบจะ retry อัตโนมัติ'}`,
+      retried: resetOk,
+      reset_failed: resetFail,
+      success: 0,
+      failed: 0,
+      message: `รีเซ็ต ${resetOk} ไฟล์แล้ว — ระบบจะ retry อัตโนมัติทุก 2 ชม.`,
     });
   } catch (error) {
     console.error('manualRetryDriveSave error:', error.message);
