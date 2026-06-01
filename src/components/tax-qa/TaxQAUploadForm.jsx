@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, Loader2, CheckCircle2, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
@@ -83,14 +84,12 @@ export default function TaxQAUploadForm({ onParseComplete }) {
           {/* Customer */}
           <div>
             <label className="text-sm font-medium mb-1.5 block">ลูกค้า *</label>
-            <Select value={customerId} onValueChange={handleCustomerChange}>
-              <SelectTrigger><SelectValue placeholder="เลือกลูกค้า" /></SelectTrigger>
-              <SelectContent>
-                {customers.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={customerId}
+              onValueChange={handleCustomerChange}
+              options={customers.map(c => ({ value: c.id, label: c.company_name }))}
+              placeholder="พิมพ์ชื่อลูกค้า..."
+            />
           </div>
 
           {/* Period */}
