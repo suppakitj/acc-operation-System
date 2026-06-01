@@ -207,6 +207,7 @@ export function useAccessControl(user) {
 
       // Tax QA — visible to all authenticated users (permission can be refined later)
       menus.push('taxqa_intake');
+      menus.push('taxqa_review');
 
       return menus;
     };
