@@ -1,0 +1,49 @@
+{
+  "name": "HolidayMaster",
+  "type": "object",
+  "properties": {
+    "name_th": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e27\u0e31\u0e19\u0e2b\u0e22\u0e38\u0e14 (\u0e44\u0e17\u0e22)"
+    },
+    "name_en": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e27\u0e31\u0e19\u0e2b\u0e22\u0e38\u0e14 (\u0e2d\u0e31\u0e07\u0e01\u0e24\u0e29)"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e2b\u0e22\u0e38\u0e14"
+    },
+    "year": {
+      "type": "number",
+      "description": "\u0e1b\u0e35 \u0e1e.\u0e28. \u0e2b\u0e23\u0e37\u0e2d \u0e04.\u0e28."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "national",
+        "religious",
+        "special",
+        "company"
+      ],
+      "default": "national",
+      "description": "\u0e1b\u0e23\u0e30\u0e40\u0e20\u0e17\u0e27\u0e31\u0e19\u0e2b\u0e22\u0e38\u0e14"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name_th",
+    "date"
+  ]
+}

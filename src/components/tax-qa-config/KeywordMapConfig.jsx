@@ -21,17 +21,24 @@ export default function KeywordMapConfig({ user }) {
     queryFn: () => base44.entities.TaxQA_IncomeKeywordMap.list('-created_date', 200),
   });
 
-  const auditLog = async (action, entityId, details) => {
+  const auditLog = async (action, entityId, details, changes) => {
     await base44.entities.AuditLog.create({
-      action, entity_type: 'TaxQA_IncomeKeywordMap', entity_id: entityId,
+      action: 'config_change', entity_type: 'TaxQA_Config', entity_id: entityId,
       user_email: user?.email, user_name: user?.full_name, details,
+      changes: changes || null,
     });
   };
 
   const saveMut = useMutation({
-    mutationFn: async ({ id, data }) => {
+    mutationFn: async ({ id, data, oldData }) => {
       await base44.entities.TaxQA_IncomeKeywordMap.update(id, data);
-      await auditLog('update', id, `แก้ไข Keyword: ${data.keyword} → ${data.expected_income_type} ${data.expected_rate}%`);
+      const changes = {};
+      if (oldData) {
+        ['keyword','expected_income_type','expected_rate','note'].forEach(k => {
+          if (String(data[k] ?? '') !== String(oldData[k] ?? '')) changes[k] = { before: oldData[k], after: data[k] };
+        });
+      }
+      await auditLog('config_change', id, `แก้ไข Keyword: ${data.keyword} → ${data.expected_income_type} ${data.expected_rate}%`, changes);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['keyword_map'] }); setEditId(null); toast.success('บันทึกแล้ว'); },
   });
@@ -86,7 +93,7 @@ export default function KeywordMapConfig({ user }) {
                       <td className="py-1 px-2"><Input type="number" value={d.expected_rate} onChange={e => setEditData({ ...d, expected_rate: parseFloat(e.target.value) || 0 })} className="h-8 w-20 text-right" /></td>
                       <td className="py-1 px-2"><Input value={d.note || ''} onChange={e => setEditData({ ...d, note: e.target.value })} className="h-8" /></td>
                       <td className="py-1 px-2 flex gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => saveMut.mutate({ id: row.id, data: editData })}><Save className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" onClick={() => saveMut.mutate({ id: row.id, data: editData, oldData: row })}><Save className="w-4 h-4" /></Button>
                         <Button size="sm" variant="ghost" onClick={() => setEditId(null)}><X className="w-4 h-4" /></Button>
                       </td>
                     </>

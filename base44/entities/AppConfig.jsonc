@@ -1,0 +1,21 @@
+{
+  "name": "AppConfig",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "config key, e.g. session_timeout_minutes"
+    },
+    "value": {
+      "type": "string",
+      "description": "config value"
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "key",
+    "value"
+  ]
+}

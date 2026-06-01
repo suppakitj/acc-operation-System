@@ -59,11 +59,19 @@ export default function GlobalParamsConfig({ user }) {
         });
       }
 
+      const oldParams = rule?.parameters || {};
+      const changes = {};
+      GLOBAL_FIELDS.forEach(f => {
+        if (String(params[f.key] ?? '') !== String(oldParams[f.key] ?? '')) {
+          changes[f.key] = { before: oldParams[f.key], after: params[f.key] };
+        }
+      });
       await base44.entities.AuditLog.create({
-        action: 'update', entity_type: 'TaxQA_ValidationRule',
+        action: 'config_change', entity_type: 'TaxQA_Config',
         entity_id: rule?.id || 'new',
         user_email: user?.email, user_name: user?.full_name,
         details: `แก้ไข GLOBAL_PARAMS: ${JSON.stringify(params)}`,
+        changes,
       });
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['validation_rules_global'] }); toast.success('บันทึกพารามิเตอร์แล้ว'); },

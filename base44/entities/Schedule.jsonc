@@ -1,0 +1,88 @@
+{
+  "name": "Schedule",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "\u0e2b\u0e31\u0e27\u0e02\u0e49\u0e2d"
+    },
+    "description": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "start_time": {
+      "type": "string",
+      "description": "\u0e40\u0e27\u0e25\u0e32\u0e40\u0e23\u0e34\u0e48\u0e21 HH:mm"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "\u0e40\u0e27\u0e25\u0e32\u0e2a\u0e34\u0e49\u0e19\u0e2a\u0e38\u0e14 HH:mm"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "client_visit",
+        "office",
+        "leave",
+        "meeting",
+        "fieldwork",
+        "wfh",
+        "other"
+      ],
+      "default": "meeting"
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "assigned_to": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e1c\u0e34\u0e14\u0e0a\u0e2d\u0e1a (emails)"
+    },
+    "assigned_name": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u0e0a\u0e37\u0e48\u0e2d\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e1c\u0e34\u0e14\u0e0a\u0e2d\u0e1a"
+    },
+    "department": {
+      "type": "string",
+      "enum": [
+        "management",
+        "accounting",
+        "consulting",
+        "audit",
+        "billing",
+        "it"
+      ]
+    },
+    "location": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "completed",
+        "cancelled"
+      ],
+      "default": "scheduled"
+    },
+    "related_task_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "date"
+  ]
+}

@@ -34,7 +34,7 @@ export default function TaxQAConfig() {
       <Alert className="border-amber-200 bg-amber-50">
         <AlertTriangle className="w-4 h-4 text-amber-600" />
         <AlertDescription className="text-amber-700 text-sm">
-          การเปลี่ยนอัตราหรือพารามิเตอร์มีผลกับการ validate ครั้งถัดไป — ควรตั้ง effective_date ให้ถูกต้อง
+          การแก้มีผลกับการ validate ครั้งถัดไป ไม่ย้อนแบบที่อนุมัติแล้ว — ควรกดตรวจซ้ำงานที่ยังไม่อนุมัติ
         </AlertDescription>
       </Alert>
 

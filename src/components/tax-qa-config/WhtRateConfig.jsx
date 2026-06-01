@@ -23,17 +23,24 @@ export default function WhtRateConfig({ user }) {
     queryFn: () => base44.entities.TaxQA_WhtRateTable.list('-created_date', 200),
   });
 
-  const auditLog = async (action, entityId, details) => {
+  const auditLog = async (action, entityId, details, changes) => {
     await base44.entities.AuditLog.create({
-      action, entity_type: 'TaxQA_WhtRateTable', entity_id: entityId,
+      action: 'config_change', entity_type: 'TaxQA_Config', entity_id: entityId,
       user_email: user?.email, user_name: user?.full_name, details,
+      changes: changes || null,
     });
   };
 
   const saveMut = useMutation({
-    mutationFn: async ({ id, data }) => {
+    mutationFn: async ({ id, data, oldData }) => {
       await base44.entities.TaxQA_WhtRateTable.update(id, data);
-      await auditLog('update', id, `แก้ไข WHT Rate: ${data.income_type} ${data.payee_type} ${data.rate}%`);
+      const changes = {};
+      if (oldData) {
+        ['income_type','payee_type','rate','legal_reference','effective_date','is_dta_adjustable','active'].forEach(k => {
+          if (String(data[k] ?? '') !== String(oldData[k] ?? '')) changes[k] = { before: oldData[k], after: data[k] };
+        });
+      }
+      await auditLog('config_change', id, `แก้ไข WHT Rate: ${data.income_type} ${data.payee_type} ${data.rate}%`, changes);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['wht_rate_table'] }); setEditId(null); toast.success('บันทึกแล้ว'); },
   });
@@ -100,7 +107,7 @@ export default function WhtRateConfig({ user }) {
                       <td className="py-1 px-2 text-center"><Switch checked={d.is_dta_adjustable} onCheckedChange={v => setEditData({ ...d, is_dta_adjustable: v })} /></td>
                       <td className="py-1 px-2 text-center"><Switch checked={d.active} onCheckedChange={v => setEditData({ ...d, active: v })} /></td>
                       <td className="py-1 px-2 flex gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => saveMut.mutate({ id: row.id, data: editData })}><Save className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" onClick={() => saveMut.mutate({ id: row.id, data: editData, oldData: row })}><Save className="w-4 h-4" /></Button>
                         <Button size="sm" variant="ghost" onClick={cancelEdit}><X className="w-4 h-4" /></Button>
                       </td>
                     </>

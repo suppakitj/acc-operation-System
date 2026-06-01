@@ -1,0 +1,123 @@
+{
+  "name": "PeakLicense",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "description": "\u0e23\u0e2b\u0e31\u0e2a\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32 (ref Customer)"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "package_type": {
+      "type": "string",
+      "enum": [
+        "trial",
+        "basic",
+        "pro",
+        "pro_plus"
+      ],
+      "description": "\u0e1b\u0e23\u0e30\u0e40\u0e20\u0e17\u0e41\u0e1e\u0e47\u0e01\u0e40\u0e01\u0e08"
+    },
+    "payer_type": {
+      "type": "string",
+      "enum": [
+        "customer_direct_peak",
+        "customer_via_acc",
+        "acc_pay_for_customer"
+      ],
+      "default": "customer_direct_peak",
+      "description": "\u0e1b\u0e23\u0e30\u0e40\u0e20\u0e17\u0e40\u0e08\u0e49\u0e32\u0e02\u0e2d\u0e07\u0e0a\u0e33\u0e23\u0e30\u0e40\u0e07\u0e34\u0e19"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e0a\u0e33\u0e23\u0e30\u0e40\u0e07\u0e34\u0e19"
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u0e27\u0e31\u0e19\u0e2b\u0e21\u0e14\u0e2d\u0e32\u0e22\u0e38 (auto = payment_date + 365)"
+    },
+    "renewal_year": {
+      "type": "number",
+      "description": "\u0e1b\u0e35\u0e17\u0e35\u0e48\u0e15\u0e48\u0e2d\u0e2d\u0e32\u0e22\u0e38 (\u0e1e.\u0e28. \u0e2b\u0e23\u0e37\u0e2d \u0e04.\u0e28.)"
+    },
+    "license_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "expiring_soon",
+        "waiting_customer_confirm",
+        "waiting_acc_payment",
+        "waiting_customer_reimburse",
+        "invoiced_waiting_payment",
+        "renewed",
+        "expired",
+        "cancelled"
+      ],
+      "default": "active",
+      "description": "\u0e2a\u0e16\u0e32\u0e19\u0e30\u0e01\u0e32\u0e23\u0e15\u0e48\u0e2d\u0e2d\u0e32\u0e22\u0e38"
+    },
+    "is_affiliate": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32\u0e40\u0e1b\u0e47\u0e19 Affiliate \u0e02\u0e2d\u0e07 Peak \u0e2b\u0e23\u0e37\u0e2d\u0e44\u0e21\u0e48"
+    },
+    "acc_prepaid": {
+      "type": "boolean",
+      "default": false,
+      "description": "ACC \u0e0a\u0e33\u0e23\u0e30\u0e40\u0e07\u0e34\u0e19\u0e25\u0e48\u0e27\u0e07\u0e2b\u0e19\u0e49\u0e32\u0e43\u0e2b\u0e49\u0e01\u0e48\u0e2d\u0e19\u0e2b\u0e23\u0e37\u0e2d\u0e44\u0e21\u0e48"
+    },
+    "customer_paid_back": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32\u0e0a\u0e33\u0e23\u0e30\u0e40\u0e07\u0e34\u0e19\u0e04\u0e37\u0e19 ACC \u0e41\u0e25\u0e49\u0e27\u0e2b\u0e23\u0e37\u0e2d\u0e22\u0e31\u0e07"
+    },
+    "invoice_issued": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u0e2d\u0e2d\u0e01\u0e43\u0e1a\u0e41\u0e08\u0e49\u0e07\u0e2b\u0e19\u0e35\u0e49\u0e41\u0e25\u0e49\u0e27\u0e2b\u0e23\u0e37\u0e2d\u0e22\u0e31\u0e07"
+    },
+    "invoice_paid": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u0e0a\u0e33\u0e23\u0e30\u0e43\u0e1a\u0e41\u0e08\u0e49\u0e07\u0e2b\u0e19\u0e35\u0e49\u0e41\u0e25\u0e49\u0e27\u0e2b\u0e23\u0e37\u0e2d\u0e22\u0e31\u0e07"
+    },
+    "wht_received": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u0e2a\u0e16\u0e32\u0e19\u0e30 WHT \u0e44\u0e14\u0e49\u0e23\u0e31\u0e1a\u0e41\u0e25\u0e49\u0e27\u0e2b\u0e23\u0e37\u0e2d\u0e22\u0e31\u0e07"
+    },
+    "notification_history": {
+      "type": "array",
+      "description": "\u0e1b\u0e23\u0e30\u0e27\u0e31\u0e15\u0e34\u0e01\u0e32\u0e23\u0e41\u0e08\u0e49\u0e07\u0e40\u0e15\u0e37\u0e2d\u0e19",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "days_before": {
+            "type": "number"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "customer_id",
+    "customer_name",
+    "package_type",
+    "payment_date"
+  ]
+}

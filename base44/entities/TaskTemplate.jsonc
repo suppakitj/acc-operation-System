@@ -1,0 +1,126 @@
+{
+  "name": "TaskTemplate",
+  "type": "object",
+  "properties": {
+    "template_code": {
+      "type": "string",
+      "description": "\u0e23\u0e2b\u0e31\u0e2a template (Auto Gen)"
+    },
+    "name": {
+      "type": "string",
+      "description": "\u0e0a\u0e37\u0e48\u0e2d task"
+    },
+    "description": {
+      "type": "string"
+    },
+    "service_type": {
+      "type": "string",
+      "enum": [
+        "accounting",
+        "payroll",
+        "tax_consulting",
+        "audit",
+        "peak_licensing"
+      ]
+    },
+    "department": {
+      "type": "string",
+      "enum": [
+        "management",
+        "accounting",
+        "consulting",
+        "audit",
+        "billing",
+        "it"
+      ]
+    },
+    "recurring_type": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "quarterly",
+        "yearly"
+      ],
+      "default": "monthly",
+      "description": "\u0e04\u0e27\u0e32\u0e21\u0e16\u0e35\u0e48\u0e07\u0e32\u0e19\u0e1b\u0e23\u0e30\u0e08\u0e33"
+    },
+    "applicable_months": {
+      "type": "array",
+      "description": "\u0e40\u0e14\u0e37\u0e2d\u0e19\u0e17\u0e35\u0e48\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19 (1-12) \u0e16\u0e49\u0e32\u0e44\u0e21\u0e48\u0e23\u0e30\u0e1a\u0e38 = \u0e17\u0e38\u0e01\u0e40\u0e14\u0e37\u0e2d\u0e19",
+      "items": {
+        "type": "number"
+      }
+    },
+    "due_date_rule": {
+      "type": "number",
+      "description": "\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e04\u0e23\u0e1a\u0e01\u0e33\u0e2b\u0e19\u0e14\u0e02\u0e2d\u0e07\u0e40\u0e14\u0e37\u0e2d\u0e19 \u0e40\u0e0a\u0e48\u0e19 15 = \u0e27\u0e31\u0e19\u0e17\u0e35\u0e48 15 \u0e02\u0e2d\u0e07\u0e40\u0e14\u0e37\u0e2d\u0e19",
+      "default": 15
+    },
+    "default_priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium"
+    },
+    "default_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress"
+      ],
+      "default": "pending",
+      "description": "\u0e2a\u0e16\u0e32\u0e19\u0e30\u0e40\u0e23\u0e34\u0e48\u0e21\u0e15\u0e49\u0e19\u0e02\u0e2d\u0e07 task \u0e17\u0e35\u0e48\u0e2a\u0e23\u0e49\u0e32\u0e07"
+    },
+    "default_owner_type": {
+      "type": "string",
+      "enum": [
+        "from_customer",
+        "specific_user"
+      ],
+      "default": "from_customer",
+      "description": "\u0e01\u0e33\u0e2b\u0e19\u0e14\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e1c\u0e34\u0e14\u0e0a\u0e2d\u0e1a\u0e08\u0e32\u0e01 customer profile \u0e2b\u0e23\u0e37\u0e2d\u0e23\u0e30\u0e1a\u0e38\u0e40\u0e2d\u0e07"
+    },
+    "default_owner": {
+      "type": "string",
+      "description": "email \u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e1c\u0e34\u0e14\u0e0a\u0e2d\u0e1a\u0e40\u0e23\u0e34\u0e48\u0e21\u0e15\u0e49\u0e19 (\u0e43\u0e0a\u0e49\u0e40\u0e21\u0e37\u0e48\u0e2d default_owner_type = specific_user)"
+    },
+    "default_owner_name": {
+      "type": "string"
+    },
+    "default_checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "checked": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "estimated_days": {
+      "type": "number",
+      "description": "\u0e08\u0e33\u0e19\u0e27\u0e19\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e04\u0e32\u0e14\u0e27\u0e48\u0e32\u0e08\u0e30\u0e43\u0e0a\u0e49"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "name",
+    "service_type",
+    "recurring_type"
+  ]
+}
