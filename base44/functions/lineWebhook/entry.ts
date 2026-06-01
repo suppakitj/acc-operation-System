@@ -176,6 +176,9 @@ Deno.serve(async (req) => {
           : (messageType === 'file') ? 'file'
           : 'text';
 
+        // Only files (image/file with file_url) need Drive saving — mark others as already "saved"
+        const needsDriveSave = fileUrl && (mappedType === 'image' || mappedType === 'file');
+
         const createdMsg = await base44.asServiceRole.entities.LineMessage.create({
           line_user_id: chatKey,
           display_name: chatDisplayName,
@@ -187,7 +190,7 @@ Deno.serve(async (req) => {
           file_url: fileUrl || undefined,
           is_read: false,
           chat_type: chatType,
-          drive_saved: false,
+          drive_saved: !needsDriveSave,
         });
 
         console.log(`Saved incoming ${messageType} from ${senderName} in ${chatType} (${chatKey}): ${content}`);
