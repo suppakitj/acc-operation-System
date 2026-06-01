@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import ExceptionDetail from './ExceptionDetail';
 
 const STATUS_MAP = {
+  validating: { label: 'กำลัง validate', cls: 'bg-blue-100 text-blue-700' },
   flagged: { label: 'Flagged', cls: 'bg-red-100 text-red-700' },
   under_review: { label: 'กำลังตรวจ', cls: 'bg-amber-100 text-amber-700' },
   rejected: { label: 'ตีกลับ', cls: 'bg-red-100 text-red-700' },

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, CheckCircle2, XCircle, ShieldAlert, AlertTriangle, Loader2, Send, FileCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, ShieldAlert, AlertTriangle, Loader2, Send, FileCheck, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ExceptionDetail({ filing, canApprove, canResubmit, userEmail, onBack }) {
@@ -94,6 +94,20 @@ export default function ExceptionDetail({ filing, canApprove, canResubmit, userE
     if (await callAction('mark_filed', { filing_id: f.id })) {
       toast.success('ยืนยันยื่นแล้ว');
       onBack();
+    }
+  };
+
+  const handleRevalidate = async () => {
+    setBusy(true);
+    const res = await base44.functions.invoke('taxqaValidate', { filing_id: f.id, is_revalidation: true });
+    setBusy(false);
+    if (res.data?.error) {
+      toast.error(res.data.error);
+    } else {
+      toast.success(`ตรวจซ้ำเสร็จ: ${res.data.errors || 0} error, ${res.data.warnings || 0} warning`);
+      refetchFlags();
+      queryClient.invalidateQueries({ queryKey: ['taxqa_filing_detail', f.id] });
+      queryClient.invalidateQueries({ queryKey: ['taxqa_filings_exception'] });
     }
   };
 
@@ -260,6 +274,14 @@ export default function ExceptionDetail({ filing, canApprove, canResubmit, userE
               <span className="text-xs text-red-600">ต้อง override error flag ทั้งหมดก่อนอนุมัติ</span>
             )}
           </>
+        )}
+
+        {/* Re-validate (for validating or flagged or under_review) */}
+        {canApprove && ['validating', 'flagged', 'under_review'].includes(f.status) && (
+          <Button variant="outline" className="gap-1.5" onClick={handleRevalidate} disabled={busy}>
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            ตรวจซ้ำ
+          </Button>
         )}
 
         {/* Preparer: resubmit if rejected */}

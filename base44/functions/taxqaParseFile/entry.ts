@@ -180,10 +180,14 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Auto-validate after parse
+      const validateRes = await base44.functions.invoke('taxqaValidate', { filing_id: filing.id });
+
       return Response.json({
         success: true, batch_id: batch.id, filing_id: filing.id,
         detected_layout: detectedLayout, vat_direction: vatDirection,
         parsed_count: lineItems.length, errors,
+        validation: validateRes.data || null,
       });
     }
 
@@ -341,10 +345,14 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Auto-validate after parse
+      const validateRes = await base44.functions.invoke('taxqaValidate', { filing_id: filing.id });
+
       return Response.json({
         success: true, batch_id: batch.id, filing_id: filing.id,
         detected_layout: detectedLayout, form_type: detectedFormType,
         parsed_count: lineItems.length, filed_ref: filedRef, errors,
+        validation: validateRes.data || null,
       });
     }
 
