@@ -208,6 +208,9 @@ export function useAccessControl(user) {
       // Tax QA — visible to all authenticated users (permission can be refined later)
       menus.push('taxqa_intake');
       menus.push('taxqa_review');
+      menus.push('taxqa_dashboard');
+      // Config only for admin/partner/management
+      if (role === 'admin' || role === 'partner' || role === 'management') menus.push('taxqa_config');
 
       return menus;
     };
