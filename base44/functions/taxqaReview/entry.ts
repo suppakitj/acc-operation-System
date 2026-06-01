@@ -102,18 +102,27 @@ Deno.serve(async (req) => {
   // ─── APPROVE EXCEPTION FILING (under_review → approved) ───
   if (action === 'approve_exception') {
     const { filing_id } = body;
-    const filings = await base44.entities.TaxQA_Filing.filter({ id: filing_id });
-    const f = filings[0];
+
+    // Re-fetch filing AND flags in parallel right before write to minimise race window
+    const [filingsNow, flagsNow] = await Promise.all([
+      base44.entities.TaxQA_Filing.filter({ id: filing_id }),
+      base44.entities.TaxQA_ExceptionFlag.filter({ filing_id }),
+    ]);
+    const f = filingsNow[0];
     if (!f) return Response.json({ error: 'Filing not found' }, { status: 404 });
     if (f.status !== 'under_review') return Response.json({ error: `Cannot approve: status is ${f.status}` }, { status: 400 });
 
-    // Check no open error flags remain
-    const flags = await base44.entities.TaxQA_ExceptionFlag.filter({ filing_id });
-    const openErrors = flags.filter(fl => fl.severity === 'error' && fl.status === 'open');
+    // GUARD: block if ANY severity=error flag is still open
+    const openErrors = flagsNow.filter(fl => fl.severity === 'error' && fl.status === 'open');
     if (openErrors.length > 0) {
-      return Response.json({ error: `ยังมี error flag ที่ยัง open ${openErrors.length} รายการ — ต้อง override ก่อน`, open_error_count: openErrors.length }, { status: 400 });
+      return Response.json({
+        error: `ยังมีข้อผิดพลาด (error) ที่ยัง open ${openErrors.length} รายการ — ต้องแก้ไขหรือ override ก่อนอนุมัติ`,
+        open_error_count: openErrors.length,
+        open_error_rules: openErrors.map(e => e.rule_code),
+      }, { status: 400 });
     }
 
+    // Write immediately after guard — no other async between check and update
     await base44.entities.TaxQA_Filing.update(filing_id, {
       status: 'approved',
       reviewed_by: user.email,
