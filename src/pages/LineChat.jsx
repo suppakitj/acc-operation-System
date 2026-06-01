@@ -151,6 +151,17 @@ export default function LineChat() {
     return msgs.filter(m => m && typeof m === 'object' && m.id);
   };
 
+  // Chat list for sidebar — fetches ALL chats from server
+  const { data: chatList = [] } = useQuery({
+    queryKey: ['lineChats'],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('listLineChats', {});
+      return res.data?.chats || [];
+    },
+    refetchInterval: 30_000,
+    staleTime: 25_000,
+  });
+
   const { data: messages = [] } = useQuery({
     queryKey: ['lineMessages'],
     queryFn: async () => {
@@ -201,6 +212,7 @@ export default function LineChat() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lineMessages'] });
+      queryClient.invalidateQueries({ queryKey: ['lineChats'] });
       setNewMessage('');
       scrollToBottom('smooth');
     },
@@ -244,6 +256,7 @@ export default function LineChat() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lineMessages'] });
+      queryClient.invalidateQueries({ queryKey: ['lineChats'] });
       queryClient.invalidateQueries({ queryKey: ['lineUnreadCount'] });
     },
   });
@@ -258,7 +271,7 @@ export default function LineChat() {
     return result;
   }, [messages, allMessages]);
 
-  // Group messages by user
+  // Group messages by user (for chat messages only)
   const userGroups = useMemo(() => {
     const groups = {};
     combinedMessages.forEach(m => {
@@ -268,21 +281,33 @@ export default function LineChat() {
       if (!m.is_read && m.direction === 'incoming') groups[key].unread++;
       if ((m.created_date || '') > (groups[key].lastDate || '')) groups[key].lastDate = m.created_date;
       if (m.profile_image && !groups[key].image) groups[key].image = m.profile_image;
-      // Use display_name from the most recent message
       if ((m.created_date || '') >= (groups[key].lastDate || '') && m.display_name) groups[key].name = m.display_name;
     });
     return groups;
   }, [combinedMessages]);
 
-  const userList = Object.values(userGroups)
-    .filter(u => !search || u.name.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => {
-      if (a.unread > 0 && b.unread === 0) return -1;
-      if (a.unread === 0 && b.unread > 0) return 1;
-      return new Date(b.lastDate) - new Date(a.lastDate);
-    });
+  // Use chatList from server for sidebar (covers ALL chats, not just latest 500 messages)
+  const userList = useMemo(() => {
+    return chatList
+      .filter(u => !search || u.name.toLowerCase().includes(search.toLowerCase()));
+  }, [chatList, search]);
 
-  const selectedUser = selectedUserId ? userGroups[selectedUserId] : null;
+  // selectedUser: merge chat info from chatList with messages from userGroups
+  const selectedUser = useMemo(() => {
+    if (!selectedUserId) return null;
+    const chatInfo = chatList.find(c => c.id === selectedUserId);
+    const msgGroup = userGroups[selectedUserId];
+    if (!chatInfo && !msgGroup) return null;
+    return {
+      id: selectedUserId,
+      name: chatInfo?.name || msgGroup?.name || '?',
+      image: chatInfo?.image || msgGroup?.image || '',
+      chatType: chatInfo?.chatType || msgGroup?.chatType || 'user',
+      messages: msgGroup?.messages || [],
+      unread: chatInfo?.unread ?? msgGroup?.unread ?? 0,
+      lastDate: chatInfo?.lastDate || msgGroup?.lastDate || '',
+    };
+  }, [selectedUserId, chatList, userGroups]);
   const isGroupChat = selectedUser?.chatType === 'group';
 
   const { data: lineMembers = [] } = useQuery({
@@ -496,7 +521,7 @@ export default function LineChat() {
     );
   }
 
-  const totalUnread = Object.values(userGroups).reduce((s, u) => s + u.unread, 0);
+  const totalUnread = chatList.reduce((s, u) => s + u.unread, 0);
 
   return (
     <div className="h-[calc(100vh-120px)] md:h-[calc(100vh-100px)] flex flex-col">
@@ -529,6 +554,7 @@ export default function LineChat() {
                         }
                         toast.success(`ล้าง unread ${totalMarked} ข้อความ`);
                         queryClient.invalidateQueries({ queryKey: ['lineMessages'] });
+                        queryClient.invalidateQueries({ queryKey: ['lineChats'] });
                         queryClient.invalidateQueries({ queryKey: ['lineUnreadCount'] });
                         setAllMessages(prev => prev.map(m => ({ ...m, is_read: true })));
                         queryClient.setQueryData(['lineUnreadCount'], 0);
@@ -571,6 +597,13 @@ export default function LineChat() {
             ) : userList.map(u => {
               const isActive = selectedUserId === u.id;
               const hasUnread = u.unread > 0;
+              const preview = (() => {
+                const prefix = u.lastDirection === 'outgoing' ? 'คุณ: ' : '';
+                if (u.lastMessageType === 'image') return prefix + '📷 รูปภาพ';
+                if (u.lastMessageType === 'sticker') return prefix + '😊 Sticker';
+                if (u.lastMessageType === 'file') return prefix + '📎 ไฟล์';
+                return prefix + (u.lastContent || '');
+              })();
               return (
                 <div
                   key={u.id}
@@ -610,7 +643,7 @@ export default function LineChat() {
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <p className={`text-xs truncate flex-1 ${hasUnread ? 'text-foreground/70 font-medium' : 'text-muted-foreground'}`}>
-                        {getLastMessagePreview(u.messages)}
+                        {preview}
                       </p>
                       {hasUnread && (
                         <span className="shrink-0 min-w-[18px] h-[18px] rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center px-1">
