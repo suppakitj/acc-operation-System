@@ -123,7 +123,24 @@ export default function TaxQAUploadForm({ onParseComplete }) {
         {/* File input */}
         <div>
           <label className="text-sm font-medium mb-1.5 block">ไฟล์ Excel (.xlsx) *</label>
-          <Input type="file" accept=".xlsx,.xls" onChange={e => setFile(e.target.files?.[0] || null)} />
+          <div
+            onClick={() => document.getElementById('taxqa-file-input')?.click()}
+            className="flex items-center gap-3 border-2 border-dashed border-border rounded-lg px-4 py-3 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
+          >
+            <div className="shrink-0 h-9 px-4 inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-medium shadow-sm hover:bg-primary/90">
+              เลือกไฟล์
+            </div>
+            <span className="text-sm text-muted-foreground truncate">
+              {file ? file.name : 'ยังไม่ได้เลือกไฟล์'}
+            </span>
+            <input
+              id="taxqa-file-input"
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              onChange={e => setFile(e.target.files?.[0] || null)}
+            />
+          </div>
         </div>
 
         <Button onClick={handleUpload} disabled={parsing || !customerId || !taxPeriod || !file} className="gap-2">
