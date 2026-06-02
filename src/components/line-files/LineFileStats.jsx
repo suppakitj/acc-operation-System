@@ -61,33 +61,44 @@ export default function LineFileStats() {
   };
   counts.pending = counts.total - counts.success - counts.failed;
 
+  const rawTotal = imgMessages.length + fileOnlyMessages.length;
+  const isLimited = rawTotal >= 1000;
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {STATS_CONFIG.map(({ key, label, icon: Icon, iconBg, iconColor }) => (
-        <div key={key} className="bg-card rounded-xl border p-4 flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full ${iconBg} flex items-center justify-center shrink-0`}>
-            <Icon className={`w-5 h-5 ${iconColor}`} />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <div className="flex items-center gap-2">
-              <p className="text-xl font-bold">{counts[key]}</p>
-              {key === 'failed' && counts.failed > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs gap-1 text-red-600 border-red-200 hover:bg-red-50"
-                  onClick={handleRetry}
-                  disabled={retrying}
-                >
-                  {retrying ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
-                  {retrying ? 'กำลัง Retry...' : 'Retry'}
-                </Button>
-              )}
+    <div className="space-y-1.5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {STATS_CONFIG.map(({ key, label, icon: Icon, iconBg, iconColor }) => (
+          <div key={key} className="bg-card rounded-xl border p-4 flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-full ${iconBg} flex items-center justify-center shrink-0`}>
+              <Icon className={`w-5 h-5 ${iconColor}`} />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xl font-bold">
+                  {isLimited && key === 'total' ? `${counts[key]}+` : counts[key]}
+                </p>
+                {key === 'failed' && counts.failed > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1 text-red-600 border-red-200 hover:bg-red-50"
+                    onClick={handleRetry}
+                    disabled={retrying}
+                  >
+                    {retrying ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
+                    {retrying ? 'กำลัง Retry...' : 'Retry'}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
+      <p className="text-[11px] text-muted-foreground px-1">
+        * นับเฉพาะไฟล์รูป/เอกสารขาเข้า (incoming) — ข้อมูลเก่าเกิน 6 เดือนถูกลบอัตโนมัติ
+        {isLimited && ' — แสดงผลสูงสุด 1,000 รายการล่าสุด'}
+      </p>
     </div>
   );
 }
