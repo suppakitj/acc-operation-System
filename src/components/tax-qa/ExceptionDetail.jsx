@@ -6,13 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, CheckCircle2, XCircle, ShieldAlert, AlertTriangle, Loader2, Send, FileCheck, RefreshCw } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, ShieldAlert, AlertTriangle, Loader2, Send, FileCheck, RefreshCw, Ban, Upload, Link2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 
 export default function ExceptionDetail({ filing, canApprove, canResubmit, userEmail, onBack }) {
   const [busy, setBusy] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectNote, setRejectNote] = useState('');
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelNote, setCancelNote] = useState('');
   const [overrideFlag, setOverrideFlag] = useState(null);
   const [overrideNote, setOverrideNote] = useState('');
   const queryClient = useQueryClient();
@@ -90,6 +93,14 @@ export default function ExceptionDetail({ filing, canApprove, canResubmit, userE
     }
   };
 
+  const handleCancel = async () => {
+    if (await callAction('cancel', { filing_id: f.id, cancellation_note: cancelNote })) {
+      toast.success('ยกเลิก filing แล้ว');
+      setCancelOpen(false);
+      onBack();
+    }
+  };
+
   const handleMarkFiled = async () => {
     if (await callAction('mark_filed', { filing_id: f.id })) {
       toast.success('ยืนยันยื่นแล้ว');
@@ -126,6 +137,27 @@ export default function ExceptionDetail({ filing, canApprove, canResubmit, userE
         </Badge>
       </div>
 
+      {/* Lineage banner */}
+      {f.supersedes_id && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800 flex items-center gap-2">
+          <Link2 className="w-4 h-4 shrink-0" />
+          <span>เวอร์ชัน {f.version || 2} — แก้จากใบก่อนหน้า</span>
+          <button className="underline text-blue-700 hover:text-blue-900" onClick={onBack}>ดูใบเดิม (ในประวัติ)</button>
+        </div>
+      )}
+      {f.status === 'superseded' && f.superseded_by_filing_id && (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-sm text-purple-800 flex items-center gap-2">
+          <Link2 className="w-4 h-4 shrink-0" />
+          <span>ใบนี้ถูกแทนที่แล้ว</span>
+          <button className="underline text-purple-700 hover:text-purple-900" onClick={onBack}>ดูเวอร์ชันใหม่</button>
+        </div>
+      )}
+      {f.status === 'cancelled' && f.cancellation_note && (
+        <div className="bg-gray-100 border border-gray-300 rounded-lg p-3 text-sm text-gray-800">
+          <strong>ยกเลิกแล้ว:</strong> {f.cancellation_note}
+        </div>
+      )}
+
       {/* Filing Header Info */}
       <Card>
         <CardContent className="p-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
@@ -133,6 +165,7 @@ export default function ExceptionDetail({ filing, canApprove, canResubmit, userE
           <div><span className="text-muted-foreground">ผู้ตรวจ:</span> {f.reviewed_by_name || f.reviewed_by || '-'}</div>
           <div><span className="text-muted-foreground">ยอดภาษี:</span> {f.header_total_tax != null ? Number(f.header_total_tax).toLocaleString('th-TH', { minimumFractionDigits: 2 }) : '-'}</div>
           <div><span className="text-muted-foreground">จำนวนรายการ:</span> {f.line_count || lineItems.length}</div>
+          {f.version > 1 && <div><span className="text-muted-foreground">เวอร์ชัน:</span> {f.version}</div>}
         </CardContent>
       </Card>
 
@@ -270,10 +303,20 @@ export default function ExceptionDetail({ filing, canApprove, canResubmit, userE
             <Button variant="destructive" className="gap-1.5" onClick={() => setRejectOpen(true)} disabled={busy}>
               <XCircle className="w-4 h-4" />ตีกลับ
             </Button>
+            <Button variant="outline" className="gap-1.5 border-red-300 text-red-700 hover:bg-red-50" onClick={() => { setCancelOpen(true); setCancelNote(''); }} disabled={busy}>
+              <Ban className="w-4 h-4" />ยกเลิก
+            </Button>
             {openErrors.length > 0 && (
               <span className="text-xs text-red-600">ต้อง override error flag ทั้งหมดก่อนอนุมัติ</span>
             )}
           </>
+        )}
+
+        {/* Cancel for flagged/validating/clean/rejected */}
+        {canApprove && ['flagged', 'validating', 'clean', 'rejected'].includes(f.status) && (
+          <Button variant="outline" className="gap-1.5 border-red-300 text-red-700 hover:bg-red-50" onClick={() => { setCancelOpen(true); setCancelNote(''); }} disabled={busy}>
+            <Ban className="w-4 h-4" />ยกเลิก
+          </Button>
         )}
 
         {/* Re-validate (for validating or flagged or under_review) */}
@@ -284,12 +327,23 @@ export default function ExceptionDetail({ filing, canApprove, canResubmit, userE
           </Button>
         )}
 
-        {/* Preparer: resubmit if rejected */}
+        {/* Preparer: resubmit if rejected — PND54/PP36 use resubmit, others use upload fix */}
         {canResubmit && isPreparer && f.status === 'rejected' && (
-          <Button className="gap-1.5" onClick={handleResubmit} disabled={busy}>
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            ส่งตรวจใหม่
-          </Button>
+          <>
+            {['PND54', 'PP36'].includes(f.form_type) ? (
+              <Button className="gap-1.5" onClick={handleResubmit} disabled={busy}>
+                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                แก้ข้อมูล + ส่งตรวจใหม่
+              </Button>
+            ) : (
+              <Link to={`/TaxQAIntake?fix=${f.id}`}>
+                <Button className="gap-1.5">
+                  <Upload className="w-4 h-4" />
+                  อัปโหลดไฟล์แก้ไข
+                </Button>
+              </Link>
+            )}
+          </>
         )}
 
         {/* Mark filed */}
@@ -310,6 +364,21 @@ export default function ExceptionDetail({ filing, canApprove, canResubmit, userE
             <Button variant="outline" onClick={() => setRejectOpen(false)}>ยกเลิก</Button>
             <Button variant="destructive" onClick={handleReject} disabled={busy || !rejectNote.trim()}>
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}ตีกลับ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Dialog */}
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>ยกเลิก Filing</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">ใบที่ยกเลิกจะออกจากคิวตรวจ ไม่สามารถกู้คืนได้</p>
+          <Textarea placeholder="เหตุผลที่ยกเลิก *" value={cancelNote} onChange={e => setCancelNote(e.target.value)} rows={3} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelOpen(false)}>ปิด</Button>
+            <Button variant="destructive" onClick={handleCancel} disabled={busy || !cancelNote.trim()}>
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}ยกเลิก Filing
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -39,6 +39,14 @@
       "type": "string",
       "description": "ref TaxQA_Filing ID \u0e17\u0e35\u0e48\u0e09\u0e1a\u0e31\u0e1a\u0e19\u0e35\u0e49\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48"
     },
+    "superseded_by_filing_id": {
+      "type": "string",
+      "description": "ref TaxQA_Filing ID \u0e02\u0e2d\u0e07\u0e09\u0e1a\u0e31\u0e1a\u0e43\u0e2b\u0e21\u0e48\u0e17\u0e35\u0e48\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e43\u0e1a\u0e19\u0e35\u0e49"
+    },
+    "superseded_at": {
+      "type": "string",
+      "description": "\u0e27\u0e31\u0e19\u0e40\u0e27\u0e25\u0e32\u0e17\u0e35\u0e48\u0e16\u0e39\u0e01\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48 (ISO datetime)"
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -49,7 +57,9 @@
         "under_review",
         "approved",
         "rejected",
-        "filed"
+        "filed",
+        "superseded",
+        "cancelled"
       ],
       "default": "draft",
       "description": "\u0e2a\u0e16\u0e32\u0e19\u0e30\u0e41\u0e1a\u0e1a"
@@ -93,6 +103,14 @@
     "rejection_note": {
       "type": "string",
       "description": "\u0e40\u0e2b\u0e15\u0e38\u0e1c\u0e25\u0e17\u0e35\u0e48\u0e15\u0e35\u0e01\u0e25\u0e31\u0e1a"
+    },
+    "cancelled_at": {
+      "type": "string",
+      "description": "\u0e27\u0e31\u0e19\u0e40\u0e27\u0e25\u0e32\u0e22\u0e01\u0e40\u0e25\u0e34\u0e01 (ISO datetime)"
+    },
+    "cancellation_note": {
+      "type": "string",
+      "description": "\u0e40\u0e2b\u0e15\u0e38\u0e1c\u0e25\u0e17\u0e35\u0e48\u0e22\u0e01\u0e40\u0e25\u0e34\u0e01"
     },
     "source_batch_id": {
       "type": "string",

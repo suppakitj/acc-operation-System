@@ -185,8 +185,9 @@ Deno.serve(async (req) => {
         const otherFilings = await svc.entities.TaxQA_Filing.filter({
           customer_id: filing.customer_id, tax_period: filing.tax_period, form_type: formType,
         }, '-created_date', 50);
+        const excludeStatuses = ['rejected', 'superseded', 'cancelled'];
         const otherFilingIds = otherFilings
-          .filter(f => f.id !== filing_id && f.status !== 'rejected')
+          .filter(f => f.id !== filing_id && !excludeStatuses.includes(f.status))
           .map(f => f.id);
 
         if (otherFilingIds.length > 0) {

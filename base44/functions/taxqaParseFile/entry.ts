@@ -7,9 +7,25 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { file_url, customer_id, customer_name, tax_period, form_type } = await req.json();
+    const { file_url, customer_id, customer_name, tax_period, form_type, supersedes_filing_id } = await req.json();
     if (!file_url || !customer_id || !tax_period) {
       return Response.json({ error: 'file_url, customer_id, tax_period required' }, { status: 400 });
+    }
+
+    // ─── Supersede validation ───
+    let supersedesVersion = 0;
+    if (supersedes_filing_id) {
+      const oldFilings = await base44.asServiceRole.entities.TaxQA_Filing.filter({ id: supersedes_filing_id });
+      const oldF = oldFilings[0];
+      if (!oldF) return Response.json({ error: 'ใบเดิมไม่พบ' }, { status: 404 });
+      if (oldF.status !== 'rejected') return Response.json({ error: `ใบเดิมสถานะ "${oldF.status}" — ต้องเป็น rejected เท่านั้น` }, { status: 400 });
+      if (oldF.customer_id !== customer_id || oldF.tax_period !== tax_period) {
+        return Response.json({ error: 'ลูกค้า/งวดภาษีไม่ตรงกับใบเดิม' }, { status: 400 });
+      }
+      if (form_type && form_type !== 'auto' && oldF.form_type !== form_type) {
+        return Response.json({ error: `ประเภทแบบไม่ตรง — ใบเดิมเป็น ${oldF.form_type}` }, { status: 400 });
+      }
+      supersedesVersion = oldF.version || 1;
     }
 
     // Download file
@@ -136,10 +152,14 @@ Deno.serve(async (req) => {
       }
 
       // PP30 find-or-create: reuse existing filing if not yet filed
+      // Exclude filed/superseded/cancelled/rejected from reuse
+      const excludeReuse = ['filed', 'superseded', 'cancelled', 'rejected'];
       const existingPP30 = await base44.asServiceRole.entities.TaxQA_Filing.filter({
         customer_id, tax_period, form_type: 'PP30'
       }, '-created_date', 10);
-      const reusable = existingPP30.find(f => f.status !== 'filed');
+      const reusable = supersedes_filing_id
+        ? null  // supersede always creates a new filing
+        : existingPP30.find(f => !excludeReuse.includes(f.status));
 
       let filing;
       if (reusable) {
@@ -152,7 +172,7 @@ Deno.serve(async (req) => {
         });
         filing.line_count = (filing.line_count || 0) + dataRows.length;
       } else {
-        filing = await base44.asServiceRole.entities.TaxQA_Filing.create({
+        const pp30FilingData = {
           customer_id, customer_name: customer_name || '',
           form_type: detectedFormType, tax_period,
           tax_deadline_id: taxDeadlineId,
@@ -160,7 +180,21 @@ Deno.serve(async (req) => {
           source_batch_id: batch.id, filed_ref: filedRef,
           prepared_by: user.email, prepared_by_name: user.full_name || '',
           line_count: dataRows.length,
-        });
+        };
+        if (supersedes_filing_id) {
+          pp30FilingData.supersedes_id = supersedes_filing_id;
+          pp30FilingData.version = supersedesVersion + 1;
+        }
+        filing = await base44.asServiceRole.entities.TaxQA_Filing.create(pp30FilingData);
+
+        // Mark old filing as superseded
+        if (supersedes_filing_id) {
+          await base44.asServiceRole.entities.TaxQA_Filing.update(supersedes_filing_id, {
+            status: 'superseded',
+            superseded_at: new Date().toISOString(),
+            superseded_by_filing_id: filing.id,
+          });
+        }
       }
 
       // Create LineItems in batches
@@ -299,7 +333,7 @@ Deno.serve(async (req) => {
 
       // Create Filing
       const totalTax = dataRows.reduce((sum, r) => sum + (Number(r[13]) || 0), 0);
-      const filing = await base44.asServiceRole.entities.TaxQA_Filing.create({
+      const whtFilingData = {
         customer_id, customer_name: customer_name || '',
         form_type: detectedFormType, tax_period,
         tax_deadline_id: taxDeadlineId,
@@ -308,7 +342,21 @@ Deno.serve(async (req) => {
         source_batch_id: batch.id, filed_ref: filedRef || '',
         prepared_by: user.email, prepared_by_name: user.full_name || '',
         line_count: dataRows.length,
-      });
+      };
+      if (supersedes_filing_id) {
+        whtFilingData.supersedes_id = supersedes_filing_id;
+        whtFilingData.version = supersedesVersion + 1;
+      }
+      const filing = await base44.asServiceRole.entities.TaxQA_Filing.create(whtFilingData);
+
+      // Mark old filing as superseded
+      if (supersedes_filing_id) {
+        await base44.asServiceRole.entities.TaxQA_Filing.update(supersedes_filing_id, {
+          status: 'superseded',
+          superseded_at: new Date().toISOString(),
+          superseded_by_filing_id: filing.id,
+        });
+      }
 
       // Parse wht_rate
       const parseRate = (v) => {

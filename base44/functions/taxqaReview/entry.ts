@@ -292,5 +292,43 @@ Deno.serve(async (req) => {
     return Response.json({ success: true });
   }
 
+  // ─── CANCEL FILING (ยกเลิก/จำหน่าย) ───
+  if (action === 'cancel') {
+    const { filing_id, cancellation_note } = body;
+    if (!cancellation_note?.trim()) {
+      return Response.json({ error: 'cancellation_note required' }, { status: 400 });
+    }
+
+    const allowedRoles = ['admin', 'partner', 'manager', 'super_supervisor'];
+    if (!allowedRoles.includes(user.role)) {
+      return Response.json({ error: 'เฉพาะ Reviewer/Partner/Admin เท่านั้น' }, { status: 403 });
+    }
+
+    const filings = await base44.entities.TaxQA_Filing.filter({ id: filing_id });
+    const f = filings[0];
+    if (!f) return Response.json({ error: 'Filing not found' }, { status: 404 });
+
+    const cancelable = ['validating', 'flagged', 'clean', 'under_review', 'rejected'];
+    if (!cancelable.includes(f.status)) {
+      return Response.json({ error: `ไม่สามารถยกเลิกได้: สถานะปัจจุบัน "${f.status}" — ใบที่ยื่นแล้ว/ยกเลิกแล้ว/ถูกแทนที่ ไม่อนุญาต` }, { status: 400 });
+    }
+
+    await base44.entities.TaxQA_Filing.update(filing_id, {
+      status: 'cancelled',
+      cancelled_at: new Date().toISOString(),
+      cancellation_note: cancellation_note.trim(),
+    });
+
+    writeLog({
+      action: 'cancel',
+      entity_type: 'TaxQA_Filing',
+      entity_id: filing_id,
+      entity_name: `${f.form_type} ${f.tax_period} — ${f.customer_name}`,
+      details: `ยกเลิก filing: ${f.form_type} งวด ${f.tax_period} ลูกค้า "${f.customer_name}" — เหตุผล: ${cancellation_note.trim()}`,
+      changes: { status: { from: f.status, to: 'cancelled' } },
+    });
+    return Response.json({ success: true });
+  }
+
   return Response.json({ error: 'Invalid action' }, { status: 400 });
 });

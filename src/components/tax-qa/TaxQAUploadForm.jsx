@@ -15,11 +15,12 @@ const FORM_TYPES = [
   { value: 'PP30', label: 'ภ.พ.30 (ภาษีซื้อ/ขาย)' },
 ];
 
-export default function TaxQAUploadForm({ onParseComplete }) {
-  const [customerId, setCustomerId] = useState('');
-  const [customerName, setCustomerName] = useState('');
-  const [taxPeriod, setTaxPeriod] = useState('');
-  const [formType, setFormType] = useState('');
+export default function TaxQAUploadForm({ onParseComplete, fixFiling }) {
+  const isFixMode = !!fixFiling;
+  const [customerId, setCustomerId] = useState(fixFiling?.customer_id || '');
+  const [customerName, setCustomerName] = useState(fixFiling?.customer_name || '');
+  const [taxPeriod, setTaxPeriod] = useState(fixFiling?.tax_period || '');
+  const [formType, setFormType] = useState(fixFiling?.form_type || '');
   const [file, setFile] = useState(null);
   const [parsing, setParsing] = useState(false);
   const [result, setResult] = useState(null);
@@ -55,10 +56,14 @@ export default function TaxQAUploadForm({ onParseComplete }) {
 
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-    const res = await base44.functions.invoke('taxqaParseFile', {
+    const parsePayload = {
       file_url, customer_id: customerId, customer_name: customerName,
       tax_period: taxPeriod, form_type: formType || undefined,
-    });
+    };
+    if (isFixMode && fixFiling?.id) {
+      parsePayload.supersedes_filing_id = fixFiling.id;
+    }
+    const res = await base44.functions.invoke('taxqaParseFile', parsePayload);
 
     setResult(res.data);
     setParsing(false);
@@ -86,16 +91,17 @@ export default function TaxQAUploadForm({ onParseComplete }) {
             <label className="text-sm font-medium mb-1.5 block">ลูกค้า *</label>
             <SearchableSelect
               value={customerId}
-              onValueChange={handleCustomerChange}
+              onValueChange={isFixMode ? undefined : handleCustomerChange}
               options={customers.map(c => ({ value: c.id, label: c.company_name }))}
               placeholder="พิมพ์ชื่อลูกค้า..."
+              disabled={isFixMode}
             />
           </div>
 
           {/* Period */}
           <div>
             <label className="text-sm font-medium mb-1.5 block">งวดภาษี *</label>
-            <Select value={taxPeriod} onValueChange={setTaxPeriod}>
+            <Select value={taxPeriod} onValueChange={isFixMode ? undefined : setTaxPeriod} disabled={isFixMode}>
               <SelectTrigger><SelectValue placeholder="YYYY-MM" /></SelectTrigger>
               <SelectContent>
                 {periodOptions.map(p => (
@@ -107,8 +113,8 @@ export default function TaxQAUploadForm({ onParseComplete }) {
 
           {/* Form type (optional — auto-detect) */}
           <div>
-            <label className="text-sm font-medium mb-1.5 block">ประเภทแบบ (auto-detect)</label>
-            <Select value={formType} onValueChange={setFormType}>
+            <label className="text-sm font-medium mb-1.5 block">ประเภทแบบ {isFixMode ? '' : '(auto-detect)'}</label>
+            <Select value={formType} onValueChange={isFixMode ? undefined : setFormType} disabled={isFixMode}>
               <SelectTrigger><SelectValue placeholder="อัตโนมัติ" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="auto">อัตโนมัติ</SelectItem>
