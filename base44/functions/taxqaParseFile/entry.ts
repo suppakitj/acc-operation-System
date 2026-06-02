@@ -277,18 +277,6 @@ Deno.serve(async (req) => {
         return first !== '' && !first.includes('รวม') && first !== 'null';
       });
 
-      // Duplicate check
-      const seen = new Map();
-      const dupFlags = [];
-      for (const r of dataRows) {
-        const key = `${r[2]}|${r[5]}|${r[12]}|${r[13]}|${String(r[10] || '').substring(0, 50)}`;
-        if (seen.has(key)) {
-          dupFlags.push({ rule_code: 'INGEST_DUPLICATE', severity: 'warning', message: `บรรทัดซ้ำ: cert_no=${r[2]}, payee=${r[5]}, base=${r[12]}, wht=${r[13]}` });
-        }
-        seen.set(key, true);
-      }
-      errors.push(...dupFlags);
-
       // Create batch
       const batch = await base44.asServiceRole.entities.TaxQA_IngestionBatch.create({
         source_filename: file_url.split('/').pop(),

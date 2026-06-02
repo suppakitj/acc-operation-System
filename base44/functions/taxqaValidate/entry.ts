@@ -175,6 +175,42 @@ Deno.serve(async (req) => {
     }
 
     // ═══════════════════════════════════════════════════
+    // CROSS-FILING DUPLICATE: cert_no (WTI) ซ้ำกับ filing อื่น
+    // ═══════════════════════════════════════════════════
+    if (isWht && formType !== 'PND1') {
+      // Collect unique cert_no from this filing
+      const certNos = [...new Set(lineItems.map(li => li.cert_no).filter(Boolean))];
+      if (certNos.length > 0) {
+        // Find other filings of same customer + tax_period (exclude current + rejected)
+        const otherFilings = await svc.entities.TaxQA_Filing.filter({
+          customer_id: filing.customer_id, tax_period: filing.tax_period, form_type: formType,
+        }, '-created_date', 50);
+        const otherFilingIds = otherFilings
+          .filter(f => f.id !== filing_id && f.status !== 'rejected')
+          .map(f => f.id);
+
+        if (otherFilingIds.length > 0) {
+          // Load line items from other filings in batches
+          const otherCertNos = new Set();
+          for (const ofId of otherFilingIds) {
+            const otherLines = await svc.entities.TaxQA_LineItem.filter({ filing_id: ofId }, 'seq_in_file', 2000);
+            for (const ol of otherLines) {
+              if (ol.cert_no) otherCertNos.add(ol.cert_no);
+            }
+          }
+
+          // Check for overlap
+          for (const cn of certNos) {
+            if (otherCertNos.has(cn)) {
+              addFlag('VAL_DUP_CROSS', 'warning',
+                `WTI ${cn} เคยถูกบันทึกในไฟล์/ใบอื่นของงวดนี้ อาจอัปโหลดหรือนับซ้ำ`);
+            }
+          }
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════════════
     // CROSS-FORM: PND54 ↔ PP36
     // ═══════════════════════════════════════════════════
     if (formType === 'PND54') {
