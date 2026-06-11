@@ -46,7 +46,16 @@ export default function Tasks() {
 
   const { data: allTasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date', 1000),
+    queryFn: async () => {
+      const [pending, inProgress, review, completed, cancelled] = await Promise.all([
+        base44.entities.Task.filter({ status: 'pending' }, '-created_date', 1000),
+        base44.entities.Task.filter({ status: 'in_progress' }, '-created_date', 1000),
+        base44.entities.Task.filter({ status: 'review' }, '-created_date', 1000),
+        base44.entities.Task.filter({ status: 'completed' }, '-created_date', 1000),
+        base44.entities.Task.filter({ status: 'cancelled' }, '-created_date', 500),
+      ]);
+      return [...pending, ...inProgress, ...review, ...completed, ...cancelled];
+    },
   });
   // Apply department-based visibility
   const tasks = ac.filterByDepartment(allTasks);
