@@ -1,15 +1,15 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 /**
  * Retry saving LINE files to Google Drive for messages that failed previously.
- * Directly uploads to Drive (no nested function call) to avoid service-role auth issues.
+ * Uses resumable upload to avoid memory limits on large files.
  * Max 10 retries per message before giving up.
  */
 
 const MAX_RETRIES = 10;
-const BATCH_SIZE = 3;
-const BATCH_DELAY_MS = 2000;
-const MAX_PROCESS = 30;
+const BATCH_SIZE = 1;   // Process one at a time to stay within memory limits
+const BATCH_DELAY_MS = 1000;
+const MAX_PROCESS = 5;  // Fewer per run to avoid timeouts
 
 async function findOrCreateFolder(accessToken, name, parentId) {
   const q = parentId
@@ -65,36 +65,48 @@ async function uploadFileToDrive(accessToken, msg) {
   const dayId = await findOrCreateFolder(accessToken, day, monthId);
   const senderId = await findOrCreateFolder(accessToken, senderName, dayId);
 
-  // Download file
-  const fileRes = await fetch(msg.file_url);
-  if (!fileRes.ok) throw new Error('Failed to download file from storage');
-  const fileBuffer = await fileRes.arrayBuffer();
-
-  // Upload
+  // Step 1: Initiate resumable upload session (no file data in memory yet)
   const metadata = { name: fileName, parents: [senderId] };
-  const boundary = 'retry_boundary_' + Date.now();
-  const metadataStr = JSON.stringify(metadata);
-  const encoder = new TextEncoder();
-  const metaPart = encoder.encode(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadataStr}\r\n`);
-  const filePart = encoder.encode(`--${boundary}\r\nContent-Type: ${contentType}\r\n\r\n`);
-  const endPart = encoder.encode(`\r\n--${boundary}--`);
-  const body = new Uint8Array(metaPart.length + filePart.length + fileBuffer.byteLength + endPart.length);
-  body.set(metaPart, 0);
-  body.set(filePart, metaPart.length);
-  body.set(new Uint8Array(fileBuffer), metaPart.length + filePart.length);
-  body.set(endPart, metaPart.length + filePart.length + fileBuffer.byteLength);
-
-  const driveRes = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink',
+  const initRes = await fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,name,webViewLink',
     {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'Content-Type': `multipart/related; boundary=${boundary}`,
+        'Content-Type': 'application/json; charset=UTF-8',
       },
-      body,
+      body: JSON.stringify(metadata),
     }
   );
+
+  if (!initRes.ok) {
+    const errText = await initRes.text();
+    throw new Error(`Drive resumable init failed (${initRes.status}): ${errText}`);
+  }
+
+  const uploadUrl = initRes.headers.get('Location');
+  if (!uploadUrl) throw new Error('No upload URL returned from Drive');
+
+  // Step 2: Download source file and stream it directly to Drive upload URL
+  const fileRes = await fetch(msg.file_url);
+  if (!fileRes.ok) throw new Error('Failed to download file from storage');
+
+  // Get content length if available for proper upload
+  const contentLength = fileRes.headers.get('content-length');
+
+  const uploadHeaders = {
+    'Content-Type': contentType,
+  };
+  if (contentLength) {
+    uploadHeaders['Content-Length'] = contentLength;
+  }
+
+  // Stream the body directly — avoids loading entire file into memory
+  const driveRes = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: uploadHeaders,
+    body: fileRes.body,
+  });
 
   if (!driveRes.ok) {
     const errText = await driveRes.text();
@@ -128,23 +140,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Google Drive not connected', details: e.message }, { status: 400 });
     }
 
-    // Fetch unsaved messages
-    let failedMessages = [];
-    let skip = 0;
-    const PAGE_SIZE = 100;
-    while (true) {
-      const page = await base44.asServiceRole.entities.LineMessage.filter(
-        { drive_saved: false, direction: 'incoming' },
-        '-created_date',
-        PAGE_SIZE,
-        skip
-      );
-      if (!Array.isArray(page) || page.length === 0) break;
-      failedMessages = failedMessages.concat(page);
-      if (page.length < PAGE_SIZE) break;
-      skip += PAGE_SIZE;
-      if (failedMessages.length >= 1000) break;
-    }
+    // Fetch unsaved messages — small page to stay within memory
+    const failedMessages = await base44.asServiceRole.entities.LineMessage.filter(
+      { drive_saved: false, direction: 'incoming' },
+      '-created_date',
+      50
+    );
 
     // Fix legacy: mark non-file messages (text, sticker, etc.) as drive_saved=true
     // since they don't need Drive saving
