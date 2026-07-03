@@ -37,7 +37,6 @@ export default function PerformanceEvaluation() {
   const [lockOnSave, setLockOnSave] = useState(false);
   const reportRef = useRef(null);
 
-  // Shared cache with embedded StaffScorecard (identical queryKeys)
   const { data: tasks = [] } = useQuery({ queryKey: ['tasks_kpi'], queryFn: () => list('Task', '-created_date', 2000), staleTime: 60_000 });
   const { data: meetingNotes = [] } = useQuery({ queryKey: ['meetingNotes_kpi'], queryFn: () => list('MeetingNote', '-created_date', 1000), staleTime: 60_000 });
   const { data: timeEntries = [] } = useQuery({
@@ -63,7 +62,6 @@ export default function PerformanceEvaluation() {
   const cur = period.resolved;
   const cmp = period.comparisonResolved;
 
-  // Replicate embedded component's filtering EXACTLY so numbers reconcile
   const scoreForWindow = (from, to) => {
     if (!from || !to || !staff) return null;
     const ft = tasks.filter((t) => { const d = t.created_date?.slice(0, 10) || ''; return d >= from && d <= to; });
@@ -74,7 +72,6 @@ export default function PerformanceEvaluation() {
   const scorecard = useMemo(() => email && cur ? scoreForWindow(cur.from, cur.to) : null, [email, cur, tasks, timeEntries, meetingNotes, staff]);
   const compScore = useMemo(() => email && cmp ? scoreForWindow(cmp.from, cmp.to) : null, [email, cmp, tasks, timeEntries, meetingNotes, staff]);
 
-  // Peer context — same window filtering for every teammate
   const peer = useMemo(() => {
     if (!email || !cur?.from) return null;
     const ft = tasks.filter((t) => { const d = t.created_date?.slice(0, 10) || ''; return d >= cur.from && d <= cur.to; });
@@ -82,7 +79,6 @@ export default function PerformanceEvaluation() {
     return computePeerContext({ users: activeUsers, tasks: ft, timeEntries: fe, meetingNotes, from: cur.from, to: cur.to });
   }, [email, activeUsers, tasks, timeEntries, meetingNotes, cur]);
 
-  // Longitudinal trend — trailing 6 windows
   const trend = useMemo(() => {
     if (!email || !staff) return [];
     const pts = [];
@@ -107,7 +103,6 @@ export default function PerformanceEvaluation() {
     generatedAt: new Date().toLocaleString('th-TH'),
   };
 
-  // ── Actions ──
   const doSnapshot = async () => {
     setBusy('snap');
     try {
@@ -207,7 +202,6 @@ export default function PerformanceEvaluation() {
         <p className="text-sm text-muted-foreground">เครื่องมือประเมินระดับบุคคล — ใช้ประกอบค่าตอบแทน · เลื่อนตำแหน่ง · PIP</p>
       </div>
 
-      {/* Staff Selector */}
       <Card>
         <CardContent className="p-4 flex flex-wrap items-center gap-3">
           <select
@@ -238,7 +232,6 @@ export default function PerformanceEvaluation() {
         <>
           <PeriodSelector value={period} onChange={setPeriod} fiscalStart={fiscalStart} />
 
-          {/* Evaluation Summary */}
           <Card>
             <CardContent className="p-5">
               <div className="flex flex-wrap items-center gap-6">
@@ -261,7 +254,6 @@ export default function PerformanceEvaluation() {
             </CardContent>
           </Card>
 
-          {/* Longitudinal Trend */}
           <Card>
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-2">
@@ -291,10 +283,8 @@ export default function PerformanceEvaluation() {
             </CardContent>
           </Card>
 
-          {/* Dimensional deep-dive — reuse existing component */}
           <StaffScorecard email={email} role={staff.role} from={cur.from} to={cur.to} user={staff} />
 
-          {/* Auto-Insights */}
           <Card>
             <CardContent className="p-5 space-y-3">
               <h2 className="font-semibold">บทวิเคราะห์อัตโนมัติ (Evaluation Insights)</h2>
@@ -323,7 +313,6 @@ export default function PerformanceEvaluation() {
             </CardContent>
           </Card>
 
-          {/* Evaluation Actions */}
           <Card>
             <CardContent className="p-5 space-y-3">
               <h2 className="font-semibold">การดำเนินการ (Evaluation Actions)</h2>
@@ -351,7 +340,6 @@ export default function PerformanceEvaluation() {
             </CardContent>
           </Card>
 
-          {/* Snapshot History */}
           <Card>
             <CardContent className="p-5">
               <h2 className="font-semibold mb-3">ประวัติ Snapshot (Immutable Records)</h2>
@@ -375,7 +363,6 @@ export default function PerformanceEvaluation() {
             </CardContent>
           </Card>
 
-          {/* Off-screen capture target for PDF */}
           <div style={{ position: 'fixed', left: -10000, top: 0 }}>
             <EvaluationReport
               ref={reportRef}
