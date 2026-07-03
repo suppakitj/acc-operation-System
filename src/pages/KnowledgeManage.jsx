@@ -13,6 +13,7 @@ import moment from 'moment';
 
 import ArticleForm from '@/components/knowledge/ArticleForm';
 import RejectDialog from '@/components/knowledge/RejectDialog';
+import { useUserList } from '@/hooks/useUserList';
 
 const STATUS_BADGE = {
   draft: 'bg-gray-100 text-gray-600',
@@ -45,6 +46,12 @@ export default function KnowledgeManage() {
   });
 
   const isManager = ['admin', 'management', 'manager', 'super_supervisor'].includes(ac.role);
+  const { data: users = [] } = useUserList();
+  const { data: lineConfigs = [] } = useQuery({
+    queryKey: ['appConfig', 'line_accounting'],
+    queryFn: () => base44.entities.AppConfig.list(),
+    staleTime: 300_000,
+  });
 
   const visibleArticles = useMemo(() => {
     if (isManager) return allArticles;
@@ -88,6 +95,38 @@ export default function KnowledgeManage() {
       setShowForm(false);
       setEditingArticle(null);
       toast.success(articleId ? 'อัปเดตบทความเรียบร้อย' : 'สร้างบทความเรียบร้อย');
+
+      // ส่ง LINE + Noti แจ้งหัวหน้าเมื่อพนักงานส่ง KB รออนุมัติ
+      if (data.status === 'pending_review') {
+        const staffName = currentUser?.full_name || currentUser?.email || '';
+        const articleTitle = data.title || '';
+        const categoryName = data.category_name || '';
+
+        // In-app notification → หัวหน้า
+        const managers = users.filter(u =>
+          ['admin', 'management', 'manager', 'super_supervisor'].includes(u.role) && u.email !== currentUser?.email
+        );
+        for (const mgr of managers.slice(0, 5)) {
+          base44.entities.Notification.create({
+            title: `📖 KB รออนุมัติ: ${articleTitle}`,
+            message: `${staffName} ส่งบทความ "${articleTitle}" (${categoryName}) เข้ามารออนุมัติ`,
+            type: 'task_assigned',
+            target_user: mgr.email,
+            related_entity_type: 'KnowledgeArticle',
+          }).catch(() => {});
+        }
+
+        // LINE notification → กลุ่มบัญชี
+        const groupId = lineConfigs.find(c => c.key === 'line_group_dept_accounting')?.value;
+        if (groupId) {
+          base44.functions.invoke('lineSendMessage', {
+            line_user_id: groupId,
+            message: `📖 KB รออนุมัติ\n━━━━━━━━━━━━━━━━\n📄 ${articleTitle}\n📁 หมวด: ${categoryName || '-'}\n👤 โดย: ${staffName}\n━━━━━━━━━━━━━━━━\nกรุณาตรวจสอบและอนุมัติ`,
+            display_name: 'ACC Precision Hub',
+            chat_type: 'group',
+          }).catch(e => console.warn('KB LINE noti failed:', e.message));
+        }
+      }
     } catch (err) {
       toast.error('เกิดข้อผิดพลาด');
     } finally {
