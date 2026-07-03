@@ -21,7 +21,7 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
   const [form, setForm] = useState({
     username: '', nickname: '', initials: '', phone: '', position: '',
     role: 'staff', departments: [], department: '',
-    user_status: 'active', hourly_cost: 0,
+    user_status: 'active', hourly_cost: 0, hire_date: '',
   });
 
   useEffect(() => {
@@ -37,9 +37,10 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
         department: user.department || '',
         user_status: user.user_status || 'active',
         hourly_cost: user.hourly_cost || 0,
+        hire_date: user.hire_date || '',
       });
     } else {
-      setForm({ username: '', nickname: '', initials: '', phone: '', position: '', role: 'staff', departments: [], department: '', user_status: 'active', hourly_cost: 0 });
+      setForm({ username: '', nickname: '', initials: '', phone: '', position: '', role: 'staff', departments: [], department: '', user_status: 'active', hourly_cost: 0, hire_date: '' });
     }
   }, [user, open]);
 
@@ -133,6 +134,14 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
               ))}
             </div>
           </div>
+
+          {isEdit && (
+            <div className="space-y-1.5">
+              <Label>วันเริ่มงาน</Label>
+              <Input type="date" value={form.hire_date || ''} onChange={e => update('hire_date', e.target.value)} />
+              <p className="text-[10px] text-muted-foreground">ใช้สำหรับคำนวณ tenure ใน Talent Matrix</p>
+            </div>
+          )}
 
           {canSeeCost && isEdit && (
             <div className="space-y-1.5">

@@ -31,6 +31,7 @@ module.exports = {
     'bg-amber-100', 'text-amber-700', 'border-amber-300',
     'bg-orange-100', 'text-orange-700', 'border-orange-300',
     'bg-red-100', 'text-red-700', 'border-red-300',
+    'bg-sky-50', 'border-sky-200', 'bg-cyan-50', 'border-cyan-200',
     'border-l-emerald-400', 'border-l-orange-400',
   ],
   theme: {
