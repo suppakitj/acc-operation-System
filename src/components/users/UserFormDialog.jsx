@@ -72,11 +72,6 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
               <div><Label>ชื่อ-นามสกุล</Label><p className="text-sm mt-1 font-medium">{user.full_name}</p></div>
               <div><Label>Email</Label><p className="text-sm mt-1 text-muted-foreground">{user.email}</p></div>
               {user.employee_id && <div><Label>รหัสพนักงาน</Label><p className="text-sm mt-1 font-mono text-primary">{user.employee_id}</p></div>}
-              <div className="space-y-1.5">
-                <Label>รหัส Payroll (โปรแกรมเงินเดือน)</Label>
-                <Input value={form.payroll_code} onChange={e => update('payroll_code', e.target.value)} placeholder="เช่น 24005" />
-                <p className="text-[10px] text-muted-foreground">ใช้สำหรับ join ข้อมูล OT — คนละชุดกับรหัสพนักงาน</p>
-              </div>
             </>
           )}
 
@@ -141,15 +136,19 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
             </div>
           </div>
 
-          {isEdit && (
-            <div className="space-y-1.5">
-              <Label>วันเริ่มงาน</Label>
-              <Input type="date" value={form.hire_date || ''} onChange={e => update('hire_date', e.target.value)} />
-              <p className="text-[10px] text-muted-foreground">ใช้สำหรับคำนวณ tenure ใน Talent Matrix</p>
-            </div>
-          )}
+          <div className="space-y-1.5">
+            <Label>รหัส Payroll (โปรแกรมเงินเดือน)</Label>
+            <Input value={form.payroll_code} onChange={e => update('payroll_code', e.target.value)} placeholder="เช่น 24005" />
+            <p className="text-[10px] text-muted-foreground">ใช้ join ข้อมูล OT — เว้นว่างได้ แล้วค่อยจับคู่ใน OT Analytics</p>
+          </div>
 
-          {canSeeCost && isEdit && (
+          <div className="space-y-1.5">
+            <Label>วันเริ่มงาน</Label>
+            <Input type="date" value={form.hire_date || ''} onChange={e => update('hire_date', e.target.value)} />
+            <p className="text-[10px] text-muted-foreground">ใช้สำหรับคำนวณ tenure ใน Talent Matrix</p>
+          </div>
+
+          {canSeeCost && (
             <div className="space-y-1.5">
               <Label>ต้นทุนต่อชั่วโมง (฿/ชม.)</Label>
               <Input type="number" value={form.hourly_cost || ''} onChange={e => update('hourly_cost', parseFloat(e.target.value) || 0)} placeholder="เช่น 250" />
