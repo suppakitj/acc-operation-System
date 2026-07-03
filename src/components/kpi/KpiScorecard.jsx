@@ -51,7 +51,7 @@ export default function KpiScorecard({ kpi, prevKpi }) {
       label: 'On-Time Rate', value: `${fmt(kpi.onTimeRate)}%`, icon: CheckCircle2,
       color: kpi.onTimeRate >= 90 ? 'text-green-600' : kpi.onTimeRate >= 75 ? 'text-yellow-600' : 'text-red-600',
       bg: kpi.onTimeRate >= 90 ? 'bg-green-50' : kpi.onTimeRate >= 75 ? 'bg-yellow-50' : 'bg-red-50',
-      delta: <Delta current={kpi.onTimeRate} previous={prevKpi.onTimeRate} />,
+      delta: <Delta current={kpi.onTimeRate} previous={prevKpi?.onTimeRate} />,
     },
     {
       label: 'งานที่เสร็จแล้ว', value: `${kpi.completedCount} งาน`, icon: CheckCircle2,
@@ -69,17 +69,17 @@ export default function KpiScorecard({ kpi, prevKpi }) {
     {
       label: 'Avg Completion Time', value: `${fmt(kpi.avgCompletionDays)} วัน`, icon: CalendarClock,
       color: 'text-purple-600', bg: 'bg-purple-50',
-      delta: <DeltaDays current={kpi.avgCompletionDays} previous={prevKpi.avgCompletionDays} />,
+      delta: <DeltaDays current={kpi.avgCompletionDays} previous={prevKpi?.avgCompletionDays} />,
     },
     {
       label: 'Due Date Change Rate', value: `${fmt(kpi.dueDateChangeRate)}%`, icon: Repeat,
       sub: `${kpi.dueDateChangedCount}/${kpi.totalInPeriod} งานถูกเลื่อน`, color: 'text-amber-600', bg: 'bg-amber-50',
-      delta: <DeltaInverse current={kpi.dueDateChangeRate} previous={prevKpi.dueDateChangeRate} />,
+      delta: <DeltaInverse current={kpi.dueDateChangeRate} previous={prevKpi?.dueDateChangeRate} />,
     },
     {
       label: 'Staff Utilization', value: `${fmt(kpi.utilization)}%`, icon: Users,
       sub: `${fmt(kpi.totalLoggedHours, 0)} ชม. จาก capacity`, color: 'text-indigo-600', bg: 'bg-indigo-50',
-      delta: <Delta current={kpi.utilization} previous={prevKpi.utilization} />,
+      delta: <Delta current={kpi.utilization} previous={prevKpi?.utilization} />,
     },
     {
       label: 'Recurring Task Completion', value: `${fmt(kpi.recurringCompletionRate)}%`, icon: TrendingUp,
