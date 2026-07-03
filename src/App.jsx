@@ -60,10 +60,7 @@ const StaffScorecardPage = lazy(() => import('./pages/StaffScorecard'));
 const TeamRanking = lazy(() => import('./pages/TeamRanking'));
 const ReworkAnalytics = lazy(() => import('./pages/ReworkAnalytics'));
 const PostponeAnalytics = lazy(() => import('./pages/PostponeAnalytics'));
-const TaxQAIntake = lazy(() => import('./pages/TaxQAIntake'));
-const TaxQAReview = lazy(() => import('./pages/TaxQAReview'));
-const TaxQADashboard = lazy(() => import('./pages/TaxQADashboard'));
-const TaxQAConfig = lazy(() => import('./pages/TaxQAConfig'));
+
 
 const PageLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -149,10 +146,7 @@ const AuthenticatedApp = () => {
           <Route path="/TeamRanking" element={<TeamRanking />} />
           <Route path="/ReworkAnalytics" element={<ReworkAnalytics />} />
           <Route path="/PostponeAnalytics" element={<PostponeAnalytics />} />
-          <Route path="/TaxQAIntake" element={<TaxQAIntake />} />
-          <Route path="/TaxQAReview" element={<TaxQAReview />} />
-          <Route path="/TaxQADashboard" element={<TaxQADashboard />} />
-          <Route path="/TaxQAConfig" element={<TaxQAConfig />} />
+
         </Route>
         <Route path="*" element={<PageNotFound />} />
       </Routes>

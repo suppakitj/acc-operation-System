@@ -7,7 +7,6 @@ import {
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays, RotateCcw,
   ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target, Activity,
   HeartPulse, KeyRound, Globe, BookOpen, BookMarked, Home, ClipboardCheck, CalendarClock, FileBarChart, GraduationCap, FileText, ShieldAlert, Lightbulb, Trophy,
-  SearchCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -74,11 +73,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'audit', label: t('menu_audit'), icon: History, path: '/AuditLog' },
     { id: 'backup', label: 'Backup DB', icon: Database, path: '/DatabaseBackup' },
     { id: 'settings', label: t('menu_settings'), icon: Settings, path: '/AppSettings' },
-    // ─── ระบบตรวจภาษี (Tax QA) ───
-    { id: 'taxqa_intake', label: 'Tax QA Intake', icon: SearchCheck, path: '/TaxQAIntake' },
-    { id: 'taxqa_review', label: 'Tax QA Review', icon: SearchCheck, path: '/TaxQAReview' },
-    { id: 'taxqa_dashboard', label: 'Tax QA Dashboard', icon: BarChart3, path: '/TaxQADashboard' },
-    { id: 'taxqa_config', label: 'Tax QA Config', icon: Cog, path: '/TaxQAConfig' },
+
   ];
 
   const allowedIds = ac.getVisibleMenuIds();
@@ -95,7 +90,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },
     { key: 'reports', label: 'ทีม & รายงาน', icon: BarChart3, ids: ['staff_dashboard', 'team_analytics', 'staff_scorecard', 'team_ranking', 'rework_analytics', 'postpone_analytics', 'engagement_insights', 'obligation_dashboard', 'customer_summary', 'findings_dashboard', 'workload', 'staff_cost_report', 'forecast_risk'] },
     { key: 'system', label: 'ตั้งค่า & ระบบ', icon: Cog, ids: ['service_master', 'external_service', 'holiday_master', 'users', 'roles', 'audit', 'backup', 'settings'] },
-    { key: 'tax_qa', label: 'ระบบตรวจภาษี (Tax QA)', icon: SearchCheck, ids: ['taxqa_intake', 'taxqa_review', 'taxqa_dashboard', 'taxqa_config'] },
+
   ];
 
   // Build visible groups
