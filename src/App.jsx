@@ -61,8 +61,8 @@ const TeamRanking = lazy(() => import('./pages/TeamRanking'));
 const ReworkAnalytics = lazy(() => import('./pages/ReworkAnalytics'));
 const PostponeAnalytics = lazy(() => import('./pages/PostponeAnalytics'));
 const ExecutiveBI = lazy(() => import('./pages/ExecutiveBI'));
-const KpiReportCenter = lazy(() => import('./pages/KpiReportCenter'));
-const PerformanceEvaluation = lazy(() => import('./pages/PerformanceEvaluation'));
+import KpiReportCenter from './pages/KpiReportCenter';
+import PerformanceEvaluation from './pages/PerformanceEvaluation';
 
 
 const PageLoader = () => (
