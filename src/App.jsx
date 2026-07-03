@@ -60,6 +60,9 @@ const StaffScorecardPage = lazy(() => import('./pages/StaffScorecard'));
 const TeamRanking = lazy(() => import('./pages/TeamRanking'));
 const ReworkAnalytics = lazy(() => import('./pages/ReworkAnalytics'));
 const PostponeAnalytics = lazy(() => import('./pages/PostponeAnalytics'));
+const ExecutiveBI = lazy(() => import('./pages/ExecutiveBI'));
+const KpiReportCenter = lazy(() => import('./pages/KpiReportCenter'));
+const PerformanceEvaluation = lazy(() => import('./pages/PerformanceEvaluation'));
 
 
 const PageLoader = () => (
@@ -146,6 +149,9 @@ const AuthenticatedApp = () => {
           <Route path="/TeamRanking" element={<TeamRanking />} />
           <Route path="/ReworkAnalytics" element={<ReworkAnalytics />} />
           <Route path="/PostponeAnalytics" element={<PostponeAnalytics />} />
+          <Route path="/ExecutiveBI" element={<ExecutiveBI />} />
+          <Route path="/KpiReportCenter" element={<KpiReportCenter />} />
+          <Route path="/PerformanceEvaluation" element={<PerformanceEvaluation />} />
 
         </Route>
         <Route path="*" element={<PageNotFound />} />

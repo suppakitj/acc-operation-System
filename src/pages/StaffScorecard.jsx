@@ -1,15 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { BarChart3, Shield, HelpCircle } from 'lucide-react';
 import ScoringMethodDialog from '@/components/analytics/ScoringMethodDialog';
-import { startOfQuarter, format } from 'date-fns';
 import StaffScorecardComponent from '@/components/analytics/StaffScorecard';
 import { useSearchParams } from 'react-router-dom';
 import { useUserList } from '@/hooks/useUserList';
+import PeriodSelector from '@/components/shared/PeriodSelector';
+import { defaultPeriodState, resolvePeriod } from '@/utils/periodUtils';
 
 export default function StaffScorecard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -21,10 +21,8 @@ export default function StaffScorecard() {
   const isAdmin = role === 'admin' || role === 'management';
   const isManager = role === 'manager' || role === 'super_supervisor';
 
-  // Default email
   const email = emailParam || currentUser?.email || '';
 
-  // Permission check
   const canView = useMemo(() => {
     if (!currentUser) return false;
     if (isAdmin) return true;
@@ -38,15 +36,17 @@ export default function StaffScorecard() {
     return false;
   }, [currentUser, email, isAdmin, isManager, allUsers]);
 
-  // Target user
   const targetUser = useMemo(() => allUsers.find(u => u.email === email) || currentUser, [allUsers, email, currentUser]);
 
-  // Date range
-  const today = new Date();
-  const [from, setFrom] = useState(format(startOfQuarter(today), 'yyyy-MM-dd'));
-  const [to, setTo] = useState(format(today, 'yyyy-MM-dd'));
+  const [period, setPeriod] = useState(() => {
+    const s = defaultPeriodState();
+    const resolved = resolvePeriod(s);
+    return { ...s, resolved };
+  });
 
-  // Staff list for admin/manager to browse
+  const from = period.resolved?.from || '';
+  const to = period.resolved?.to || '';
+
   const browseUsers = useMemo(() => {
     if (isAdmin) return allUsers;
     if (isManager) {
@@ -82,15 +82,12 @@ export default function StaffScorecard() {
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">{targetUser?.full_name || email}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => setShowMethod(true)}>
-            <HelpCircle className="w-3.5 h-3.5" /> วิธีวัดผล
-          </Button>
-          <Input type="date" value={from} onChange={e => setFrom(e.target.value)} className="h-8 text-xs w-[140px]" />
-          <span className="text-xs text-muted-foreground">ถึง</span>
-          <Input type="date" value={to} onChange={e => setTo(e.target.value)} className="h-8 text-xs w-[140px]" />
-        </div>
+        <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => setShowMethod(true)}>
+          <HelpCircle className="w-3.5 h-3.5" /> วิธีวัดผล
+        </Button>
       </div>
+
+      <PeriodSelector value={period} onChange={setPeriod} showComparison={false} />
 
       {/* Browse staff list */}
       {browseUsers.length > 1 && (

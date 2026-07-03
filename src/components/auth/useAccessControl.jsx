@@ -205,6 +205,11 @@ export function useAccessControl(user) {
       if (p('rework_analytics') !== 'no') menus.push('rework_analytics');
       if (p('postpone_analytics') !== 'no') menus.push('postpone_analytics');
 
+      // Executive tier
+      if (p('executive_bi') !== 'no')           menus.push('executive_bi');
+      if (p('kpi_report_center') !== 'no')      menus.push('kpi_report_center');
+      if (p('performance_evaluation') !== 'no') menus.push('performance_evaluation');
+
       // Tax QA
       if (p('taxqa_intake') !== 'no') menus.push('taxqa_intake');
       if (p('taxqa_review') !== 'no') menus.push('taxqa_review');

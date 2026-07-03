@@ -2,74 +2,59 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Target, ShieldAlert } from 'lucide-react';
-import { startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subMonths, addDays, differenceInDays } from 'date-fns';
+import { differenceInDays, addDays } from 'date-fns';
 import { useUserList } from '@/hooks/useUserList';
 
-import KpiFilters from '../components/kpi/KpiFilters';
+import PeriodSelector from '@/components/shared/PeriodSelector';
+import { defaultPeriodState, resolvePeriod } from '@/utils/periodUtils';
 import KpiScorecard from '../components/kpi/KpiScorecard';
 import SlaComplianceTable from '../components/kpi/SlaComplianceTable';
 import TeamPerformanceTable from '../components/kpi/TeamPerformanceTable';
 import KpiTrendChart from '../components/kpi/KpiTrendChart';
 import DeadlineRiskPanel from '../components/kpi/DeadlineRiskPanel';
 
-function getDateRange(period, dateFrom, dateTo) {
-  const now = new Date();
-  if (period === 'this_month') return { start: startOfMonth(now), end: endOfMonth(now) };
-  if (period === 'this_quarter') return { start: startOfQuarter(now), end: endOfQuarter(now) };
-  if (period === 'this_year') return { start: startOfYear(now), end: endOfYear(now) };
-  if (period === 'custom' && dateFrom && dateTo) return { start: new Date(dateFrom), end: new Date(dateTo + 'T23:59:59') };
-  return { start: startOfMonth(now), end: endOfMonth(now) };
-}
-
-function computeKpi(tasks, timeEntries, dateRange, activeUsers) {
+function computeKpi(tasks, timeEntries, from, to, activeUsers) {
+  const start = new Date(from), end = new Date(to + 'T23:59:59');
   const isInPeriod = (dateStr) => {
     if (!dateStr) return false;
     const d = new Date(dateStr);
-    return d >= dateRange.start && d <= dateRange.end;
+    return d >= start && d <= end;
   };
 
   const today = new Date();
   const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-  // Completed tasks in period
   const completed = tasks.filter(t => t.status === 'completed' && isInPeriod(t.completed_date));
   const onTime = completed.filter(t => t.due_date && t.completed_date <= t.due_date);
   const onTimeRate = completed.length > 0 ? (onTime.length / completed.length) * 100 : 0;
 
-  // All tasks started/created in period
   const tasksInPeriod = tasks.filter(t => isInPeriod(t.start_date || t.created_date));
   const totalInPeriod = tasksInPeriod.length;
 
-  // Overdue
   const overdue = tasks.filter(t => t.due_date && !['completed', 'cancelled'].includes(t.status) && new Date(t.due_date) < todayStart);
   const overdueOver3 = overdue.filter(t => differenceInDays(todayStart, new Date(t.due_date)) > 3).length;
 
-  // Urgent/High pending
   const urgentHighPending = tasks.filter(t => ['pending', 'in_progress', 'review'].includes(t.status) && ['urgent', 'high'].includes(t.priority)).length;
 
-  // Avg completion time
   const avgCompletionDays = completed.length > 0
     ? completed.reduce((s, t) => {
-        const start = t.start_date || t.created_date;
-        if (!start) return s;
-        return s + Math.max(0, differenceInDays(new Date(t.completed_date), new Date(start)));
+        const st = t.start_date || t.created_date;
+        if (!st) return s;
+        return s + Math.max(0, differenceInDays(new Date(t.completed_date), new Date(st)));
       }, 0) / completed.length
     : 0;
 
-  // Due date change rate
   const dueDateChangedCount = tasksInPeriod.filter(t => (t.due_date_change_count || 0) >= 1).length;
   const dueDateChangeRate = totalInPeriod > 0 ? (dueDateChangedCount / totalInPeriod) * 100 : 0;
 
-  // Staff utilization
   const periodEntries = timeEntries.filter(e => e.start_time && isInPeriod(e.start_time));
   const totalLoggedMinutes = periodEntries.reduce((s, e) => s + (e.duration_minutes || 0), 0);
   const totalLoggedHours = totalLoggedMinutes / 60;
-  const daySpan = Math.max(1, differenceInDays(dateRange.end, dateRange.start));
-  const workingDays = Math.round(daySpan * 5 / 7); // rough estimate
+  const daySpan = Math.max(1, differenceInDays(end, start));
+  const workingDays = Math.round(daySpan * 5 / 7);
   const totalCapacityHours = activeUsers.length * workingDays * 8;
   const utilization = totalCapacityHours > 0 ? (totalLoggedHours / totalCapacityHours) * 100 : 0;
 
-  // Recurring task completion
   const recurringInPeriod = tasksInPeriod.filter(t => t.is_recurring);
   const recurringCompleted = recurringInPeriod.filter(t => t.status === 'completed').length;
   const recurringCompletionRate = recurringInPeriod.length > 0 ? (recurringCompleted / recurringInPeriod.length) * 100 : 0;
@@ -96,94 +81,84 @@ export default function KpiDashboard() {
     queryKey: ['timeEntries-kpi'], queryFn: () => base44.entities.TimeEntry.list('-start_time', 2000), staleTime: 5 * 60_000,
   });
 
-  const [filters, setFilters] = useState({ period: 'this_month', dateFrom: '', dateTo: '', department: 'all', serviceType: 'all' });
+  const [period, setPeriod] = useState(() => {
+    const s = defaultPeriodState();
+    const resolved = resolvePeriod(s);
+    return { ...s, resolved };
+  });
+  const [deptFilter, setDeptFilter] = useState('all');
+  const [svcFilter, setSvcFilter] = useState('all');
 
   const role = currentUser?.role;
   const isMD = ['admin', 'management'].includes(role);
   const isManagerOrSupervisor = ['manager', 'super_supervisor'].includes(role);
 
-  // Locked dept for managers
   const userDepts = useMemo(() => {
     if (!currentUser) return [];
     return currentUser.departments?.length ? currentUser.departments : currentUser.department ? [currentUser.department] : [];
   }, [currentUser]);
   const lockedDept = isManagerOrSupervisor && userDepts.length > 0 ? userDepts[0] : null;
 
-  const dateRange = useMemo(() => getDateRange(filters.period, filters.dateFrom, filters.dateTo), [filters.period, filters.dateFrom, filters.dateTo]);
-  const prevRange = useMemo(() => {
-    const prevStart = subMonths(dateRange.start, 1);
-    return { start: startOfMonth(prevStart), end: endOfMonth(prevStart) };
-  }, [dateRange]);
+  const from = period.resolved?.from || '';
+  const to = period.resolved?.to || '';
+  const cmpFrom = period.comparisonResolved?.from || '';
+  const cmpTo = period.comparisonResolved?.to || '';
 
-  // Scope tasks/entries by department
-  const deptFilter = lockedDept || filters.department;
+  const activeDept = lockedDept || deptFilter;
   const scopedTasks = useMemo(() => {
     let t = allTasks;
     if (isManagerOrSupervisor && userDepts.length) t = t.filter(task => userDepts.includes(task.department));
-    else if (deptFilter !== 'all') t = t.filter(task => task.department === deptFilter);
-    if (filters.serviceType !== 'all') t = t.filter(task => task.service_type === filters.serviceType);
+    else if (activeDept !== 'all') t = t.filter(task => task.department === activeDept);
+    if (svcFilter !== 'all') t = t.filter(task => task.service_type === svcFilter);
     return t;
-  }, [allTasks, deptFilter, filters.serviceType, isManagerOrSupervisor, userDepts]);
+  }, [allTasks, activeDept, svcFilter, isManagerOrSupervisor, userDepts]);
 
   const scopedEntries = useMemo(() => {
     let e = allTimeEntries;
     if (isManagerOrSupervisor && userDepts.length) e = e.filter(entry => userDepts.includes(entry.department));
-    else if (deptFilter !== 'all') e = e.filter(entry => entry.department === deptFilter);
-    if (filters.serviceType !== 'all') e = e.filter(entry => entry.service_type === filters.serviceType);
+    else if (activeDept !== 'all') e = e.filter(entry => entry.department === activeDept);
+    if (svcFilter !== 'all') e = e.filter(entry => entry.service_type === svcFilter);
     return e;
-  }, [allTimeEntries, deptFilter, filters.serviceType, isManagerOrSupervisor, userDepts]);
+  }, [allTimeEntries, activeDept, svcFilter, isManagerOrSupervisor, userDepts]);
 
   const activeUsers = useMemo(() => users.filter(u => u.user_status !== 'inactive'), [users]);
 
-  // KPI current & previous
-  const kpi = useMemo(() => computeKpi(scopedTasks, scopedEntries, dateRange, activeUsers), [scopedTasks, scopedEntries, dateRange, activeUsers]);
-  const prevKpi = useMemo(() => computeKpi(scopedTasks, scopedEntries, prevRange, activeUsers), [scopedTasks, scopedEntries, prevRange, activeUsers]);
+  const kpi = useMemo(() => from && to ? computeKpi(scopedTasks, scopedEntries, from, to, activeUsers) : null, [scopedTasks, scopedEntries, from, to, activeUsers]);
+  const prevKpi = useMemo(() => cmpFrom && cmpTo ? computeKpi(scopedTasks, scopedEntries, cmpFrom, cmpTo, activeUsers) : null, [scopedTasks, scopedEntries, cmpFrom, cmpTo, activeUsers]);
 
-  // SLA data
   const slaData = useMemo(() => {
+    if (!from || !to) return [];
+    const start = new Date(from), end = new Date(to + 'T23:59:59');
     return SVC_TYPES.map(svc => {
-      const completed = scopedTasks.filter(t => t.status === 'completed' && t.service_type === svc && t.completed_date && new Date(t.completed_date) >= dateRange.start && new Date(t.completed_date) <= dateRange.end);
+      const completed = scopedTasks.filter(t => t.status === 'completed' && t.service_type === svc && t.completed_date && new Date(t.completed_date) >= start && new Date(t.completed_date) <= end);
       const onTime = completed.filter(t => t.due_date && t.completed_date <= t.due_date);
-      return {
-        service: svc, total: completed.length, onTime: onTime.length, late: completed.length - onTime.length,
-        rate: completed.length > 0 ? (onTime.length / completed.length) * 100 : 0,
-      };
+      return { service: svc, total: completed.length, onTime: onTime.length, late: completed.length - onTime.length, rate: completed.length > 0 ? (onTime.length / completed.length) * 100 : 0 };
     }).filter(d => d.total > 0);
-  }, [scopedTasks, dateRange]);
+  }, [scopedTasks, from, to]);
 
-  // Team performance data
   const performanceData = useMemo(() => {
-    const isInPeriod = (d) => d && new Date(d) >= dateRange.start && new Date(d) <= dateRange.end;
+    if (!from || !to) return [];
+    const start = new Date(from), end = new Date(to + 'T23:59:59');
+    const isInPeriod = (d) => d && new Date(d) >= start && new Date(d) <= end;
     const today = new Date();
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-    if (isMD && deptFilter === 'all') {
-      // Group by department
+    if (isMD && activeDept === 'all') {
       const deptMap = {};
       scopedTasks.forEach(t => {
         const dept = t.department || 'other';
         if (!deptMap[dept]) deptMap[dept] = { name: DEPT_LABELS[dept] || dept, totalTasks: 0, completed: 0, onTimeCount: 0, avgDaysSum: 0, avgDaysCount: 0, overdueCount: 0, dueDateChangedCount: 0, department: dept };
         const d = deptMap[dept];
-        if (isInPeriod(t.start_date || t.created_date)) {
-          d.totalTasks++;
-          if ((t.due_date_change_count || 0) >= 1) d.dueDateChangedCount++;
-        }
+        if (isInPeriod(t.start_date || t.created_date)) { d.totalTasks++; if ((t.due_date_change_count || 0) >= 1) d.dueDateChangedCount++; }
         if (t.status === 'completed' && isInPeriod(t.completed_date)) {
-          d.completed++;
-          if (t.due_date && t.completed_date <= t.due_date) d.onTimeCount++;
-          const start = t.start_date || t.created_date;
-          if (start) { d.avgDaysSum += Math.max(0, differenceInDays(new Date(t.completed_date), new Date(start))); d.avgDaysCount++; }
+          d.completed++; if (t.due_date && t.completed_date <= t.due_date) d.onTimeCount++;
+          const st = t.start_date || t.created_date; if (st) { d.avgDaysSum += Math.max(0, differenceInDays(new Date(t.completed_date), new Date(st))); d.avgDaysCount++; }
         }
         if (t.due_date && !['completed', 'cancelled'].includes(t.status) && new Date(t.due_date) < todayStart) d.overdueCount++;
       });
-      return Object.values(deptMap).map(d => ({
-        ...d, onTimeRate: d.completed > 0 ? (d.onTimeCount / d.completed) * 100 : 0,
-        avgDays: d.avgDaysCount > 0 ? d.avgDaysSum / d.avgDaysCount : 0,
-        dueDateChangedPct: d.totalTasks > 0 ? (d.dueDateChangedCount / d.totalTasks) * 100 : 0,
-      }));
+      return Object.values(deptMap).map(d => ({ ...d, onTimeRate: d.completed > 0 ? (d.onTimeCount / d.completed) * 100 : 0, avgDays: d.avgDaysCount > 0 ? d.avgDaysSum / d.avgDaysCount : 0, dueDateChangedPct: d.totalTasks > 0 ? (d.dueDateChangedCount / d.totalTasks) * 100 : 0 }));
     }
 
-    // Group by staff
     const staffMap = {};
     scopedTasks.forEach(t => {
       const email = t.assigned_to || 'unassigned';
@@ -192,31 +167,20 @@ export default function KpiDashboard() {
         staffMap[email] = { name: u?.initials || u?.nickname || t.assigned_name || email, totalTasks: 0, completed: 0, onTimeCount: 0, avgDaysSum: 0, avgDaysCount: 0, overdueCount: 0, dueDateChangedCount: 0, department: u?.department || t.department || '' };
       }
       const s = staffMap[email];
-      if (isInPeriod(t.start_date || t.created_date)) {
-        s.totalTasks++;
-        if ((t.due_date_change_count || 0) >= 1) s.dueDateChangedCount++;
-      }
+      if (isInPeriod(t.start_date || t.created_date)) { s.totalTasks++; if ((t.due_date_change_count || 0) >= 1) s.dueDateChangedCount++; }
       if (t.status === 'completed' && isInPeriod(t.completed_date)) {
-        s.completed++;
-        if (t.due_date && t.completed_date <= t.due_date) s.onTimeCount++;
-        const start = t.start_date || t.created_date;
-        if (start) { s.avgDaysSum += Math.max(0, differenceInDays(new Date(t.completed_date), new Date(start))); s.avgDaysCount++; }
+        s.completed++; if (t.due_date && t.completed_date <= t.due_date) s.onTimeCount++;
+        const st = t.start_date || t.created_date; if (st) { s.avgDaysSum += Math.max(0, differenceInDays(new Date(t.completed_date), new Date(st))); s.avgDaysCount++; }
       }
       if (t.due_date && !['completed', 'cancelled'].includes(t.status) && new Date(t.due_date) < todayStart) s.overdueCount++;
     });
-    return Object.values(staffMap).map(s => ({
-      ...s, onTimeRate: s.completed > 0 ? (s.onTimeCount / s.completed) * 100 : 0,
-      avgDays: s.avgDaysCount > 0 ? s.avgDaysSum / s.avgDaysCount : 0,
-      dueDateChangedPct: s.totalTasks > 0 ? (s.dueDateChangedCount / s.totalTasks) * 100 : 0,
-    }));
-  }, [scopedTasks, dateRange, isMD, deptFilter, users]);
+    return Object.values(staffMap).map(s => ({ ...s, onTimeRate: s.completed > 0 ? (s.onTimeCount / s.completed) * 100 : 0, avgDays: s.avgDaysCount > 0 ? s.avgDaysSum / s.avgDaysCount : 0, dueDateChangedPct: s.totalTasks > 0 ? (s.dueDateChangedCount / s.totalTasks) * 100 : 0 }));
+  }, [scopedTasks, from, to, isMD, activeDept, users]);
 
-  // Deadline risk
   const atRiskTasks = useMemo(() => {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
-    const in7Days = addDays(today, 7);
-    const in7Str = in7Days.toISOString().split('T')[0];
+    const in7Str = addDays(today, 7).toISOString().split('T')[0];
     return scopedTasks
       .filter(t => ['pending', 'in_progress', 'review'].includes(t.status) && t.due_date && t.due_date >= todayStr && t.due_date <= in7Str)
       .sort((a, b) => a.due_date.localeCompare(b.due_date));
@@ -224,7 +188,6 @@ export default function KpiDashboard() {
 
   const isLoading = loadingTasks || loadingTime;
 
-  // Access denied for staff
   if (role && !isMD && !isManagerOrSupervisor) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -245,15 +208,29 @@ export default function KpiDashboard() {
         <p className="text-xs text-muted-foreground mt-0.5">ภาพรวม KPI และ SLA ขององค์กร — ติดตามประสิทธิภาพและคุณภาพงาน</p>
       </div>
 
-      <KpiFilters filters={filters} setFilters={setFilters} lockedDept={lockedDept} />
+      <PeriodSelector value={period} onChange={setPeriod} showComparison={true} />
+
+      {/* Department & Service filters */}
+      {!lockedDept && (
+        <div className="flex flex-wrap items-center gap-2">
+          <select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)} className="h-9 rounded-md border px-3 text-sm bg-background">
+            <option value="all">ทุกแผนก</option>
+            {Object.entries(DEPT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+          <select value={svcFilter} onChange={(e) => setSvcFilter(e.target.value)} className="h-9 rounded-md border px-3 text-sm bg-background">
+            <option value="all">ทุกบริการ</option>
+            {SVC_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground text-sm">กำลังโหลดข้อมูล...</div>
       ) : (
         <>
-          <KpiScorecard kpi={kpi} prevKpi={prevKpi} />
+          {kpi && <KpiScorecard kpi={kpi} prevKpi={prevKpi} />}
           <SlaComplianceTable slaData={slaData} />
-          <TeamPerformanceTable performanceData={performanceData} isMD={isMD && deptFilter === 'all'} />
+          <TeamPerformanceTable performanceData={performanceData} isMD={isMD && activeDept === 'all'} />
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-3">
               <KpiTrendChart tasks={scopedTasks} />

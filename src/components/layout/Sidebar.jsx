@@ -7,6 +7,7 @@ import {
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays, RotateCcw,
   ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target, Activity,
   HeartPulse, KeyRound, Globe, BookOpen, BookMarked, Home, ClipboardCheck, CalendarClock, FileBarChart, GraduationCap, FileText, ShieldAlert, Lightbulb, Trophy,
+  LayoutPanelTop, FileBarChart2, UserCheck, Sparkles, Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -61,6 +62,10 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'workload', label: 'Workload Balancer', icon: Scale, path: '/WorkloadBalancer' },
     { id: 'staff_cost_report', label: 'Staff Cost Report', icon: DollarSign, path: '/StaffCostReport' },
     { id: 'forecast_risk', label: 'Forecast & Risk', icon: Activity, path: '/ForecastRisk' },
+    // ─── Executive BI ───
+    { id: 'executive_bi', label: 'Executive BI Cockpit', icon: LayoutPanelTop, path: '/ExecutiveBI' },
+    { id: 'kpi_report_center', label: 'KPI Report Center', icon: FileBarChart2, path: '/KpiReportCenter' },
+    { id: 'performance_evaluation', label: 'Performance Evaluation', icon: UserCheck, path: '/PerformanceEvaluation' },
     // ─── LINE ───
     { id: 'line_chat', label: t('menu_line_chat'), icon: MessageCircle, path: '/LineChat' },
     { id: 'line_files', label: 'LINE Files', icon: HardDrive, path: '/LineFiles' },
@@ -88,7 +93,9 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { key: 'work_setup', label: 'เทมเพลต & ความรู้', icon: ClipboardList, ids: ['templates', 'task_generation', 'tax_calendar', 'knowledge_base', 'knowledge_manage'] },
     { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault', 'director_vault'] },
     { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },
-    { key: 'reports', label: 'ทีม & รายงาน', icon: BarChart3, ids: ['staff_dashboard', 'team_analytics', 'staff_scorecard', 'team_ranking', 'rework_analytics', 'postpone_analytics', 'engagement_insights', 'obligation_dashboard', 'customer_summary', 'findings_dashboard', 'workload', 'staff_cost_report', 'forecast_risk'] },
+    { key: 'executive', label: 'Executive BI', icon: Sparkles, ids: ['executive_bi', 'kpi_report_center', 'performance_evaluation'] },
+    { key: 'operational', label: 'Operational Analytics', icon: Target, ids: ['team_analytics', 'staff_scorecard', 'team_ranking', 'workload'] },
+    { key: 'diagnostic', label: 'Diagnostic Deep-Dives', icon: Search, ids: ['rework_analytics', 'findings_dashboard', 'postpone_analytics', 'obligation_dashboard', 'staff_cost_report', 'engagement_insights', 'forecast_risk', 'staff_dashboard', 'customer_summary'] },
     { key: 'system', label: 'ตั้งค่า & ระบบ', icon: Cog, ids: ['service_master', 'external_service', 'holiday_master', 'users', 'roles', 'audit', 'backup', 'settings'] },
 
   ];
@@ -105,7 +112,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const [expandedGroups, setExpandedGroups] = useState(() => {
     const saved = localStorage.getItem('sidebar_groups');
     if (saved) return JSON.parse(saved);
-    return { personal: true, daily_work: true, work_setup: false, overview: false, clients: false, finance: false, reports: false, comms: false, system: false };
+    return { personal: true, daily_work: true, work_setup: false, overview: false, clients: false, finance: false, executive: false, operational: false, diagnostic: false, comms: false, system: false };
   });
 
   useEffect(() => {
