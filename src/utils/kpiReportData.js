@@ -1,6 +1,7 @@
 import { computeFirmHealth } from './firmHealth';
 import { buildAttentionFlags } from './attentionFlags';
 
+
 const inRange = (d, from, to) => !!d && d >= from && d <= to;
 
 export function buildKpiReportData({ users, tasks, timeEntries, meetingNotes, billings, pulses, from, to, compareFrom, compareTo, config }) {

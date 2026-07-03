@@ -2,6 +2,7 @@ import { base44 } from '@/api/base44Client';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
+
 export async function elementToPdfBlob(el) {
   const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
   const img = canvas.toDataURL('image/png');

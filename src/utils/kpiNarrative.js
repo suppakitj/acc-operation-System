@@ -1,6 +1,7 @@
 import { base44 } from '@/api/base44Client';
 
 const SCHEMA = {
+
   type: 'object',
   properties: {
     executive_summary: { type: 'string' },

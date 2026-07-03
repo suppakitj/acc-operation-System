@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 
-const fmtTHB = (n) => (n == null ? '—' : new Intl.NumberFormat('th-TH').format(Math.round(n)));
+const fmtTHB = (n) => (n == null ? '\u2014' : new Intl.NumberFormat('th-TH').format(Math.round(n)));
 
 const Section = ({ title, children }) => (
   <div style={{ marginTop: 20 }}>
