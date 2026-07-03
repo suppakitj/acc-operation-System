@@ -13,7 +13,8 @@ import { generateKpiNarrative } from '@/utils/kpiNarrative';
 import { elementToPdfBlob, downloadBlob, uploadPdf, emailReport } from '@/utils/reportExport';
 import BoardReport from '@/components/report/BoardReport';
 
-const list = (E, sort = '-created_date', n = 2000) => base44.entities[E].list(sort, n);
+const fetchList = (entity, sort = '-created_date', limit = 2000) =>
+  base44.entities[entity].list(sort, limit);
 
 export default function KpiReportCenter() {
   const [period, setPeriod] = useState(() => {
@@ -26,25 +27,28 @@ export default function KpiReportCenter() {
 
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
   const { data: users = [] } = useUserList();
-  const { data: tasks = [] } = useQuery({ queryKey: ['rpt-tasks'], queryFn: () => list('Task'), staleTime: 5 * 60_000 });
-  const { data: timeEntries = [] } = useQuery({ queryKey: ['rpt-time'], queryFn: () => list('TimeEntry', '-start_time'), staleTime: 5 * 60_000 });
-  const { data: meetingNotes = [] } = useQuery({ queryKey: ['rpt-meet'], queryFn: () => list('MeetingNote'), staleTime: 5 * 60_000 });
-  const { data: billings = [] } = useQuery({ queryKey: ['rpt-bill'], queryFn: () => list('Billing'), staleTime: 5 * 60_000 });
-  const { data: pulses = [] } = useQuery({ queryKey: ['rpt-pulse'], queryFn: () => list('PulseResponse'), staleTime: 5 * 60_000 });
-  const { data: configs = [] } = useQuery({ queryKey: ['rpt-config'], queryFn: () => base44.entities.AppConfig.list(), staleTime: 60_000 });
-  const { data: archive = [], refetch: refetchArchive } = useQuery({ queryKey: ['kpi-archive'], queryFn: () => list('KpiReport', '-created_date', 100) });
+  const { data: tasks = [] } = useQuery({ queryKey: ['rpt-tasks'], queryFn: () => fetchList('Task'), staleTime: 300000 });
+  const { data: timeEntries = [] } = useQuery({ queryKey: ['rpt-time'], queryFn: () => fetchList('TimeEntry', '-start_time'), staleTime: 300000 });
+  const { data: meetingNotes = [] } = useQuery({ queryKey: ['rpt-meet'], queryFn: () => fetchList('MeetingNote'), staleTime: 300000 });
+  const { data: billings = [] } = useQuery({ queryKey: ['rpt-bill'], queryFn: () => fetchList('Billing'), staleTime: 300000 });
+  const { data: pulses = [] } = useQuery({ queryKey: ['rpt-pulse'], queryFn: () => fetchList('PulseResponse'), staleTime: 300000 });
+  const { data: configs = [] } = useQuery({ queryKey: ['rpt-config'], queryFn: () => base44.entities.AppConfig.list(), staleTime: 60000 });
+  const { data: archive = [], refetch: refetchArchive } = useQuery({ queryKey: ['kpi-archive'], queryFn: () => fetchList('KpiReport', '-created_date', 100) });
 
   const config = useMemo(() => {
     const map = {};
-    configs.forEach((c) => { try { map[c.key] = JSON.parse(c.value); } catch (_e) { map[c.key] = c.value; } });
+    configs.forEach((c) => {
+      try { map[c.key] = JSON.parse(c.value); } catch (_e) { map[c.key] = c.value; }
+    });
     return map;
   }, [configs]);
-  const fiscalStart = Number(config.fiscal_start_month) || 1;
 
+  const fiscalStart = Number(config.fiscal_start_month) || 1;
   const cur = period.resolved;
   const cmp = period.comparisonResolved;
+
   const meta = useMemo(() => ({
-    title: `KPI Report · ${cur?.label || ''}`,
+    title: 'KPI Report \u00B7 ' + (cur?.label || ''),
     viewerName: currentUser?.nickname || currentUser?.full_name || currentUser?.email || '',
     generatedAt: new Date().toLocaleString('th-TH'),
   }), [cur, currentUser]);
@@ -52,12 +56,17 @@ export default function KpiReportCenter() {
   const generate = async () => {
     setBusy('generate');
     try {
-      const data = buildKpiReportData({ users, tasks, timeEntries, meetingNotes, billings, pulses, from: cur.from, to: cur.to, compareFrom: cmp?.from, compareTo: cmp?.to, config });
+      const data = buildKpiReportData({
+        users, tasks, timeEntries, meetingNotes, billings, pulses,
+        from: cur.from, to: cur.to,
+        compareFrom: cmp?.from, compareTo: cmp?.to,
+        config,
+      });
       const ai = await generateKpiNarrative(data);
       setReport({ data, ai });
-      toast({ title: 'สร้างรายงานเรียบร้อย' });
+      toast({ title: '\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22' });
     } catch (e) {
-      toast({ title: 'เกิดข้อผิดพลาด', description: e.message, variant: 'destructive' });
+      toast({ title: '\u0E40\u0E01\u0E34\u0E14\u0E02\u0E49\u0E2D\u0E1C\u0E34\u0E14\u0E1E\u0E25\u0E32\u0E14', description: e.message, variant: 'destructive' });
     }
     setBusy(null);
   };
@@ -67,10 +76,10 @@ export default function KpiReportCenter() {
     try {
       await document.fonts?.ready;
       const blob = await elementToPdfBlob(reportRef.current);
-      downloadBlob(blob, `${meta.title}.pdf`);
-      toast({ title: 'ดาวน์โหลด PDF เรียบร้อย' });
-    } catch (e) {
-      toast({ title: 'สร้าง PDF ไม่สำเร็จ', variant: 'destructive' });
+      downloadBlob(blob, meta.title + '.pdf');
+      toast({ title: '\u0E14\u0E32\u0E27\u0E19\u0E4C\u0E42\u0E2B\u0E25\u0E14 PDF \u0E40\u0E23\u0E35\u0E22\u0E1A\u0E23\u0E49\u0E2D\u0E22' });
+    } catch (_e) {
+      toast({ title: '\u0E2A\u0E23\u0E49\u0E32\u0E07 PDF \u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08', variant: 'destructive' });
     }
     setBusy(null);
   };
@@ -79,10 +88,13 @@ export default function KpiReportCenter() {
     setBusy('email');
     try {
       const html = reportRef.current.outerHTML;
-      const sent = await emailReport({ users, fromName: 'ACC Consulting', subject: `[KPI Report] ${cur.label}`, html });
-      toast({ title: `ส่งอีเมลแล้ว ${sent} ฉบับ` });
-    } catch (e) {
-      toast({ title: 'ส่งอีเมลไม่สำเร็จ', variant: 'destructive' });
+      const sent = await emailReport({
+        users, fromName: 'ACC Consulting',
+        subject: '[KPI Report] ' + cur.label, html,
+      });
+      toast({ title: '\u0E2A\u0E48\u0E07\u0E2D\u0E35\u0E40\u0E21\u0E25\u0E41\u0E25\u0E49\u0E27 ' + sent + ' \u0E09\u0E1A\u0E31\u0E1A' });
+    } catch (_e) {
+      toast({ title: '\u0E2A\u0E48\u0E07\u0E2D\u0E35\u0E40\u0E21\u0E25\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08', variant: 'destructive' });
     }
     setBusy(null);
   };
@@ -92,7 +104,7 @@ export default function KpiReportCenter() {
     try {
       await document.fonts?.ready;
       const blob = await elementToPdfBlob(reportRef.current);
-      const pdf_url = await uploadPdf(blob, `${meta.title}.pdf`);
+      const pdfUrl = await uploadPdf(blob, meta.title + '.pdf');
       const { data, ai } = report;
       await base44.entities.KpiReport.create({
         title: meta.title,
@@ -109,15 +121,15 @@ export default function KpiReportCenter() {
         ai_concerns: ai.concerns || [],
         ai_recommendations: ai.recommendations || [],
         ai_risk_flags: ai.risk_flags || [],
-        pdf_url,
+        pdf_url: pdfUrl,
         status: 'completed',
         generated_by: currentUser?.email,
         generated_by_name: meta.viewerName,
       });
       await refetchArchive();
-      toast({ title: 'บันทึกเข้าคลังรายงานแล้ว' });
+      toast({ title: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E40\u0E02\u0E49\u0E32\u0E04\u0E25\u0E31\u0E07\u0E23\u0E32\u0E22\u0E07\u0E32\u0E19\u0E41\u0E25\u0E49\u0E27' });
     } catch (e) {
-      toast({ title: 'บันทึกไม่สำเร็จ', description: e.message, variant: 'destructive' });
+      toast({ title: '\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08', description: e.message, variant: 'destructive' });
     }
     setBusy(null);
   };
@@ -126,26 +138,36 @@ export default function KpiReportCenter() {
     <div className="max-w-[1100px] mx-auto space-y-5">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">KPI Report Center</h1>
-        <p className="text-sm text-muted-foreground">รายงานสำหรับที่ประชุมผู้บริหาร — สร้าง · ดาวน์โหลด · ส่ง · จัดเก็บ</p>
+        <p className="text-sm text-muted-foreground">
+          รายงานสำหรับที่ประชุมผู้บริหาร — สร้าง · ดาวน์โหลด · ส่ง · จัดเก็บ
+        </p>
       </div>
 
       <PeriodSelector value={period} onChange={setPeriod} fiscalStart={fiscalStart} />
 
       <div className="flex flex-wrap gap-2">
         <Button onClick={generate} disabled={!!busy}>
-          {busy === 'generate' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+          {busy === 'generate'
+            ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            : <FileText className="w-4 h-4 mr-2" />}
           สร้างรายงาน
         </Button>
         <Button variant="outline" onClick={doPdf} disabled={!report || !!busy}>
-          {busy === 'pdf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}
+          {busy === 'pdf'
+            ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            : <FileDown className="w-4 h-4 mr-2" />}
           ดาวน์โหลด PDF
         </Button>
         <Button variant="outline" onClick={doEmail} disabled={!report || !!busy}>
-          {busy === 'email' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+          {busy === 'email'
+            ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            : <Mail className="w-4 h-4 mr-2" />}
           ส่งอีเมลผู้บริหาร
         </Button>
         <Button variant="outline" onClick={doSave} disabled={!report || !!busy}>
-          {busy === 'save' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+          {busy === 'save'
+            ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            : <Save className="w-4 h-4 mr-2" />}
           บันทึกเข้าคลัง
         </Button>
       </div>
@@ -156,7 +178,6 @@ export default function KpiReportCenter() {
         </div>
       )}
 
-      {/* Archive */}
       <Card className="p-4">
         <div className="flex items-center gap-2 mb-3">
           <FileBarChart2 className="w-4 h-4 text-muted-foreground" />
@@ -172,13 +193,20 @@ export default function KpiReportCenter() {
                 </div>
               </div>
               {r.pdf_url && (
-                <a href={r.pdf_url} target="_blank" rel="noreferrer" className="text-primary text-xs flex items-center gap-1 shrink-0 ml-2 hover:underline">
+                <a
+                  href={r.pdf_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary text-xs flex items-center gap-1 shrink-0 ml-2 hover:underline"
+                >
                   <FileDown className="w-3 h-3" />PDF
                 </a>
               )}
             </div>
           ))}
-          {archive.length === 0 && <p className="text-sm text-muted-foreground py-3">ยังไม่มีรายงานที่จัดเก็บ</p>}
+          {archive.length === 0 && (
+            <p className="text-sm text-muted-foreground py-3">ยังไม่มีรายงานที่จัดเก็บ</p>
+          )}
         </div>
       </Card>
     </div>
