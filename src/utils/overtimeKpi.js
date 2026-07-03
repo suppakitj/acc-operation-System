@@ -10,7 +10,7 @@ export function entryCost(e, hourlyCost, mult = MULT_DEFAULT) {
 
 export function aggregateByPerson({ entries, users, mult = MULT_DEFAULT }) {
   const uByCode = {};
-  users.forEach((u) => { if (u.employee_id) uByCode[String(u.employee_id).trim()] = u; });
+  users.forEach((u) => { const code = String(u.payroll_code || u.employee_id || '').trim(); if (code) uByCode[code] = u; });
   const map = {};
   entries.forEach((e) => {
     const u = uByCode[e.employee_code];

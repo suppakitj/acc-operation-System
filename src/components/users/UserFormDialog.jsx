@@ -21,7 +21,7 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
   const [form, setForm] = useState({
     username: '', nickname: '', initials: '', phone: '', position: '',
     role: 'staff', departments: [], department: '',
-    user_status: 'active', hourly_cost: 0, hire_date: '',
+    user_status: 'active', hourly_cost: 0, hire_date: '', payroll_code: '',
   });
 
   useEffect(() => {
@@ -38,9 +38,10 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
         user_status: user.user_status || 'active',
         hourly_cost: user.hourly_cost || 0,
         hire_date: user.hire_date || '',
+        payroll_code: user.payroll_code || '',
       });
     } else {
-      setForm({ username: '', nickname: '', initials: '', phone: '', position: '', role: 'staff', departments: [], department: '', user_status: 'active', hourly_cost: 0, hire_date: '' });
+      setForm({ username: '', nickname: '', initials: '', phone: '', position: '', role: 'staff', departments: [], department: '', user_status: 'active', hourly_cost: 0, hire_date: '', payroll_code: '' });
     }
   }, [user, open]);
 
@@ -71,6 +72,11 @@ export default function UserFormDialog({ open, onOpenChange, user, onSave, isSav
               <div><Label>ชื่อ-นามสกุล</Label><p className="text-sm mt-1 font-medium">{user.full_name}</p></div>
               <div><Label>Email</Label><p className="text-sm mt-1 text-muted-foreground">{user.email}</p></div>
               {user.employee_id && <div><Label>รหัสพนักงาน</Label><p className="text-sm mt-1 font-mono text-primary">{user.employee_id}</p></div>}
+              <div className="space-y-1.5">
+                <Label>รหัส Payroll (โปรแกรมเงินเดือน)</Label>
+                <Input value={form.payroll_code} onChange={e => update('payroll_code', e.target.value)} placeholder="เช่น 24005" />
+                <p className="text-[10px] text-muted-foreground">ใช้สำหรับ join ข้อมูล OT — คนละชุดกับรหัสพนักงาน</p>
+              </div>
             </>
           )}
 

@@ -12,6 +12,7 @@ import { defaultPeriodState, resolvePeriod, resolveComparison } from '@/utils/pe
 import { parsePayrollOt } from '@/utils/payrollOtImport';
 import { aggregateByPerson, aggregateByMonth, aggregateByCause, aggregateByCustomer, firmOtSummary, breakEvenHire } from '@/utils/overtimeKpi';
 import OtCauseTagger from '@/components/overtime/OtCauseTagger';
+import PayrollMappingPanel from '@/components/overtime/PayrollMappingPanel';
 
 const fetchList = (E, s = '-ot_date', n = 5000) => base44.entities[E].list(s, n);
 const fmtTHB = (v) => new Intl.NumberFormat('th-TH').format(Math.round(v || 0));
@@ -60,7 +61,7 @@ export default function OvertimeAnalytics() {
   const commit = async () => {
     setBusy('commit');
     const uByCode = {};
-    users.forEach((u) => { if (u.employee_id) uByCode[String(u.employee_id).trim()] = u; });
+    users.forEach((u) => { const code = String(u.payroll_code || u.employee_id || '').trim(); if (code) uByCode[code] = u; });
     const rows = preview.entries.map((e) => {
       const u = uByCode[e.employee_code];
       return { ...e, user_email: u?.email || null, department: e.department || u?.department || '' };
@@ -79,7 +80,7 @@ export default function OvertimeAnalytics() {
   };
 
   const previewAgg = preview ? aggregateByPerson({ entries: preview.entries, users, mult }) : [];
-  const unmatched = preview ? [...new Set(preview.entries.filter((e) => !users.some((u) => String(u.employee_id).trim() === e.employee_code)).map((e) => e.employee_code))] : [];
+  const unmatched = preview ? [...new Set(preview.entries.filter((e) => !users.some((u) => String(u.payroll_code || u.employee_id || '').trim() === e.employee_code)).map((e) => e.employee_code))] : [];
 
   const isJunior = (s) => s && (s.includes('\u0E17\u0E14\u0E25\u0E2D\u0E07') || s.includes('\u0E23\u0E30\u0E2B\u0E27\u0E48\u0E32\u0E07\u0E17\u0E14\u0E25\u0E2D\u0E07'));
   const isGone = (s) => s && s.includes('\u0E1E\u0E49\u0E19');
@@ -90,6 +91,12 @@ export default function OvertimeAnalytics() {
         <h1 className="text-2xl font-bold tracking-tight">OT Analytics</h1>
         <p className="text-sm text-muted-foreground">วิเคราะห์การทำงานล่วงเวลา — ต้นทุน · แนวโน้ม · ต้นเหตุ · ความเสี่ยง burnout</p>
       </div>
+
+      {/* Payroll mapping */}
+      <PayrollMappingPanel entries={entries} previewEntries={preview?.entries} users={users} onMapped={refetch} />
+
+      {/* Backfill unlinked */}
+      <BackfillButton entries={entries} users={users} onDone={refetch} />
 
       {/* Import */}
       <Card>
@@ -259,6 +266,37 @@ export default function OvertimeAnalytics() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function BackfillButton({ entries, users, onDone }) {
+  const [busy, setBusy] = useState(false);
+  const unlinked = entries.filter((e) => !e.user_email && e.employee_code);
+  if (!unlinked.length) return null;
+  const uByCode = {};
+  users.forEach((u) => { const code = String(u.payroll_code || u.employee_id || '').trim(); if (code) uByCode[code] = u; });
+  const fixable = unlinked.filter((e) => uByCode[e.employee_code]);
+  if (!fixable.length) return null;
+  const run = async () => {
+    setBusy(true);
+    for (const e of fixable) {
+      const u = uByCode[e.employee_code];
+      try { await base44.entities.OvertimeEntry.update(e.id, { user_email: u.email }); } catch (_) {}
+    }
+    await onDone();
+    setBusy(false);
+  };
+  return (
+    <Card>
+      <CardContent className="p-4 flex items-center justify-between">
+        <div className="text-sm">
+          พบ <b>{fixable.length}</b> รายการ OT ที่ยังไม่ผูก email แต่ตอนนี้ map ได้แล้ว
+        </div>
+        <Button size="sm" variant="outline" onClick={run} disabled={busy}>
+          {busy ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null}เชื่อมข้อมูลย้อนหลัง
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
