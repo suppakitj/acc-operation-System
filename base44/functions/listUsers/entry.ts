@@ -19,6 +19,7 @@ Deno.serve(async (req) => {
       departments: u.departments,
       position: u.position,
       employee_id: u.employee_id,
+      payroll_code: u.payroll_code || '',
       user_status: u.user_status,
       username: u.username,
       phone: u.phone,
