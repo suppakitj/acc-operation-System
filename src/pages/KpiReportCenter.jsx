@@ -13,7 +13,6 @@ import { generateKpiNarrative } from '@/utils/kpiNarrative';
 import { elementToPdfBlob, downloadBlob, uploadPdf, emailReport } from '@/utils/reportExport';
 import BoardReport from '@/components/report/BoardReport';
 
-
 const list = (E, sort = '-created_date', n = 2000) => base44.entities[E].list(sort, n);
 
 export default function KpiReportCenter() {
