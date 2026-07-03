@@ -20,7 +20,7 @@ export default function StaffScorecard({ email, role, from, to, user }) {
   });
   const { data: timeEntries = [] } = useQuery({
     queryKey: ['timeEntries_kpi'],
-    queryFn: async () => { try { return await base44.entities.TimeEntry.list('-created_date', 5000); } catch { return []; } },
+    queryFn: async () => { try { return await base44.entities.TimeEntry.list('-created_date', 5000); } catch (_e) { return []; } },
     staleTime: 60_000,
   });
 
