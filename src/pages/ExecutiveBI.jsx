@@ -34,7 +34,7 @@ export default function ExecutiveBI() {
 
   const config = useMemo(() => {
     const map = {};
-    configs.forEach((c) => { try { map[c.key] = JSON.parse(c.value); } catch { map[c.key] = c.value; } });
+    configs.forEach((c) => { try { map[c.key] = JSON.parse(c.value); } catch (_e) { map[c.key] = c.value; } });
     return map;
   }, [configs]);
   const fiscalStart = Number(config.fiscal_start_month) || 1;

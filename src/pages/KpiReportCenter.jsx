@@ -5,7 +5,7 @@ import { useUserList } from '@/hooks/useUserList';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileDown, Mail, Save, Loader2, FileText, FileBarChart2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import PeriodSelector from '@/components/shared/PeriodSelector';
 import { defaultPeriodState, resolvePeriod, resolveComparison } from '@/utils/periodUtils';
 import { buildKpiReportData } from '@/utils/kpiReportData';
@@ -36,7 +36,7 @@ export default function KpiReportCenter() {
 
   const config = useMemo(() => {
     const map = {};
-    configs.forEach((c) => { try { map[c.key] = JSON.parse(c.value); } catch { map[c.key] = c.value; } });
+    configs.forEach((c) => { try { map[c.key] = JSON.parse(c.value); } catch (_e) { map[c.key] = c.value; } });
     return map;
   }, [configs]);
   const fiscalStart = Number(config.fiscal_start_month) || 1;
@@ -55,9 +55,9 @@ export default function KpiReportCenter() {
       const data = buildKpiReportData({ users, tasks, timeEntries, meetingNotes, billings, pulses, from: cur.from, to: cur.to, compareFrom: cmp?.from, compareTo: cmp?.to, config });
       const ai = await generateKpiNarrative(data);
       setReport({ data, ai });
-      toast.success('สร้างรายงานเรียบร้อย');
+      toast({ title: 'สร้างรายงานเรียบร้อย' });
     } catch (e) {
-      toast.error('เกิดข้อผิดพลาด: ' + e.message);
+      toast({ title: 'เกิดข้อผิดพลาด', description: e.message, variant: 'destructive' });
     }
     setBusy(null);
   };
@@ -68,9 +68,9 @@ export default function KpiReportCenter() {
       await document.fonts?.ready;
       const blob = await elementToPdfBlob(reportRef.current);
       downloadBlob(blob, `${meta.title}.pdf`);
-      toast.success('ดาวน์โหลด PDF เรียบร้อย');
+      toast({ title: 'ดาวน์โหลด PDF เรียบร้อย' });
     } catch (e) {
-      toast.error('สร้าง PDF ไม่สำเร็จ');
+      toast({ title: 'สร้าง PDF ไม่สำเร็จ', variant: 'destructive' });
     }
     setBusy(null);
   };
@@ -80,9 +80,9 @@ export default function KpiReportCenter() {
     try {
       const html = reportRef.current.outerHTML;
       const sent = await emailReport({ users, fromName: 'ACC Consulting', subject: `[KPI Report] ${cur.label}`, html });
-      toast.success(`ส่งอีเมลแล้ว ${sent} ฉบับ`);
+      toast({ title: `ส่งอีเมลแล้ว ${sent} ฉบับ` });
     } catch (e) {
-      toast.error('ส่งอีเมลไม่สำเร็จ');
+      toast({ title: 'ส่งอีเมลไม่สำเร็จ', variant: 'destructive' });
     }
     setBusy(null);
   };
@@ -115,9 +115,9 @@ export default function KpiReportCenter() {
         generated_by_name: meta.viewerName,
       });
       await refetchArchive();
-      toast.success('บันทึกเข้าคลังรายงานแล้ว');
+      toast({ title: 'บันทึกเข้าคลังรายงานแล้ว' });
     } catch (e) {
-      toast.error('บันทึกไม่สำเร็จ: ' + e.message);
+      toast({ title: 'บันทึกไม่สำเร็จ', description: e.message, variant: 'destructive' });
     }
     setBusy(null);
   };
