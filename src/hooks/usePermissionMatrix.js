@@ -60,6 +60,7 @@ const DEFAULT_MATRIX = {
   executive_bi:            { admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
   kpi_report_center:       { admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
   performance_evaluation:  { admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
+  overtime_analytics:      { admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
   taxqa_intake:     { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   taxqa_review:     { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
   taxqa_dashboard:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },

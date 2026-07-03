@@ -210,6 +210,9 @@ export function useAccessControl(user) {
       if (p('kpi_report_center') !== 'no')      menus.push('kpi_report_center');
       if (p('performance_evaluation') !== 'no') menus.push('performance_evaluation');
 
+      // Overtime Analytics
+      if (p('overtime_analytics') !== 'no') menus.push('overtime_analytics');
+
       // Tax QA
       if (p('taxqa_intake') !== 'no') menus.push('taxqa_intake');
       if (p('taxqa_review') !== 'no') menus.push('taxqa_review');

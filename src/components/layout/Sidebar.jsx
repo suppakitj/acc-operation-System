@@ -7,7 +7,7 @@ import {
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays, RotateCcw,
   ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target, Activity,
   HeartPulse, KeyRound, Globe, BookOpen, BookMarked, Home, ClipboardCheck, CalendarClock, FileBarChart, GraduationCap, FileText, ShieldAlert, Lightbulb, Trophy,
-  LayoutPanelTop, FileBarChart2, UserCheck, Sparkles, Search,
+  LayoutPanelTop, FileBarChart2, UserCheck, Sparkles, Search, Clock4,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -62,6 +62,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'workload', label: 'Workload Balancer', icon: Scale, path: '/WorkloadBalancer' },
     { id: 'staff_cost_report', label: 'Staff Cost Report', icon: DollarSign, path: '/StaffCostReport' },
     { id: 'forecast_risk', label: 'Forecast & Risk', icon: Activity, path: '/ForecastRisk' },
+    { id: 'overtime_analytics', label: 'OT Analytics', icon: Clock4, path: '/OvertimeAnalytics' },
     // ─── Executive BI ───
     { id: 'executive_bi', label: 'Executive BI Cockpit', icon: LayoutPanelTop, path: '/ExecutiveBI' },
     { id: 'kpi_report_center', label: 'KPI Report Center', icon: FileBarChart2, path: '/KpiReportCenter' },
@@ -95,7 +96,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },
     { key: 'executive', label: 'Executive BI', icon: Sparkles, ids: ['executive_bi', 'kpi_report_center', 'performance_evaluation'] },
     { key: 'operational', label: 'Operational Analytics', icon: Target, ids: ['team_analytics', 'staff_scorecard', 'team_ranking', 'workload'] },
-    { key: 'diagnostic', label: 'Diagnostic Deep-Dives', icon: Search, ids: ['rework_analytics', 'findings_dashboard', 'postpone_analytics', 'obligation_dashboard', 'staff_cost_report', 'engagement_insights', 'forecast_risk', 'staff_dashboard', 'customer_summary'] },
+    { key: 'diagnostic', label: 'Diagnostic Deep-Dives', icon: Search, ids: ['rework_analytics', 'findings_dashboard', 'postpone_analytics', 'obligation_dashboard', 'staff_cost_report', 'engagement_insights', 'forecast_risk', 'overtime_analytics', 'staff_dashboard', 'customer_summary'] },
     { key: 'system', label: 'ตั้งค่า & ระบบ', icon: Cog, ids: ['service_master', 'external_service', 'holiday_master', 'users', 'roles', 'audit', 'backup', 'settings'] },
 
   ];

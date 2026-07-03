@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { AlertTriangle, ChevronRight } from 'lucide-react';
 
 const DOT = { high: 'bg-red-500', medium: 'bg-amber-500', low: 'bg-sky-500' };
-const TYPE_TH = { performance_drop: 'ผลงานตก', burnout_risk: 'เสี่ยง burnout', overdue_pileup: 'งานค้างเลยกำหนด', quality_slip: 'คุณภาพลดลง' };
+const TYPE_TH = { performance_drop: 'ผลงานตก', burnout_risk: 'เสี่ยง burnout', overdue_pileup: 'งานค้างเลยกำหนด', quality_slip: 'คุณภาพลดลง', overtime_burnout: 'OT/วันหยุดสูง' };
 
 export default function AttentionQueue({ flags }) {
   return (

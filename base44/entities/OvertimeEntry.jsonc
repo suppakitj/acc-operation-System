@@ -1,0 +1,96 @@
+{
+  "name": "OvertimeEntry",
+  "type": "object",
+  "properties": {
+    "employee_code": {
+      "type": "string",
+      "description": "\u0e23\u0e2b\u0e31\u0e2a\u0e1e\u0e19\u0e31\u0e01\u0e07\u0e32\u0e19 (= User.employee_id)"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "resolved from employee_id at import (nullable if unmatched)"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "department": {
+      "type": "string"
+    },
+    "supervisor_name": {
+      "type": "string"
+    },
+    "employee_status": {
+      "type": "string",
+      "description": "\u0e08\u0e32\u0e01payroll: \u0e1a\u0e23\u0e23\u0e08\u0e38 / \u0e17\u0e14\u0e25\u0e2d\u0e07\u0e07\u0e32\u0e19 / \u0e1e\u0e49\u0e19\u0e2a\u0e20\u0e32\u0e1e"
+    },
+    "ot_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_month": {
+      "type": "string",
+      "description": "YYYY-MM"
+    },
+    "task_description": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "approver_name": {
+      "type": "string"
+    },
+    "requested_from": {
+      "type": "string"
+    },
+    "requested_to": {
+      "type": "string"
+    },
+    "actual_start": {
+      "type": "string"
+    },
+    "actual_end": {
+      "type": "string"
+    },
+    "normal_ot_minutes": {
+      "type": "number",
+      "default": 0
+    },
+    "holiday_work_minutes": {
+      "type": "number",
+      "default": 0
+    },
+    "holiday_ot_minutes": {
+      "type": "number",
+      "default": 0
+    },
+    "total_minutes": {
+      "type": "number",
+      "default": 0
+    },
+    "is_holiday": {
+      "type": "boolean",
+      "default": false
+    },
+    "cause_code": {
+      "type": "string",
+      "enum": [
+        "client_late",
+        "rework",
+        "deadline_peak",
+        "under_resourced",
+        "adhoc",
+        "other"
+      ],
+      "description": "root-cause tag (set in-app)"
+    },
+    "source_batch_id": {
+      "type": "string",
+      "description": "import batch stamp for dedupe/rollback"
+    }
+  },
+  "required": []
+}

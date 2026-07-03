@@ -6,6 +6,7 @@ import PeriodSelector from '@/components/shared/PeriodSelector';
 import { defaultPeriodState, resolvePeriod, resolveComparison, shiftPeriod } from '@/utils/periodUtils';
 import { computeFirmHealth } from '@/utils/firmHealth';
 import { buildAttentionFlags } from '@/utils/attentionFlags';
+import { aggregateByPerson } from '@/utils/overtimeKpi';
 import { buildTalentMatrix } from '@/utils/talentMatrix';
 import FirmHealthHero from '@/components/executive/FirmHealthHero';
 import FinancialStrip from '@/components/executive/FinancialStrip';
@@ -31,6 +32,7 @@ export default function ExecutiveBI() {
   const { data: shoutOuts = [] }                     = useQuery({ queryKey: ['exec-shout'], queryFn: () => list('ShoutOut'), staleTime: 5 * 60_000 });
   const { data: kb = [] }                            = useQuery({ queryKey: ['exec-kb'], queryFn: () => list('KnowledgeArticle'), staleTime: 5 * 60_000 });
   const { data: configs = [] }                       = useQuery({ queryKey: ['exec-config'], queryFn: () => base44.entities.AppConfig.list(), staleTime: 60_000 });
+  const { data: otEntries = [] }                     = useQuery({ queryKey: ['exec-ot'], queryFn: () => list('OvertimeEntry', '-ot_date', 5000), staleTime: 5 * 60_000 });
 
   const config = useMemo(() => {
     const map = {};
@@ -58,8 +60,17 @@ export default function ExecutiveBI() {
     return pts;
   }, [period, users, tasks, timeEntries, meetingNotes, billings, config, fiscalStart]);
 
-  const flags = useMemo(() => cur?.from ? buildAttentionFlags({ users, tasks, timeEntries, meetingNotes, pulses, from: cur.from, to: cur.to, compareFrom: cmp?.from, compareTo: cmp?.to }) : [],
-    [users, tasks, timeEntries, meetingNotes, pulses, cur, cmp]);
+  const overtimeByEmail = useMemo(() => {
+    if (!cur?.from) return {};
+    const scopedOt = otEntries.filter((e) => e.ot_date >= cur.from && e.ot_date <= cur.to);
+    const perPerson = aggregateByPerson({ entries: scopedOt, users });
+    const map = {};
+    perPerson.forEach((p) => { if (p.email) map[p.email] = { hours: p.totalH, holidayHours: Math.round((p.holidayWorkH + p.holidayOtH) * 10) / 10 }; });
+    return map;
+  }, [otEntries, users, cur]);
+
+  const flags = useMemo(() => cur?.from ? buildAttentionFlags({ users, tasks, timeEntries, meetingNotes, pulses, from: cur.from, to: cur.to, compareFrom: cmp?.from, compareTo: cmp?.to, overtimeByEmail }) : [],
+    [users, tasks, timeEntries, meetingNotes, pulses, cur, cmp, overtimeByEmail]);
 
   const matrix = useMemo(() => cur?.from ? buildTalentMatrix({ users, tasks, timeEntries, meetingNotes, skills, pulses, shoutOuts, knowledgeArticles: kb, from: cur.from, to: cur.to }) : [],
     [users, tasks, timeEntries, meetingNotes, skills, pulses, shoutOuts, kb, cur]);
