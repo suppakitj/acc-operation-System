@@ -652,6 +652,9 @@ export default function Tasks() {
     if (f.department !== 'all') result = result.filter(t => t.department === f.department);
     if (f.status === 'active') {
       result = result.filter(t => t.status !== 'completed' && t.status !== 'cancelled');
+    } else if (f.status === 'overdue') {
+      const today = new Date().toISOString().split('T')[0];
+      result = result.filter(t => t.due_date && t.due_date < today && t.status !== 'completed' && t.status !== 'cancelled');
     } else if (f.status !== 'all') {
       result = result.filter(t => t.status === f.status);
     }
@@ -697,6 +700,7 @@ export default function Tasks() {
     review: tasks.filter(t => t.status === 'review').length,
     completed: tasks.filter(t => t.status === 'completed').length,
     cancelled: tasks.filter(t => t.status === 'cancelled').length,
+    overdue: tasks.filter(t => { const today = new Date().toISOString().split('T')[0]; return t.due_date && t.due_date < today && t.status !== 'completed' && t.status !== 'cancelled'; }).length,
   };
   const filtersWithCounts = { ...filters, _count: filtered.length, _total: tasks.length, _statusCounts: statusCounts };
 

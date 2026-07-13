@@ -16,6 +16,7 @@ export default function TaskFilters({ filters, setFilters, customers = [], users
     { key: 'in_progress', label: 'กำลังทำ', color: 'bg-orange-500 text-white' },
     { key: 'review', label: 'รอ Approve', color: 'bg-purple-600 text-white' },
     { key: 'completed', label: 'เสร็จแล้ว', color: 'bg-green-600 text-white' },
+    { key: 'overdue', label: 'Overdue', color: 'bg-red-600 text-white' },
   ];
 
   return (
