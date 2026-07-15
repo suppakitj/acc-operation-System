@@ -57,10 +57,11 @@ export default function Tasks() {
       ]);
       return [...pending, ...inProgress, ...review, ...waitingClient, ...completed, ...cancelled];
     },
+    staleTime: 30_000,
   });
   // Apply department-based visibility
   const tasks = ac.filterByDepartment(allTasks);
-  const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500), staleTime: 60_000 });
+  const { data: allCustomers = [] } = useQuery({ queryKey: ['customers'], queryFn: () => base44.entities.Customer.list('-created_date', 500), staleTime: 2 * 60_000 });
   const { data: allHolidays = [] } = useQuery({
     queryKey: ['holidays'],
     queryFn: () => base44.entities.HolidayMaster.filter({ status: 'active' }),

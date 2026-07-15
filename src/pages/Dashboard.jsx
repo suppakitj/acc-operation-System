@@ -33,9 +33,9 @@ export default function Dashboard() {
   const today = new Date();
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['dashboard-tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 1000),
-    staleTime: 60_000, // dashboard doesn't need real-time
+    staleTime: 2 * 60_000,
   });
   const { data: users = [] } = useUserList();
 

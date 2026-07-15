@@ -35,7 +35,7 @@ export default function MyDay() {
       200
     ),
     enabled: !!currentUser?.email,
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 
   const { data: myTimeEntries = [] } = useQuery({
@@ -46,7 +46,7 @@ export default function MyDay() {
       100
     ),
     enabled: !!currentUser?.email,
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 
   // ดึงงานรอตรวจ — เฉพาะ reviewer เท่านั้น
@@ -55,7 +55,7 @@ export default function MyDay() {
     queryKey: ['reviewTasks'],
     queryFn: () => base44.entities.Task.filter({ status: 'review' }, '-created_date', 50),
     enabled: !!currentUser && isReviewer,
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 
   // ดึงงานทั้งหมดที่มี pending_due_change (สำหรับ approval queue)
@@ -63,7 +63,7 @@ export default function MyDay() {
     queryKey: ['allActiveTasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 500),
     enabled: !!currentUser && isReviewer,
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 
   // Derive task groups
