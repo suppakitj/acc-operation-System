@@ -21,9 +21,9 @@ export default function WorkloadBalancer() {
   const [editingTask, setEditingTask] = useState(null);
 
   const { data: allTasks = [] } = useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['workload-tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 1000),
-    staleTime: 60_000,
+    staleTime: 2 * 60_000,
   });
 
   const activeTasks = useMemo(() =>
@@ -69,6 +69,7 @@ export default function WorkloadBalancer() {
       });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workload-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('ย้ายงานสำเร็จ');
     },
@@ -77,6 +78,7 @@ export default function WorkloadBalancer() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workload-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setEditingTask(null);
     },

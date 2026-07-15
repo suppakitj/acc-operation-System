@@ -58,9 +58,9 @@ export default function ObligationDashboard() {
   const ac = useAccessControl(currentUser);
 
   const { data: customers = [], isLoading: loadingCustomers } = useQuery({
-    queryKey: ['customers'],
+    queryKey: ['customers-active'],
     queryFn: () => base44.entities.Customer.filter({ status: 'active' }, 'company_name', 500),
-    staleTime: 120_000,
+    staleTime: 2 * 60_000,
   });
 
   const { data: tasks = [], isLoading: loadingTasks } = useQuery({

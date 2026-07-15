@@ -33,9 +33,9 @@ export default function CustomerMonthlySummary() {
   const ac = useAccessControl(currentUser);
 
   const { data: customers = [] } = useQuery({
-    queryKey: ['customers'],
+    queryKey: ['customers-active'],
     queryFn: () => base44.entities.Customer.filter({ status: 'active' }, 'company_name', 500),
-    staleTime: 120_000,
+    staleTime: 2 * 60_000,
   });
 
   const { data: allTasks = [], isLoading: loadingTasks } = useQuery({

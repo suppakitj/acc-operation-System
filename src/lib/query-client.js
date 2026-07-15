@@ -7,8 +7,8 @@ export const queryClientInstance = new QueryClient({
 			refetchOnWindowFocus: false,
 			refetchOnReconnect: false,
 			retry: 1,
-			staleTime: 45_000,   // 45s — prevent refetch on every page switch
-			gcTime: 10 * 60_000, // 10min — keep unused cache much longer for shared data
+			staleTime: 60_000,   // 60s — prevent refetch on every page switch
+			gcTime: 15 * 60_000, // 15min — keep unused cache longer for shared data
 		},
 	},
 });

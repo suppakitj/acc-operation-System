@@ -31,9 +31,9 @@ export default function TeamAnalytics() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['analytics-tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 1000),
-    staleTime: 3 * 60_000, // analytics page — doesn't need real-time
+    staleTime: 3 * 60_000,
   });
 
   const filteredTasks = useMemo(() => {

@@ -22,11 +22,11 @@ export default function AppLayout() {
     queryKey: ['unreadNotifications', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      return base44.entities.Notification.filter({ target_user: user.email, is_read: false });
+      return base44.entities.Notification.filter({ target_user: user.email, is_read: false }, '-created_date', 50);
     },
     enabled: !!user?.email,
     refetchInterval: 2 * 60_000,
-    staleTime: 60_000,
+    staleTime: 90_000,
   });
 
   const { data: lineUnreadCount = 0 } = useQuery({
@@ -35,13 +35,13 @@ export default function AppLayout() {
       const messages = await base44.entities.LineMessage.filter(
         { is_read: false, direction: 'incoming' },
         '-created_date',
-        500
+        100
       );
       return messages.length;
     },
     enabled: !!user?.email,
-    refetchInterval: 30_000,
-    staleTime: 15_000,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 
   // ─── Tab title กะพริบเมื่อ LINE ใหม่ ───

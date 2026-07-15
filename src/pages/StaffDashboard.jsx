@@ -32,9 +32,9 @@ export default function StaffDashboard() {
   const ac = useAccessControl(currentUser);
 
   const { data: tasks = [], isLoading: loadingTasks } = useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['staff-dashboard-tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 1000),
-    staleTime: 60_000,
+    staleTime: 2 * 60_000,
   });
   // staleTime inherited from global default (30s)
   const { data: users = [], isLoading: loadingUsers } = useUserList();

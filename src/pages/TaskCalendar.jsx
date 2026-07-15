@@ -61,8 +61,16 @@ export default function TaskCalendar() {
   const ac = useAccessControl(currentUser);
 
   const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date', 1000),
+    queryKey: ['calendar-tasks'],
+    queryFn: async () => {
+      const [pending, inProgress, review, waitingClient] = await Promise.all([
+        base44.entities.Task.filter({ status: 'pending' }, '-due_date', 500),
+        base44.entities.Task.filter({ status: 'in_progress' }, '-due_date', 500),
+        base44.entities.Task.filter({ status: 'review' }, '-due_date', 500),
+        base44.entities.Task.filter({ status: 'waiting_client' }, '-due_date', 500),
+      ]);
+      return [...pending, ...inProgress, ...review, ...waitingClient];
+    },
     staleTime: 60_000,
   });
 
@@ -84,6 +92,7 @@ export default function TaskCalendar() {
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('อัปเดต Due Date เรียบร้อย');
     },
@@ -172,8 +181,8 @@ export default function TaskCalendar() {
     setPendingDrag(null);
 
     // Optimistic update
-    queryClient.setQueryData(['tasks'], (old) =>
-      old.map(t => t.id === task.id ? { ...t, due_date: newDate } : t)
+    queryClient.setQueryData(['calendar-tasks'], (old) =>
+      (old || []).map(t => t.id === task.id ? { ...t, due_date: newDate } : t)
     );
 
     const currentHistory = Array.isArray(task.due_date_change_history) ? task.due_date_change_history : [];
@@ -457,6 +466,7 @@ export default function TaskCalendar() {
               reason,
             },
           });
+          queryClient.invalidateQueries({ queryKey: ['calendar-tasks'] });
           queryClient.invalidateQueries({ queryKey: ['tasks'] });
           toast.success('📨 ส่งคำขอเลื่อน Due Date แล้ว — รอหัวหน้าอนุมัติ');
           setRequestDueDrag(null);
