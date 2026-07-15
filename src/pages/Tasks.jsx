@@ -47,14 +47,15 @@ export default function Tasks() {
   const { data: allTasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
-      const [pending, inProgress, review, completed, cancelled] = await Promise.all([
+      const [pending, inProgress, review, waitingClient, completed, cancelled] = await Promise.all([
         base44.entities.Task.filter({ status: 'pending' }, '-created_date', 1000),
         base44.entities.Task.filter({ status: 'in_progress' }, '-created_date', 1000),
         base44.entities.Task.filter({ status: 'review' }, '-created_date', 1000),
+        base44.entities.Task.filter({ status: 'waiting_client' }, '-created_date', 1000),
         base44.entities.Task.filter({ status: 'completed' }, '-created_date', 1000),
         base44.entities.Task.filter({ status: 'cancelled' }, '-created_date', 500),
       ]);
-      return [...pending, ...inProgress, ...review, ...completed, ...cancelled];
+      return [...pending, ...inProgress, ...review, ...waitingClient, ...completed, ...cancelled];
     },
   });
   // Apply department-based visibility
@@ -475,6 +476,20 @@ export default function Tasks() {
       if (!data.review_note) data.review_note = 'ปิดงานโดยหัวหน้างาน (ไม่ผ่าน review)';
     }
 
+    // ── waiting_client tracking ──
+    if (editingTask && data.status === 'waiting_client' && editingTask.status !== 'waiting_client') {
+      data.waiting_client_since = new Date().toISOString();
+    }
+    if (editingTask && editingTask.status === 'waiting_client' && data.status !== 'waiting_client') {
+      // Calculate days waited and accumulate
+      const since = editingTask.waiting_client_since ? new Date(editingTask.waiting_client_since) : null;
+      if (since) {
+        const daysWaited = Math.max(0, Math.round((Date.now() - since.getTime()) / 86400000));
+        data.waiting_client_days = (editingTask.waiting_client_days || 0) + daysWaited;
+      }
+      data.waiting_client_since = null;
+    }
+
     // Auto set completed_date when status changes to completed
     if (data.status === 'completed' && !data.completed_date) {
       data.completed_date = format(new Date(), 'yyyy-MM-dd');
@@ -622,7 +637,7 @@ export default function Tasks() {
           start_time: startTime.toISOString(), is_running: true,
           description: 'เริ่มอัตโนมัติ (status → In Progress)',
         });
-      } else if ((newStatus === 'completed' || newStatus === 'review') && myRunning) {
+      } else if ((newStatus === 'completed' || newStatus === 'review' || newStatus === 'waiting_client') && myRunning) {
         // Auto-stop timer — clamp both start & end to working hours
         const rawStart = new Date(myRunning.start_time);
         const rawEnd = new Date();
@@ -654,7 +669,7 @@ export default function Tasks() {
       result = result.filter(t => t.status !== 'completed' && t.status !== 'cancelled');
     } else if (f.status === 'overdue') {
       const today = new Date().toISOString().split('T')[0];
-      result = result.filter(t => t.due_date && t.due_date < today && t.status !== 'completed' && t.status !== 'cancelled');
+      result = result.filter(t => t.due_date && t.due_date < today && t.status !== 'completed' && t.status !== 'cancelled' && t.status !== 'waiting_client');
     } else if (f.status !== 'all') {
       result = result.filter(t => t.status === f.status);
     }
@@ -699,8 +714,9 @@ export default function Tasks() {
     in_progress: tasks.filter(t => t.status === 'in_progress').length,
     review: tasks.filter(t => t.status === 'review').length,
     completed: tasks.filter(t => t.status === 'completed').length,
+    waiting_client: tasks.filter(t => t.status === 'waiting_client').length,
     cancelled: tasks.filter(t => t.status === 'cancelled').length,
-    overdue: tasks.filter(t => { const today = new Date().toISOString().split('T')[0]; return t.due_date && t.due_date < today && t.status !== 'completed' && t.status !== 'cancelled'; }).length,
+    overdue: tasks.filter(t => { const today = new Date().toISOString().split('T')[0]; return t.due_date && t.due_date < today && t.status !== 'completed' && t.status !== 'cancelled' && t.status !== 'waiting_client'; }).length,
   };
   const filtersWithCounts = { ...filters, _count: filtered.length, _total: tasks.length, _statusCounts: statusCounts };
 

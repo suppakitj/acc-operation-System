@@ -7,6 +7,7 @@ const STATUS_STYLES = {
   in_progress: 'bg-blue-100 text-blue-700',
   review: 'bg-yellow-100 text-yellow-700',
   completed: 'bg-green-100 text-green-700',
+  waiting_client: 'bg-cyan-100 text-cyan-700',
   cancelled: 'bg-red-100 text-red-700',
   active: 'bg-green-100 text-green-700',
   inactive: 'bg-gray-100 text-gray-700',

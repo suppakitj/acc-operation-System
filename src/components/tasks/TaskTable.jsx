@@ -13,10 +13,11 @@ const STATUS_STYLES = {
   pending: 'bg-gray-100 text-gray-600 border-gray-200',
   in_progress: 'bg-blue-50 text-blue-700 border-blue-200',
   review: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  waiting_client: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   completed: 'bg-green-50 text-green-700 border-green-200',
   cancelled: 'bg-red-50 text-red-600 border-red-200',
 };
-const STATUS_LABELS = { pending: 'Pending', in_progress: 'In Progress', review: 'Waiting', completed: 'Completed', cancelled: 'Cancelled' };
+const STATUS_LABELS = { pending: 'Pending', in_progress: 'In Progress', review: 'Waiting', waiting_client: 'รอลูกค้า', completed: 'Completed', cancelled: 'Cancelled' };
 const SVC_STYLES = {
   accounting: 'bg-green-100 text-green-700', payroll: 'bg-blue-100 text-blue-700',
   tax_consulting: 'bg-purple-100 text-purple-700', audit: 'bg-orange-100 text-orange-700',
@@ -118,7 +119,7 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
             const effectiveDue = task.status === 'review'
               ? (task.review_deadline || null)
               : task.due_date;
-            const isOverdue = effectiveDue && task.status !== 'completed' && task.status !== 'cancelled' && new Date(effectiveDue) < todayStart;
+            const isOverdue = effectiveDue && task.status !== 'completed' && task.status !== 'cancelled' && task.status !== 'waiting_client' && new Date(effectiveDue) < todayStart;
             const daysLate = isOverdue ? differenceInDays(todayStart, new Date(effectiveDue)) : 0;
             return (
               <tr key={task.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors cursor-pointer group"
@@ -202,6 +203,12 @@ export default function TaskTable({ tasks, selected, setSelected, onRowClick, so
                     <p className="text-[9px] text-purple-600 mt-1">
                       ⏰ กำหนดตรวจ: {format(new Date(task.review_deadline + 'T00:00:00'), 'd MMM yy')}
                     </p>
+                  )}
+                  {/* Waiting Client badge */}
+                  {task.status === 'waiting_client' && (
+                    <Badge variant="outline" className="text-[9px] mt-1 bg-cyan-50 text-cyan-700 border-cyan-200">
+                      ⏳ รอลูกค้า confirm{task.waiting_client_since ? ` (${Math.max(1, Math.round((Date.now() - new Date(task.waiting_client_since).getTime()) / 86400000))} วัน)` : ''}
+                    </Badge>
                   )}
                   {/* Staff sees waiting badge */}
                   {task.status === 'review' && !isReviewer && (

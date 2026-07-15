@@ -1,5 +1,5 @@
 import React from 'react';
-import { ClipboardList, AlertTriangle, Clock, Inbox, Search, CheckCircle2, PlayCircle } from 'lucide-react';
+import { ClipboardList, AlertTriangle, Clock, Inbox, Search, CheckCircle2, PlayCircle, UserCheck } from 'lucide-react';
 import { differenceInDays, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -9,13 +9,14 @@ const VARIANTS = {
   yellow: 'bg-yellow-50 border-yellow-200 text-yellow-700',
   orange: 'bg-orange-50 border-orange-200 text-orange-700',
   purple: 'bg-purple-50 border-purple-200 text-purple-700',
+  cyan: 'bg-cyan-50 border-cyan-200 text-cyan-700',
   green: 'bg-green-50 border-green-200 text-green-700',
   slate: 'bg-slate-50 border-slate-200 text-slate-700',
 };
 const ICON_COLORS = {
   blue: 'text-blue-500', red: 'text-red-500', yellow: 'text-yellow-500',
-  orange: 'text-orange-500', purple: 'text-purple-500', green: 'text-green-500',
-  slate: 'text-slate-500',
+  orange: 'text-orange-500', purple: 'text-purple-500', cyan: 'text-cyan-500',
+  green: 'text-green-500', slate: 'text-slate-500',
 };
 
 export default function TaskStatsRow({ tasks }) {
@@ -25,7 +26,8 @@ export default function TaskStatsRow({ tasks }) {
   const active = tasks.filter(t => t.status !== 'completed' && t.status !== 'cancelled');
   const pending = tasks.filter(t => t.status === 'pending').length;
   const inProgress = tasks.filter(t => t.status === 'in_progress').length;
-  const overdue = active.filter(t => t.due_date && new Date(t.due_date) < todayStart).length;
+  const waitingClient = tasks.filter(t => t.status === 'waiting_client').length;
+  const overdue = active.filter(t => t.due_date && new Date(t.due_date) < todayStart && t.status !== 'waiting_client').length;
   const due3 = active.filter(t => { if (!t.due_date) return false; const d = differenceInDays(new Date(t.due_date), todayStart); return d >= 0 && d <= 3; }).length;
   const waitingApprove = tasks.filter(t => t.status === 'review').length;
   const completedToday = tasks.filter(t => t.completed_date === todayStr).length;
@@ -37,11 +39,12 @@ export default function TaskStatsRow({ tasks }) {
     { label: 'เลยกำหนด', value: overdue, icon: AlertTriangle, variant: 'red' },
     { label: 'ใกล้กำหนด 3 วัน', value: due3, icon: Clock, variant: 'yellow' },
     { label: 'รอ Approve', value: waitingApprove, icon: Search, variant: 'purple' },
+    { label: 'รอลูกค้า', value: waitingClient, icon: UserCheck, variant: 'cyan' },
     { label: 'เสร็จวันนี้', value: completedToday, icon: CheckCircle2, variant: 'green' },
   ];
 
   return (
-    <div className="grid grid-cols-4 lg:grid-cols-7 gap-2 md:gap-3">
+    <div className="grid grid-cols-4 lg:grid-cols-8 gap-2 md:gap-3">
       {stats.map(s => (
         <div key={s.label} className={cn('rounded-xl border p-2.5 md:p-3', VARIANTS[s.variant])}>
           <div className="flex items-center justify-between">

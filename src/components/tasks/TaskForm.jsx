@@ -268,6 +268,7 @@ export default function TaskForm({ task, onSubmit, onSaveAsTemplate, isLoading, 
               <SelectItem value="pending">{t('status_pending')}</SelectItem>
               <SelectItem value="in_progress">{t('status_in_progress')}</SelectItem>
               <SelectItem value="review">{t('status_review')}</SelectItem>
+              <SelectItem value="waiting_client">⏳ รอลูกค้า</SelectItem>
               {currentUser?.role !== 'staff' && (
                 <SelectItem value="completed">{t('status_completed')}</SelectItem>
               )}

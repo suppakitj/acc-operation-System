@@ -37,7 +37,7 @@ export function computeExecution({ tasks, timeEntries = [], user, email, from, t
   const total_assigned = myTasks.length;
   const completed = myTasks.filter(t => t.status === 'completed').length;
   const cancelled = myTasks.filter(t => t.status === 'cancelled').length;
-  const in_flight = myTasks.filter(t => ['pending', 'in_progress', 'review'].includes(t.status)).length;
+  const in_flight = myTasks.filter(t => ['pending', 'in_progress', 'review', 'waiting_client'].includes(t.status)).length;
   const completion_rate = total_assigned > 0 ? completed / total_assigned : 0;
 
   // Hours from TimeEntry
@@ -165,6 +165,13 @@ export function computeEfficiency({ tasks, meetingNotes = [], email, from, to })
   const onTimeTasks = completedTasks.filter(t => {
     const orig = getOriginalDue(t);
     if (!orig || !t.completed_date) return true; // no data = assume on time
+    // Adjust for waiting_client days — add accumulated waiting days to allowed deadline
+    const waitDays = t.waiting_client_days || 0;
+    if (waitDays > 0) {
+      const adjustedDue = new Date(orig);
+      adjustedDue.setDate(adjustedDue.getDate() + waitDays);
+      return t.completed_date <= adjustedDue.toISOString().slice(0, 10);
+    }
     return t.completed_date <= orig;
   });
   const on_time_rate = completedTasks.length > 0 ? onTimeTasks.length / completedTasks.length : 1;
@@ -183,7 +190,7 @@ export function computeEfficiency({ tasks, meetingNotes = [], email, from, to })
   const postponedTasks = myTasks.filter(t => (t.due_date_change_count || 0) > 0);
   const postpone_ratio = myTasks.length > 0 ? postponedTasks.length / myTasks.length : 0;
 
-  // Overdue open
+  // Overdue open — exclude waiting_client (ลูกค้าไม่ confirm ไม่กระทบ KPI)
   const now = new Date().toISOString().slice(0, 10);
   const overdue_open = myTasks.filter(t =>
     ['pending', 'in_progress', 'review'].includes(t.status) && t.due_date && t.due_date < now
