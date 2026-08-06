@@ -10,20 +10,23 @@ import FileListTable from '../components/line-files/FileListTable';
 import LineFileStats from '../components/line-files/LineFileStats';
 
 export default function LineFiles() {
-  const [folderStack, setFolderStack] = useState([]); // [{id, name}, ...]
+  const [folderStack, setFolderStack] = useState([]); // [{id, name, allIds?}, ...]
   const [currentFolderId, setCurrentFolderId] = useState(null);
+  const [currentAllIds, setCurrentAllIds] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
   const [zipping, setZipping] = useState(null); // folder id being zipped
   const [selectedIds, setSelectedIds] = useState([]);
   const [zippingMulti, setZippingMulti] = useState(false);
   const [failedIds, setFailedIds] = useState(new Set());
 
-  const currentKey = currentFolderId || 'root';
+  const currentKey = currentAllIds ? `merged-${currentAllIds.join(',')}` : (currentFolderId || 'root');
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['line-drive-files', currentKey],
     queryFn: async () => {
-      const params = currentFolderId ? { action: 'list', folder_id: currentFolderId } : { action: 'list' };
+      const params = currentFolderId
+        ? { action: 'list', folder_id: currentFolderId, ...(currentAllIds ? { all_folder_ids: currentAllIds } : {}) }
+        : { action: 'list' };
       const res = await base44.functions.invoke('browseLineDrive', params);
       return res.data;
     },
@@ -37,22 +40,25 @@ export default function LineFiles() {
     ...folderStack,
   ];
 
-  const handleFolderClick = (folderId, folderName) => {
-    setFolderStack(prev => [...prev, { id: folderId, name: folderName }]);
+  const handleFolderClick = (folderId, folderName, allIds) => {
+    setFolderStack(prev => [...prev, { id: folderId, name: folderName, allIds }]);
     setCurrentFolderId(folderId);
+    setCurrentAllIds(allIds || null);
     setSelectedIds([]);
   };
 
   const handleBreadcrumbNav = (folderId) => {
     if (!folderId) {
-      // Go to root
       setFolderStack([]);
       setCurrentFolderId(null);
+      setCurrentAllIds(null);
     } else {
       const idx = folderStack.findIndex(f => f.id === folderId);
       if (idx >= 0) {
-        setFolderStack(prev => prev.slice(0, idx + 1));
+        const newStack = folderStack.slice(0, idx + 1);
+        setFolderStack(newStack);
         setCurrentFolderId(folderId);
+        setCurrentAllIds(newStack[idx]?.allIds || null);
       }
     }
   };
@@ -62,6 +68,7 @@ export default function LineFiles() {
       const newStack = folderStack.slice(0, -1);
       setFolderStack(newStack);
       setCurrentFolderId(newStack.length > 0 ? newStack[newStack.length - 1].id : null);
+      setCurrentAllIds(newStack.length > 0 ? newStack[newStack.length - 1].allIds || null : null);
     }
   };
 

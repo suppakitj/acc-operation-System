@@ -116,7 +116,7 @@ export default function FileListTable({ files, onFolderClick, onDownload, downlo
             <tr
               key={file.id}
               className={`border-b last:border-b-0 hover:bg-muted/50 transition-colors ${file.isFolder ? 'cursor-pointer' : ''}`}
-              onClick={() => file.isFolder && onFolderClick(file.id, file.name)}
+              onClick={() => file.isFolder && onFolderClick(file.id, file.name, file._allIds)}
             >
               <td className="py-2.5 px-2 w-8" onClick={e => e.stopPropagation()}>
                 {!file.isFolder && (

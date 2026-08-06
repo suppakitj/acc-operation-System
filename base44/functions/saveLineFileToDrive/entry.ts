@@ -5,21 +5,29 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
  * LINE Files / {customerName} / {YYYY} / {MM} / {DD} / filename
  */
 
+// In-memory folder ID cache to prevent duplicate creation within concurrent requests
+const folderCache = new Map();
+
 async function findOrCreateFolder(accessToken, name, parentId) {
-  // Search for existing folder by name under parent
+  const cacheKey = `${parentId || 'root'}::${name}`;
+  if (folderCache.has(cacheKey)) return folderCache.get(cacheKey);
+
+  const escapedName = name.replace(/'/g, "\\'");
   const q = parentId
-    ? `name='${name}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`
-    : `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    ? `name='${escapedName}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`
+    : `name='${escapedName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
 
   const searchRes = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&spaces=drive`,
+    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&orderBy=createdTime&spaces=drive`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
 
   if (searchRes.ok) {
     const data = await searchRes.json();
     if (data.files && data.files.length > 0) {
-      return data.files[0].id;
+      const id = data.files[0].id;
+      folderCache.set(cacheKey, id);
+      return id;
     }
   }
 
@@ -45,6 +53,31 @@ async function findOrCreateFolder(accessToken, name, parentId) {
   }
 
   const folder = await createRes.json();
+
+  // Re-search to get the earliest-created folder (in case of race condition)
+  const verifyRes = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&orderBy=createdTime&spaces=drive`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (verifyRes.ok) {
+    const verifyData = await verifyRes.json();
+    if (verifyData.files && verifyData.files.length > 0) {
+      const canonicalId = verifyData.files[0].id;
+      folderCache.set(cacheKey, canonicalId);
+      // Clean up duplicate if we created a different one
+      if (canonicalId !== folder.id) {
+        console.log(`Race condition detected for folder "${name}" — using ${canonicalId}, trashing duplicate ${folder.id}`);
+        await fetch(`https://www.googleapis.com/drive/v3/files/${folder.id}`, {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trashed: true }),
+        }).catch(() => {});
+      }
+      return canonicalId;
+    }
+  }
+
+  folderCache.set(cacheKey, folder.id);
   return folder.id;
 }
 
