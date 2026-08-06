@@ -44,9 +44,10 @@ Deno.serve(async (req) => {
     return allFiles;
   }
 
-  // Helper: find ALL sibling folders with the same name under the same parent
+  // Helper: find ALL folders with same name AND same parent-name across duplicated trees
+  // Walks up to find the parent name, then searches globally for all parents with that name,
+  // then finds this folder name inside each of those parents.
   async function findSiblingFolderIds(folderId) {
-    // Get this folder's name and parent
     const metaRes = await fetch(
       `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name,parents`,
       { headers: authHeader }
@@ -56,16 +57,42 @@ Deno.serve(async (req) => {
     const parentId = meta.parents?.[0];
     if (!parentId) return [folderId];
 
-    // Search for all folders with same name under same parent
-    const escapedName = meta.name.replace(/'/g, "\\'");
-    const q = `name='${escapedName}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-    const searchRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)&spaces=drive`,
+    // Get parent name
+    const parentMetaRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${parentId}?fields=id,name`,
       { headers: authHeader }
     );
-    if (!searchRes.ok) return [folderId];
-    const data = await searchRes.json();
-    return (data.files || []).map(f => f.id);
+    if (!parentMetaRes.ok) return [folderId];
+    const parentMeta = await parentMetaRes.json();
+
+    // Find ALL folders globally with the same parent name (across all roots)
+    const escapedParentName = parentMeta.name.replace(/'/g, "\\'");
+    const pq = `name='${escapedParentName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    const pRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(pq)}&fields=files(id)&spaces=drive&pageSize=50`,
+      { headers: authHeader }
+    );
+    let allParentIds = [parentId];
+    if (pRes.ok) {
+      const pData = await pRes.json();
+      allParentIds = (pData.files || []).map(f => f.id);
+    }
+
+    // Search for all folders with same name under ALL matching parents
+    const escapedName = meta.name.replace(/'/g, "\\'");
+    const allIds = [];
+    for (const pid of allParentIds) {
+      const q = `name='${escapedName}' and '${pid}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+      const searchRes = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)&spaces=drive`,
+        { headers: authHeader }
+      );
+      if (searchRes.ok) {
+        const data = await searchRes.json();
+        allIds.push(...(data.files || []).map(f => f.id));
+      }
+    }
+    return allIds.length > 0 ? allIds : [folderId];
   }
 
   // Helper: merge children from multiple folder IDs, dedup folders by name (keep newest)
@@ -233,9 +260,15 @@ Deno.serve(async (req) => {
   }
 
   // Subfolder: use all_folder_ids if provided (from frontend merge), else find siblings
-  const folderIdsToMerge = (all_folder_ids && all_folder_ids.length > 0)
-    ? all_folder_ids
-    : await findSiblingFolderIds(folder_id);
+  // Always find siblings to catch any duplicates frontend may have missed (e.g. stale cache)
+  let folderIdsToMerge;
+  if (all_folder_ids && all_folder_ids.length > 1) {
+    // Frontend already merged multiple — trust it
+    folderIdsToMerge = all_folder_ids;
+  } else {
+    // Single or no IDs — always search for siblings in case of duplicates
+    folderIdsToMerge = await findSiblingFolderIds(folder_id);
+  }
   const mergedFiles = await listMergedContents(folderIdsToMerge);
 
   // Get folder name for breadcrumb
