@@ -5,71 +5,83 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
  * LINE Files / {customerName} / {YYYY} / {MM} / {DD} / filename
  */
 
-// In-memory folder ID cache to prevent duplicate creation within concurrent requests
-const folderCache = new Map();
+// In-flight promise cache: prevents concurrent requests from creating duplicates
+// Maps cacheKey → Promise<folderId> so the second caller awaits the first's result
+const inflightCache = new Map();
 
 async function findOrCreateFolder(accessToken, name, parentId) {
   const cacheKey = `${parentId || 'root'}::${name}`;
-  if (folderCache.has(cacheKey)) return folderCache.get(cacheKey);
 
+  // If another request is already finding/creating this exact folder, await it
+  if (inflightCache.has(cacheKey)) {
+    return inflightCache.get(cacheKey);
+  }
+
+  const promise = _doFindOrCreate(accessToken, name, parentId);
+  inflightCache.set(cacheKey, promise);
+
+  try {
+    const result = await promise;
+    return result;
+  } catch (e) {
+    inflightCache.delete(cacheKey); // allow retry on failure
+    throw e;
+  }
+}
+
+async function _doFindOrCreate(accessToken, name, parentId) {
+  const authH = { Authorization: `Bearer ${accessToken}` };
   const escapedName = name.replace(/'/g, "\\'");
+
+  // For root "LINE Files", always search with parentId constraint via 'root' in parents
   const q = parentId
     ? `name='${escapedName}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`
-    : `name='${escapedName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    : `name='${escapedName}' and 'root' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
 
+  // Search existing
   const searchRes = await fetch(
     `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&orderBy=createdTime&spaces=drive`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
+    { headers: authH }
   );
-
   if (searchRes.ok) {
     const data = await searchRes.json();
     if (data.files && data.files.length > 0) {
-      const id = data.files[0].id;
-      folderCache.set(cacheKey, id);
-      return id;
+      return data.files[0].id; // use earliest-created
     }
   }
 
   // Create folder
-  const metadata = {
-    name,
-    mimeType: 'application/vnd.google-apps.folder',
-  };
-  if (parentId) metadata.parents = [parentId];
-
+  const metadata = { name, mimeType: 'application/vnd.google-apps.folder' };
+  if (parentId) {
+    metadata.parents = [parentId];
+  }
   const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { ...authH, 'Content-Type': 'application/json' },
     body: JSON.stringify(metadata),
   });
-
   if (!createRes.ok) {
     const errText = await createRes.text();
     throw new Error(`Failed to create folder "${name}": ${errText}`);
   }
-
   const folder = await createRes.json();
 
-  // Re-search to get the earliest-created folder (in case of race condition)
+  // Post-create verify: re-search to pick earliest (race condition guard)
+  // Small delay to let Drive index the new folder
+  await new Promise(r => setTimeout(r, 300));
   const verifyRes = await fetch(
     `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&orderBy=createdTime&spaces=drive`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
+    { headers: authH }
   );
   if (verifyRes.ok) {
     const verifyData = await verifyRes.json();
     if (verifyData.files && verifyData.files.length > 0) {
       const canonicalId = verifyData.files[0].id;
-      folderCache.set(cacheKey, canonicalId);
-      // Clean up duplicate if we created a different one
       if (canonicalId !== folder.id) {
-        console.log(`Race condition detected for folder "${name}" — using ${canonicalId}, trashing duplicate ${folder.id}`);
-        await fetch(`https://www.googleapis.com/drive/v3/files/${folder.id}`, {
+        console.log(`Race condition: folder "${name}" — using ${canonicalId}, trashing duplicate ${folder.id}`);
+        fetch(`https://www.googleapis.com/drive/v3/files/${folder.id}`, {
           method: 'PATCH',
-          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          headers: { ...authH, 'Content-Type': 'application/json' },
           body: JSON.stringify({ trashed: true }),
         }).catch(() => {});
       }
@@ -77,7 +89,6 @@ async function findOrCreateFolder(accessToken, name, parentId) {
     }
   }
 
-  folderCache.set(cacheKey, folder.id);
   return folder.id;
 }
 

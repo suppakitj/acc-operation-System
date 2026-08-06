@@ -44,55 +44,67 @@ Deno.serve(async (req) => {
     return allFiles;
   }
 
-  // Helper: find ALL folders with same name AND same parent-name across duplicated trees
-  // Walks up to find the parent name, then searches globally for all parents with that name,
-  // then finds this folder name inside each of those parents.
-  async function findSiblingFolderIds(folderId) {
-    const metaRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name,parents`,
-      { headers: authHeader }
-    );
-    if (!metaRes.ok) return [folderId];
-    const meta = await metaRes.json();
-    const parentId = meta.parents?.[0];
-    if (!parentId) return [folderId];
-
-    // Get parent name
-    const parentMetaRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${parentId}?fields=id,name`,
-      { headers: authHeader }
-    );
-    if (!parentMetaRes.ok) return [folderId];
-    const parentMeta = await parentMetaRes.json();
-
-    // Find ALL folders globally with the same parent name (across all roots)
-    const escapedParentName = parentMeta.name.replace(/'/g, "\\'");
-    const pq = `name='${escapedParentName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-    const pRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(pq)}&fields=files(id)&spaces=drive&pageSize=50`,
-      { headers: authHeader }
-    );
-    let allParentIds = [parentId];
-    if (pRes.ok) {
-      const pData = await pRes.json();
-      allParentIds = (pData.files || []).map(f => f.id);
-    }
-
-    // Search for all folders with same name under ALL matching parents
-    const escapedName = meta.name.replace(/'/g, "\\'");
-    const allIds = [];
-    for (const pid of allParentIds) {
-      const q = `name='${escapedName}' and '${pid}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-      const searchRes = await fetch(
-        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)&spaces=drive`,
+  // Helper: walk up from a folder to build its path (names array from root to folder)
+  // e.g. ["LINE Files", "ACC x TPM", "2026", "08"]
+  async function getPathToRoot(folderId) {
+    const path = [];
+    let currentId = folderId;
+    const maxDepth = 10; // safety limit
+    for (let i = 0; i < maxDepth; i++) {
+      const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${currentId}?fields=id,name,parents`,
         { headers: authHeader }
       );
-      if (searchRes.ok) {
-        const data = await searchRes.json();
-        allIds.push(...(data.files || []).map(f => f.id));
-      }
+      if (!res.ok) break;
+      const meta = await res.json();
+      path.unshift({ id: meta.id, name: meta.name });
+      if (meta.name === 'LINE Files' || !meta.parents?.[0]) break;
+      currentId = meta.parents[0];
     }
-    return allIds.length > 0 ? allIds : [folderId];
+    return path;
+  }
+
+  // Helper: find ALL duplicate folders at the same path across ALL "LINE Files" roots
+  // e.g. for path ["LINE Files", "ACC x TPM", "2026"],
+  // finds all "LINE Files" roots, then all "ACC x TPM" inside each, then all "2026" inside each
+  async function findSiblingFolderIds(folderId) {
+    const pathFromRoot = await getPathToRoot(folderId);
+    if (pathFromRoot.length === 0) return [folderId];
+
+    // If the root isn't "LINE Files", we can't do cross-root merge
+    if (pathFromRoot[0].name !== 'LINE Files') return [folderId];
+
+    // Step 1: find ALL "LINE Files" root folders
+    const rootQ = `name='LINE Files' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    const rootRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(rootQ)}&fields=files(id)&spaces=drive&pageSize=50`,
+      { headers: authHeader }
+    );
+    if (!rootRes.ok) return [folderId];
+    const rootData = await rootRes.json();
+    let currentLevelIds = (rootData.files || []).map(f => f.id);
+    if (currentLevelIds.length === 0) return [folderId];
+
+    // Step 2: walk down the path from index 1 (skip "LINE Files" itself)
+    for (let i = 1; i < pathFromRoot.length; i++) {
+      const segmentName = pathFromRoot[i].name.replace(/'/g, "\\'");
+      const nextLevelIds = [];
+      for (const pid of currentLevelIds) {
+        const q = `name='${segmentName}' and '${pid}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+        const res = await fetch(
+          `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)&spaces=drive`,
+          { headers: authHeader }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          nextLevelIds.push(...(data.files || []).map(f => f.id));
+        }
+      }
+      currentLevelIds = nextLevelIds;
+      if (currentLevelIds.length === 0) return [folderId];
+    }
+
+    return currentLevelIds.length > 0 ? currentLevelIds : [folderId];
   }
 
   // Helper: merge children from multiple folder IDs, dedup folders by name (keep newest)
