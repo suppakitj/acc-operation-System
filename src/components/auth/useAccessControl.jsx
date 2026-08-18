@@ -135,6 +135,7 @@ export function useAccessControl(user) {
       // line_chat, line_requests & line_files → always visible for relevant roles
       menus.push('line_chat');
       menus.push('line_requests');
+      menus.push('request_triage');
       menus.push('line_files');
       if (p('referral') !== 'no')    menus.push('referral');
 

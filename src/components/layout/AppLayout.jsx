@@ -44,6 +44,21 @@ export default function AppLayout() {
     staleTime: 30_000,
   });
 
+  const { data: triageCount = 0 } = useQuery({
+    queryKey: ['triageCount'],
+    queryFn: async () => {
+      const msgs = await base44.entities.LineMessage.filter(
+        { direction: 'incoming', triage_status: 'new', is_actionable: true },
+        '-created_date',
+        200
+      );
+      return msgs.length;
+    },
+    enabled: !!user?.email,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+
   // ─── Tab title กะพริบเมื่อ LINE ใหม่ ───
   const originalTitle = useRef(document.title);
   const titleInterval = useRef(null);
@@ -120,6 +135,7 @@ export default function AppLayout() {
         mobileOpen={mobileOpen}
         setMobileOpen={setMobileOpen}
         lineUnreadCount={lineUnreadCount}
+        triageCount={triageCount}
       />
       <div className={cn(
         "transition-all duration-300",
