@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { AlertTriangle, Users, User, Scale, Clock, Flag, ListChecks, XCircle, Plus, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import CreateTaskFromChat from '@/components/chat/CreateTaskFromChat';
 
 const TYPE_LABELS = {
   tax_invoice: 'ใบกำกับภาษี',
@@ -68,6 +69,9 @@ export default function RequestTriage() {
   const [dismissReason, setDismissReason] = useState('');
   const [dismissCustom, setDismissCustom] = useState('');
   const [dismissLoading, setDismissLoading] = useState(false);
+
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [taskMessage, setTaskMessage] = useState(null);
 
   // Fetch actionable new messages
   const { data: messages = [], isLoading } = useQuery({
@@ -139,9 +143,9 @@ export default function RequestTriage() {
     }
   };
 
-  // Create task (placeholder — Phase 3 will implement full dialog)
   const handleCreateTask = (msg) => {
-    toast({ title: 'สร้างงาน', description: 'ฟีเจอร์สร้างงานจากคำขอจะพร้อมใช้ใน Phase 3' });
+    setTaskMessage(msg);
+    setTaskDialogOpen(true);
   };
 
   const getRowBg = (msg) => {
@@ -278,6 +282,14 @@ export default function RequestTriage() {
             </table>
           </div>
         )}
+
+        {/* Create Task Dialog */}
+        <CreateTaskFromChat
+          open={taskDialogOpen}
+          onOpenChange={setTaskDialogOpen}
+          message={taskMessage}
+          chatDisplayName={taskMessage?.display_name || ''}
+        />
 
         {/* Dismiss Dialog */}
         <Dialog open={dismissOpen} onOpenChange={setDismissOpen}>

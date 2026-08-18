@@ -94,9 +94,25 @@ export default function CreateTaskFromChat({ open, onOpenChange, message, chatDi
   const update = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Task.create(data),
+    mutationFn: async (data) => {
+      const task = await base44.entities.Task.create(data);
+      // Link back: update source LineMessage triage status
+      if (message?.id) {
+        try {
+          await base44.entities.LineMessage.update(message.id, {
+            triage_status: 'task_created',
+            task_id: task.id,
+          });
+        } catch (e) {
+          console.warn('Failed to update triage status:', e.message);
+        }
+      }
+      return task;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['triage-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['triageCount'] });
       toast.success('สร้างงานจากข้อความ LINE สำเร็จ');
       onOpenChange(false);
     },
@@ -108,7 +124,13 @@ export default function CreateTaskFromChat({ open, onOpenChange, message, chatDi
       toast.error('กรุณาใส่ชื่องาน');
       return;
     }
-    createMutation.mutate(form);
+    const payload = {
+      ...form,
+      source_channel: 'line',
+      source_message_id: message?.id || '',
+      source_line_user_id: message?.line_user_id || '',
+    };
+    createMutation.mutate(payload);
   };
 
   return (

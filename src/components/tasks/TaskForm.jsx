@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, ClipboardList, AlertTriangle, Camera, Paperclip, Loader2, X, Image as ImageIcon, Calendar } from 'lucide-react';
+import { Plus, Trash2, ClipboardList, AlertTriangle, Camera, Paperclip, Loader2, X, Image as ImageIcon, Calendar, MessageCircle } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
+import { Link } from 'react-router-dom';
 import TaskTimeTracker from '../time-tracking/TaskTimeTracker';
 import DueDateChangeHistory from './DueDateChangeHistory';
 import RequestDueDateDialog from './RequestDueDateDialog';
@@ -495,6 +496,19 @@ export default function TaskForm({ task, onSubmit, onSaveAsTemplate, isLoading, 
           <p className="text-[10px] text-muted-foreground">ยังไม่มี — กด "เพิ่มปัญหา" เมื่อเจอปัญหาระหว่างตรวจ</p>
         )}
       </div>
+
+      {/* Source LINE message link */}
+      {task?.source_message_id && (
+        <div className="p-2.5 bg-green-50 border border-green-200 rounded-lg">
+          <Link
+            to={`/LineChat?scrollTo=${task.source_message_id}&chat=${task.source_line_user_id || ''}`}
+            className="flex items-center gap-2 text-xs text-green-700 hover:text-green-900 font-medium"
+          >
+            <MessageCircle className="w-4 h-4" />
+            📱 ดูข้อความต้นทางใน LINE
+          </Link>
+        </div>
+      )}
 
       {/* Due Date Change History */}
       {task?.id && <DueDateChangeHistory task={task} />}
