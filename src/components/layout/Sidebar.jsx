@@ -7,7 +7,7 @@ import {
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays, RotateCcw,
   ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target, Activity,
   HeartPulse, KeyRound, Globe, BookOpen, BookMarked, Home, ClipboardCheck, CalendarClock, FileBarChart, GraduationCap, FileText, ShieldAlert, Lightbulb, Trophy,
-  LayoutPanelTop, FileBarChart2, UserCheck, Sparkles, Search, Clock4, Flag,
+  LayoutPanelTop, FileBarChart2, UserCheck, Sparkles, Search, Clock4, Flag, Tags,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -73,6 +73,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'request_triage', label: 'คิวรับเรื่อง', icon: Flag, path: '/RequestTriage' },
     { id: 'line_files', label: 'LINE Files', icon: HardDrive, path: '/LineFiles' },
     // ─── ตั้งค่า & ระบบ ───
+    { id: 'keyword_manager', label: 'จัดการคำค้นหา', icon: Tags, path: '/KeywordManager' },
     { id: 'service_master', label: 'Service Master', icon: Briefcase, path: '/ServiceMaster' },
     { id: 'external_service', label: 'External Service', icon: Globe, path: '/ExternalServiceMaster' },
     { id: 'holiday_master', label: 'Holiday Master', icon: CalendarHeart, path: '/HolidayMaster' },
@@ -99,7 +100,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { key: 'executive', label: 'Executive BI', icon: Sparkles, ids: ['executive_bi', 'kpi_report_center', 'performance_evaluation'] },
     { key: 'operational', label: 'Operational Analytics', icon: Target, ids: ['team_analytics', 'staff_scorecard', 'team_ranking', 'workload'] },
     { key: 'diagnostic', label: 'Diagnostic Deep-Dives', icon: Search, ids: ['rework_analytics', 'findings_dashboard', 'postpone_analytics', 'obligation_dashboard', 'staff_cost_report', 'engagement_insights', 'forecast_risk', 'overtime_analytics', 'staff_dashboard', 'customer_summary'] },
-    { key: 'system', label: 'ตั้งค่า & ระบบ', icon: Cog, ids: ['service_master', 'external_service', 'holiday_master', 'users', 'roles', 'audit', 'backup', 'settings'] },
+    { key: 'system', label: 'ตั้งค่า & ระบบ', icon: Cog, ids: ['keyword_manager', 'service_master', 'external_service', 'holiday_master', 'users', 'roles', 'audit', 'backup', 'settings'] },
 
   ];
 

@@ -127,6 +127,7 @@ export function useAccessControl(user) {
       if (p('template') !== 'no')        menus.push('templates');
       if (p('peak') !== 'no')            menus.push('peak');
       if (p('service_master') !== 'no')  menus.push('service_master');
+      if (role === 'admin') menus.push('keyword_manager');
       if (p('holiday_master') !== 'no')  menus.push('holiday_master');
       if (p('view_billing') !== 'no')    menus.push('billing');
       if (p('user_master') !== 'no')     menus.push('users');
