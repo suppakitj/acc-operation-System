@@ -107,6 +107,13 @@ export default function CreateTaskFromChat({ open, onOpenChange, message, chatDi
           console.warn('Failed to update triage status:', e.message);
         }
       }
+      // Auto-acknowledge back to LINE group
+      if (data.source_channel === 'line') {
+        base44.functions.invoke('lineAckRequest', {
+          task: { ...data, id: task.id },
+          event_type: 'created',
+        }).catch(e => console.warn('lineAckRequest error:', e.message));
+      }
       return task;
     },
     onSuccess: () => {

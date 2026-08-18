@@ -495,6 +495,14 @@ export default function Tasks() {
     if (data.status === 'completed' && !data.completed_date) {
       data.completed_date = format(new Date(), 'yyyy-MM-dd');
     }
+
+    // LINE ack: notify customer group when LINE-sourced task completes
+    if (data.status === 'completed' && editingTask?.status !== 'completed' && editingTask?.source_channel === 'line') {
+      base44.functions.invoke('lineAckRequest', {
+        task: { ...editingTask, ...data },
+        event_type: 'completed',
+      }).catch(e => console.warn('lineAckRequest completed error:', e.message));
+    }
     // Clear completed_date if status is no longer completed
     if (data.status !== 'completed') {
       data.completed_date = null;

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2, MessageSquare, Loader2, Bell } from 'lucide-react';
+import { Plus, Trash2, MessageSquare, Loader2, Bell, Bot } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function CustomerLineGroups({ customerId, readOnly }) {
@@ -65,6 +65,14 @@ export default function CustomerLineGroups({ customerId, readOnly }) {
     );
   };
 
+  const toggleAutoAck = (group) => {
+    const newVal = !group.auto_acknowledge;
+    updateMutation.mutate(
+      { id: group.id, data: { auto_acknowledge: newVal } },
+      { onSuccess: () => toast.success(newVal ? `เปิดตอบรับอัตโนมัติกลุ่ม "${group.group_name}" แล้ว` : `ปิดตอบรับอัตโนมัติกลุ่ม "${group.group_name}" แล้ว`) }
+    );
+  };
+
   if (!customerId) {
     return (
       <p className="text-[11px] text-muted-foreground">บันทึกข้อมูลลูกค้าก่อน จึงจะเพิ่มกลุ่ม LINE ได้</p>
@@ -92,7 +100,20 @@ export default function CustomerLineGroups({ customerId, readOnly }) {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                {/* Auto Acknowledge Toggle */}
+                <div className="flex items-center gap-1.5" title={g.auto_acknowledge ? 'ตอบรับ/แจ้งเสร็จอัตโนมัติ' : 'ปิดตอบรับอัตโนมัติ'}>
+                  <Bot className={`w-3 h-3 ${g.auto_acknowledge ? 'text-green-600' : 'text-muted-foreground/40'}`} />
+                  <Switch
+                    checked={!!g.auto_acknowledge}
+                    onCheckedChange={() => toggleAutoAck(g)}
+                    disabled={readOnly}
+                    className="scale-75"
+                  />
+                </div>
+                {g.auto_acknowledge && (
+                  <Badge className="bg-green-100 text-green-700 text-[8px] px-1.5 border-green-200">🤖 Auto</Badge>
+                )}
                 {/* Tax Status Toggle */}
                 <div className="flex items-center gap-1.5" title={g.receive_tax_status ? 'รับแจ้งสถานะภาษี' : 'ไม่รับแจ้งสถานะภาษี'}>
                   <Bell className={`w-3 h-3 ${g.receive_tax_status ? 'text-orange-500' : 'text-muted-foreground/40'}`} />
