@@ -96,6 +96,13 @@ const PERMISSION_GROUPS = [
     ],
   },
   {
+    name: '💬 LINE',
+    items: [
+      { key: 'line_requests', label: 'คำขอจาก LINE' },
+      { key: 'request_triage', label: 'คิวรับเรื่อง' },
+    ],
+  },
+  {
     name: '⚙️ Master Data & เครื่องมือ',
     items: [
       { key: 'service_master', label: 'Service Master' },
@@ -201,6 +208,8 @@ const DEFAULT_PERMS = {
   kpi_report_center:      { admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
   performance_evaluation: { admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
   overtime_analytics:     { admin: 'yes', management: 'yes', manager: 'no', super_supervisor: 'no', staff: 'no' },
+  line_requests:    { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
+  request_triage:   { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
   taxqa_intake:     { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'yes' },
   taxqa_review:     { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
   taxqa_dashboard:  { admin: 'yes', management: 'yes', manager: 'yes', super_supervisor: 'yes', staff: 'no' },
