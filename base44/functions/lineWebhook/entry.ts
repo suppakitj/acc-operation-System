@@ -42,7 +42,6 @@ const TYPE_META = {
 };
 
 const PRIORITY_ORDER = ['sso_terminate','sso_enroll','wht_cert','tax_invoice'];
-const ACTION_CUES = ['ช่วย','รบกวน','ขอ','ออกให้','ทำให้','แจ้ง','ส่งให้','เตรียม','จัดการ','ดำเนินการ'];
 const NEGATION_CUES = ['ไม่ต้อง','ยังไม่','ไม่เอา','ยกเลิก','งด','ไม่ใช่','เดี๋ยวก่อน'];
 
 function normalizeText(s) {
@@ -89,8 +88,7 @@ function classifyRequest(content, keywordMap) {
 
   const meta = TYPE_META[request_type] || TYPE_META.other;
   const hasNegation = NEGATION_CUES.some((n) => compact.includes(normalizeText(n)));
-  const hasAction = ACTION_CUES.some((a) => compact.includes(normalizeText(a)));
-  const is_actionable = matched.length > 0 ? true : hasAction;
+  const is_actionable = matched.length > 0;
 
   return {
     request_type,

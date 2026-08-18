@@ -97,6 +97,7 @@ export default function RequestTriage() {
   const sorted = useMemo(() => {
     let list = [...messages];
 
+    list = list.filter(m => m.request_type && m.request_type !== 'other');
     if (filterType !== 'all') list = list.filter(m => m.request_type === filterType);
     if (filterStatutory) list = list.filter(m => m.has_statutory_deadline);
     if (filterSla === 'over_sla') list = list.filter(m => getAgeHours(m.created_date) > slaAmber);
