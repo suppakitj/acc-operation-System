@@ -7,7 +7,7 @@ import {
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays, RotateCcw,
   ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target, Activity,
   HeartPulse, KeyRound, Globe, BookOpen, BookMarked, Home, ClipboardCheck, CalendarClock, FileBarChart, GraduationCap, FileText, ShieldAlert, Lightbulb, Trophy,
-  LayoutPanelTop, FileBarChart2, UserCheck, Sparkles, Search, Clock4, Flag, Tags,
+  LayoutPanelTop, FileBarChart2, UserCheck, Sparkles, Search, Clock4, Flag, Tags, Inbox,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -71,6 +71,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'line_chat', label: t('menu_line_chat'), icon: MessageCircle, path: '/LineChat' },
     { id: 'line_requests', label: 'คำขอจาก LINE', icon: ClipboardCheck, path: '/LineRequests' },
     { id: 'request_triage', label: 'คิวรับเรื่อง', icon: Flag, path: '/RequestTriage' },
+    { id: 'unclassified_review', label: 'ข้อความยังไม่ระบุประเภท', icon: Inbox, path: '/UnclassifiedReview' },
     { id: 'line_files', label: 'LINE Files', icon: HardDrive, path: '/LineFiles' },
     // ─── ตั้งค่า & ระบบ ───
     { id: 'keyword_manager', label: 'จัดการคำค้นหา', icon: Tags, path: '/KeywordManager' },
@@ -93,7 +94,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { key: 'personal', label: 'ส่วนตัว', icon: Home, ids: ['my_day', 'my_skills', 'my_ideas'] },
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
     { key: 'daily_work', label: 'งานประจำวัน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'time_tracking', 'meeting_notes'] },
-    { key: 'comms', label: 'LINE', icon: MessageCircle, ids: ['line_chat', 'line_requests', 'request_triage', 'line_files'] },
+    { key: 'comms', label: 'LINE', icon: MessageCircle, ids: ['line_chat', 'line_requests', 'request_triage', 'unclassified_review', 'line_files'] },
     { key: 'work_setup', label: 'เทมเพลต & ความรู้', icon: ClipboardList, ids: ['templates', 'task_generation', 'tax_calendar', 'knowledge_base', 'knowledge_manage'] },
     { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault', 'director_vault'] },
     { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },

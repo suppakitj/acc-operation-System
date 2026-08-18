@@ -66,6 +66,7 @@ const ExecutiveBI = lazy(() => import('./pages/ExecutiveBI'));
 const LineRequests = lazy(() => import('./pages/LineRequests'));
 const RequestTriage = lazy(() => import('./pages/RequestTriage'));
 const KeywordManager = lazy(() => import('./pages/KeywordManager'));
+const UnclassifiedReview = lazy(() => import('./pages/UnclassifiedReview'));
 import KpiReportCenter from './pages/KpiReportCenter';
 import PerformanceEvaluation from './pages/PerformanceEvaluation';
 
@@ -161,6 +162,7 @@ const AuthenticatedApp = () => {
           <Route path="/LineRequests" element={<LineRequests />} />
           <Route path="/RequestTriage" element={<RequestTriage />} />
           <Route path="/KeywordManager" element={<KeywordManager />} />
+          <Route path="/UnclassifiedReview" element={<UnclassifiedReview />} />
 
         </Route>
         <Route path="*" element={<PageNotFound />} />

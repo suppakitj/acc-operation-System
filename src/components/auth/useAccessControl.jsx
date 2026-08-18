@@ -138,6 +138,7 @@ export function useAccessControl(user) {
       menus.push('line_files');
       if (p('line_requests') !== 'no') menus.push('line_requests');
       if (p('request_triage') !== 'no') menus.push('request_triage');
+      if (p('request_triage') !== 'no') menus.push('unclassified_review');
       if (p('referral') !== 'no')    menus.push('referral');
 
       // All menu visibility now from matrix
