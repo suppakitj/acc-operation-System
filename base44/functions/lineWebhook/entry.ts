@@ -1,6 +1,89 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { createHmac } from 'node:crypto';
 
+// ===================== REQUEST CLASSIFIER =====================
+const REQUEST_KEYWORDS = {
+  tax_invoice: [
+    'ใบกำกับภาษี','กำกับภาษี','ออกใบกำกับ','เปิดใบกำกับ','ใบกำกับ',
+    'ใบกำกับขาย','กำกับขาย','ใบกำกับเต็มรูป','เต็มรูป','ใบกำกับอย่างย่อ','อย่างย่อ','ใบกำกับย่อ',
+    'เปิดบิล','ออกบิล','บิลขาย','ออกบิลขาย','ขอบิล',
+    'tax invoice','full tax','vat invoice','tax inv',
+  ],
+  wht_cert: [
+    'หัก ณ ที่จ่าย','หักภาษี ณ ที่จ่าย','ใบหัก','หนังสือรับรองหัก','หนังสือรับรองการหักภาษี',
+    '50 ทวิ','๕๐ ทวิ','ทวิ',
+    'ภ.ง.ด.1','ภ.ง.ด.2','ภ.ง.ด.3','ภ.ง.ด.53','ภ.ง.ด.54',
+    'ภงด1','ภงด2','ภงด3','ภงด53','ภงด54',
+    'pnd1','pnd2','pnd3','pnd53','pnd54',
+    'wht','withholding','withholding tax',
+    'ออกหัก','ทำหัก ณ','ขอใบหัก',
+  ],
+  sso_enroll: [
+    'แจ้งเข้าประกันสังคม','เข้าประกันสังคม','ขึ้นประกันสังคม',
+    'แจ้งเข้า ปกส','เข้าปกส','แจ้งเข้า สปส','เข้าสปส',
+    'ขึ้นทะเบียนผู้ประกันตน','ขึ้นทะเบียน','แจ้งขึ้นทะเบียน','ขึ้นทะเบียนนายจ้าง',
+    'สปส.1-03','สปส.1-02','สปส 1-03','สปส 1-02',
+    'พนักงานเข้าใหม่','พนักงานใหม่','รับพนักงานใหม่','มีพนักงานเข้า','คนเข้าใหม่','จ้างพนักงานใหม่','เพิ่มพนักงาน',
+  ],
+  sso_terminate: [
+    'แจ้งออกประกันสังคม','ออกประกันสังคม',
+    'แจ้งออก ปกส','ออกปกส','แจ้งออก สปส','ออกสปส',
+    'แจ้งลาออก','ลาออก','พนักงานลาออก','มีคนลาออก','พนักงานออก','มีพนักงานออก','เลิกจ้าง',
+    'สปส.6-09','สปส 6-09','แจ้งสิ้นสุด','สิ้นสุดความเป็นผู้ประกันตน',
+  ],
+};
+
+const TYPE_META = {
+  tax_invoice:   { statutory: false, priority: 'medium' },
+  wht_cert:      { statutory: true,  priority: 'high' },
+  sso_enroll:    { statutory: true,  priority: 'high' },
+  sso_terminate: { statutory: true,  priority: 'high' },
+  other:         { statutory: false, priority: 'medium' },
+};
+
+const PRIORITY_ORDER = ['sso_terminate','sso_enroll','wht_cert','tax_invoice'];
+const ACTION_CUES = ['ช่วย','รบกวน','ขอ','ออกให้','ทำให้','แจ้ง','ส่งให้','เตรียม','จัดการ','ดำเนินการ'];
+const NEGATION_CUES = ['ไม่ต้อง','ยังไม่','ไม่เอา','ยกเลิก','งด','ไม่ใช่','เดี๋ยวก่อน'];
+
+function normalizeText(s) {
+  return (s || '').toLowerCase().replace(/[\s.\-/]/g, '');
+}
+
+function classifyRequest(content) {
+  const compact = normalizeText(content);
+  if (!compact) {
+    return { request_type: 'other', is_actionable: false, has_statutory_deadline: false,
+             auto_priority: 'low', multi_request: false, needs_review: false };
+  }
+
+  const matched = [];
+  for (const [type, kws] of Object.entries(REQUEST_KEYWORDS)) {
+    if (kws.some((k) => compact.includes(normalizeText(k)))) matched.push(type);
+  }
+
+  let request_type = 'other';
+  let multi_request = false;
+  if (matched.length > 0) {
+    request_type = PRIORITY_ORDER.find((t) => matched.includes(t)) || matched[0];
+    multi_request = matched.length > 1;
+  }
+
+  const meta = TYPE_META[request_type] || TYPE_META.other;
+  const hasNegation = NEGATION_CUES.some((n) => compact.includes(normalizeText(n)));
+  const hasAction = ACTION_CUES.some((a) => compact.includes(normalizeText(a)));
+  const is_actionable = matched.length > 0 ? true : hasAction;
+
+  return {
+    request_type,
+    is_actionable,
+    has_statutory_deadline: is_actionable ? meta.statutory : false,
+    auto_priority: is_actionable ? meta.priority : 'low',
+    multi_request,
+    needs_review: matched.length > 0 && hasNegation,
+  };
+}
+// =================== END REQUEST CLASSIFIER ===================
+
 Deno.serve(async (req) => {
   if (req.method === 'GET') {
     return Response.json({ status: 'ok' }, { status: 200 });
@@ -194,6 +277,24 @@ Deno.serve(async (req) => {
         });
 
         console.log(`Saved incoming ${messageType} from ${senderName} in ${chatType} (${chatKey}): ${content}`);
+
+        // Classify request and tag LineMessage (keyword-based, fast)
+        if (mappedType === 'text' && content && createdMsg?.id) {
+          try {
+            const cls = classifyRequest(content);
+            await base44.asServiceRole.entities.LineMessage.update(createdMsg.id, {
+              request_type: cls.request_type,
+              is_actionable: cls.is_actionable,
+              has_statutory_deadline: cls.has_statutory_deadline,
+              auto_priority: cls.auto_priority,
+              multi_request: cls.multi_request,
+              needs_review: cls.needs_review,
+              triage_status: 'new',
+            });
+          } catch (e) {
+            console.warn('classifyRequest failed (non-blocking):', e.message);
+          }
+        }
 
         // Detect LINE requests (tax invoice, withholding cert, SSO) for text messages
         if (messageType === 'text' && content && chatType) {
