@@ -69,6 +69,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'performance_evaluation', label: 'Performance Evaluation', icon: UserCheck, path: '/PerformanceEvaluation' },
     // ─── LINE ───
     { id: 'line_chat', label: t('menu_line_chat'), icon: MessageCircle, path: '/LineChat' },
+    { id: 'line_requests', label: 'คำขอจาก LINE', icon: ClipboardCheck, path: '/LineRequests' },
     { id: 'line_files', label: 'LINE Files', icon: HardDrive, path: '/LineFiles' },
     // ─── ตั้งค่า & ระบบ ───
     { id: 'service_master', label: 'Service Master', icon: Briefcase, path: '/ServiceMaster' },
@@ -90,7 +91,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { key: 'personal', label: 'ส่วนตัว', icon: Home, ids: ['my_day', 'my_skills', 'my_ideas'] },
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
     { key: 'daily_work', label: 'งานประจำวัน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'time_tracking', 'meeting_notes'] },
-    { key: 'comms', label: 'LINE', icon: MessageCircle, ids: ['line_chat', 'line_files'] },
+    { key: 'comms', label: 'LINE', icon: MessageCircle, ids: ['line_chat', 'line_requests', 'line_files'] },
     { key: 'work_setup', label: 'เทมเพลต & ความรู้', icon: ClipboardList, ids: ['templates', 'task_generation', 'tax_calendar', 'knowledge_base', 'knowledge_manage'] },
     { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault', 'director_vault'] },
     { key: 'finance', label: 'การเงิน', icon: CreditCard, ids: ['billing', 'peak', 'referral'] },

@@ -132,8 +132,9 @@ export function useAccessControl(user) {
       if (p('user_master') !== 'no')     menus.push('users');
       if (p('role_mgmt') !== 'no')       menus.push('roles');
 
-      // line_chat & line_files → always visible for relevant roles
+      // line_chat, line_requests & line_files → always visible for relevant roles
       menus.push('line_chat');
+      menus.push('line_requests');
       menus.push('line_files');
       if (p('referral') !== 'no')    menus.push('referral');
 

@@ -62,6 +62,7 @@ const ReworkAnalytics = lazy(() => import('./pages/ReworkAnalytics'));
 const PostponeAnalytics = lazy(() => import('./pages/PostponeAnalytics'));
 const OvertimeAnalytics = lazy(() => import('./pages/OvertimeAnalytics'));
 const ExecutiveBI = lazy(() => import('./pages/ExecutiveBI'));
+const LineRequests = lazy(() => import('./pages/LineRequests'));
 import KpiReportCenter from './pages/KpiReportCenter';
 import PerformanceEvaluation from './pages/PerformanceEvaluation';
 
@@ -154,6 +155,7 @@ const AuthenticatedApp = () => {
           <Route path="/ExecutiveBI" element={<ExecutiveBI />} />
           <Route path="/KpiReportCenter" element={<KpiReportCenter />} />
           <Route path="/PerformanceEvaluation" element={<PerformanceEvaluation />} />
+          <Route path="/LineRequests" element={<LineRequests />} />
 
         </Route>
         <Route path="*" element={<PageNotFound />} />

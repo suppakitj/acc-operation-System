@@ -195,6 +195,35 @@ Deno.serve(async (req) => {
 
         console.log(`Saved incoming ${messageType} from ${senderName} in ${chatType} (${chatKey}): ${content}`);
 
+        // Detect LINE requests (tax invoice, withholding cert, SSO) for text messages
+        if (messageType === 'text' && content && chatType) {
+          (async () => {
+            try {
+              // Resolve customer from LineGroup mapping
+              let custId = '';
+              let custName = '';
+              if (isGroup && chatKey) {
+                const groups = await base44.asServiceRole.entities.LineGroup.filter({ group_id: chatKey }, '-created_date', 1);
+                if (groups.length > 0) {
+                  custId = groups[0].customer_id || '';
+                  custName = groups[0].customer_name || '';
+                }
+              }
+              await base44.asServiceRole.functions.invoke('detectLineRequest', {
+                message: content,
+                message_id: createdMsg?.id || '',
+                line_user_id: chatKey,
+                chat_type: chatType,
+                sender_name: senderName,
+                customer_id: custId,
+                customer_name: custName,
+              });
+            } catch (e) {
+              console.warn('detectLineRequest failed (non-blocking):', e.message);
+            }
+          })();
+        }
+
         // Track group member for mention support
         if (isGroup && userId && groupId && senderName !== userId) {
           try {
