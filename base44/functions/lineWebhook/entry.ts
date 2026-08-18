@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { createHmac } from 'node:crypto';
 
 // ===================== REQUEST CLASSIFIER =====================
-const REQUEST_KEYWORDS = {
+const DEFAULT_REQUEST_KEYWORDS = {
   tax_invoice: [
     'ใบกำกับภาษี','กำกับภาษี','ออกใบกำกับ','เปิดใบกำกับ','ใบกำกับ',
     'ใบกำกับขาย','กำกับขาย','ใบกำกับเต็มรูป','เต็มรูป','ใบกำกับอย่างย่อ','อย่างย่อ','ใบกำกับย่อ',
@@ -49,15 +49,34 @@ function normalizeText(s) {
   return (s || '').toLowerCase().replace(/[\s.\-/]/g, '');
 }
 
-function classifyRequest(content) {
+async function loadKeywordMap(base44) {
+  try {
+    const rows = await base44.asServiceRole.entities.RequestKeyword.filter({ active: true });
+    if (!rows || rows.length === 0) return DEFAULT_REQUEST_KEYWORDS;
+    const map = {};
+    for (const r of rows) {
+      if (!r.request_type || !r.keyword) continue;
+      if (!map[r.request_type]) map[r.request_type] = [];
+      map[r.request_type].push(r.keyword);
+    }
+    return Object.keys(map).length > 0 ? map : DEFAULT_REQUEST_KEYWORDS;
+  } catch (e) {
+    console.warn('loadKeywordMap failed, using defaults:', e.message);
+    return DEFAULT_REQUEST_KEYWORDS;
+  }
+}
+
+function classifyRequest(content, keywordMap) {
   const compact = normalizeText(content);
   if (!compact) {
     return { request_type: 'other', is_actionable: false, has_statutory_deadline: false,
              auto_priority: 'low', multi_request: false, needs_review: false };
   }
 
+  const kwMap = (keywordMap && Object.keys(keywordMap).length) ? keywordMap : DEFAULT_REQUEST_KEYWORDS;
+
   const matched = [];
-  for (const [type, kws] of Object.entries(REQUEST_KEYWORDS)) {
+  for (const [type, kws] of Object.entries(kwMap)) {
     if (kws.some((k) => compact.includes(normalizeText(k)))) matched.push(type);
   }
 
@@ -130,6 +149,7 @@ Deno.serve(async (req) => {
       }
     }
 
+    const keywordMap = await loadKeywordMap(base44);
     const events = payload.events || [];
 
     for (const event of events) {
@@ -281,7 +301,7 @@ Deno.serve(async (req) => {
         // Classify request and tag LineMessage (keyword-based, fast)
         if (mappedType === 'text' && content && createdMsg?.id) {
           try {
-            const cls = classifyRequest(content);
+            const cls = classifyRequest(content, keywordMap);
             await base44.asServiceRole.entities.LineMessage.update(createdMsg.id, {
               request_type: cls.request_type,
               is_actionable: cls.is_actionable,
