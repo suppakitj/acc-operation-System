@@ -1,0 +1,44 @@
+{
+  "name": "Retry failed Drive saves",
+  "description": "\u0e17\u0e38\u0e01 2 \u0e0a\u0e31\u0e48\u0e27\u0e42\u0e21\u0e07 \u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a\u0e44\u0e1f\u0e25\u0e4c LINE \u0e17\u0e35\u0e48 save \u0e44\u0e1b Google Drive \u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e41\u0e25\u0e49\u0e27 retry \u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 2,
+      "interval_unit": "hours",
+      "interval_anchor": "2026-03-20T14:31:09.950000",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "retry_failed_drive_saves",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "retryDriveSave",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "retryDriveSave"
+  }
+}

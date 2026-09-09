@@ -1,0 +1,44 @@
+{
+  "name": "Risk Score Alert (Daily)",
+  "description": "\u0e2a\u0e48\u0e07 LINE \u0e41\u0e25\u0e30 Email \u0e40\u0e15\u0e37\u0e2d\u0e19\u0e17\u0e38\u0e01\u0e40\u0e0a\u0e49\u0e32\u0e40\u0e21\u0e37\u0e48\u0e2d\u0e1e\u0e1a\u0e07\u0e32\u0e19\u0e17\u0e35\u0e48\u0e21\u0e35 Risk Score \u0e23\u0e30\u0e14\u0e31\u0e1a\u0e2a\u0e39\u0e07\u0e2b\u0e23\u0e37\u0e2d\u0e27\u0e34\u0e01\u0e24\u0e15",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 2 * * 1-5",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "risk_score_alert_daily",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "riskScoreAlert",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "riskScoreAlert"
+  }
+}
