@@ -154,15 +154,21 @@ Deno.serve(async (req) => {
      try {
       // Auto-capture Group ID in AppConfig
       if (event.source?.type === 'group' && event.source?.groupId) {
-        const existingGroupConfig = configs.find(c => c.key === 'line_group_id');
-        const currentGroupId = existingGroupConfig?.value || '';
-        if (currentGroupId !== event.source.groupId) {
-          if (existingGroupConfig) {
-            await base44.asServiceRole.entities.AppConfig.update(existingGroupConfig.id, { value: event.source.groupId });
-          } else {
+        try {
+          const existingGroupConfig = configs.find(c => c.key === 'line_group_id');
+          if (!existingGroupConfig) {
             await base44.asServiceRole.entities.AppConfig.create({ key: 'line_group_id', value: event.source.groupId, description: 'LINE Group ID (auto-captured)' });
+            console.log(`Auto-captured LINE Group ID: ${event.source.groupId}`);
+          } else {
+            const lastSeen = configs.find(c => c.key === 'line_last_seen_group_id');
+            if (!lastSeen) {
+              await base44.asServiceRole.entities.AppConfig.create({ key: 'line_last_seen_group_id', value: event.source.groupId, description: 'กลุ่มล่าสุดที่ส่งข้อความเข้ามา (อ้างอิงเท่านั้น ห้ามใช้ส่งแจ้งเตือน)' });
+            } else if (lastSeen.value !== event.source.groupId) {
+              await base44.asServiceRole.entities.AppConfig.update(lastSeen.id, { value: event.source.groupId });
+            }
           }
-          console.log(`Auto-captured LINE Group ID: ${event.source.groupId}`);
+        } catch (e) {
+          console.error('Group ID capture error (non-blocking):', e.message);
         }
       }
 

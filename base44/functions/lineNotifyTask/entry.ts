@@ -166,15 +166,24 @@ Deno.serve(async (req) => {
       recipients.add(adminLineUserId);
     }
 
-    // Send to company group
-    if (companyGroupId) {
-      recipients.add(companyGroupId);
-    }
-
-    // Send to department group if task/schedule has a department
+    const internalGroupId = getVal('line_internal_group_id');
+    const changeSource = data.last_change_source || '';
+    const isBoardChange = ['board_claim', 'board_complete', 'board_release'].includes(changeSource);
     const dept = data.department;
-    if (dept && deptGroupMap[dept]) {
-      recipients.add(deptGroupMap[dept]);
+
+    if (isBoardChange) {
+      // Internal-only scope: never send to company/department groups
+      if (internalGroupId) recipients.add(internalGroupId);
+    } else {
+      // Send to company group
+      if (companyGroupId) {
+        recipients.add(companyGroupId);
+      }
+
+      // Send to department group if task/schedule has a department
+      if (dept && deptGroupMap[dept]) {
+        recipients.add(deptGroupMap[dept]);
+      }
     }
 
     // Also try to reach assigned user's LINE ID
