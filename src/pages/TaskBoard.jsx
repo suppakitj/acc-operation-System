@@ -5,6 +5,8 @@ import { useAuth } from '@/lib/AuthContext';
 import { useAccessControl } from '@/components/auth/useAccessControl';
 import { useToast } from '@/components/ui/use-toast';
 import { LayoutGrid } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { reasonToText } from '@/utils/taskActionMessages';
 import BoardColumn from '@/components/taskboard/BoardColumn';
 import BoardTaskCard from '@/components/taskboard/BoardTaskCard';
 import MentionCard from '@/components/taskboard/MentionCard';
@@ -35,22 +37,12 @@ export default function TaskBoard() {
     queryKey: ['board-mine', email], enabled: !!email, ...REFRESH,
     queryFn: () => base44.entities.Task.filter({ assigned_to: email, status: 'in_progress' }, 'due_date', 200),
   });
-  const { data: done = [] } = useQuery({
-    queryKey: ['board-done', email, today], enabled: !!email, ...REFRESH,
-    queryFn: async () => {
-      const [r, c] = await Promise.all([
-        base44.entities.Task.filter({ assigned_to: email, status: 'review' }, '-updated_date', 100),
-        base44.entities.Task.filter({ assigned_to: email, status: 'completed', completed_date: today }, '-updated_date', 100),
-      ]);
-      return [...r, ...c];
-    },
-  });
 
   const pool = ac.filterByDepartment(pending.filter(t => !t.assigned_to || t.is_open_pool === true));
   const overdueMine = mine.filter(t => t.due_date && t.due_date < today).length;
   const mentionsToday = mentions.filter(m => (m.created_date || '').slice(0, 10) === today).length;
 
-  const refetchAll = () => ['board-mentions', 'board-pending', 'board-mine', 'board-done'].forEach(k => qc.invalidateQueries({ queryKey: [k] }));
+  const refetchAll = () => ['board-mentions', 'board-pending', 'board-mine'].forEach(k => qc.invalidateQueries({ queryKey: [k] }));
 
   const run = async (task, action) => {
     setBusyId(task.id);
@@ -58,12 +50,8 @@ export default function TaskBoard() {
     setBusyId(null);
     if (data?.ok) {
       toast({ title: 'สำเร็จ', description: data.warning || undefined });
-    } else if (data?.reason === 'taken') {
-      toast({ title: `งานนี้ถูก ${data.taken_by} รับไปแล้ว`, variant: 'destructive' });
-    } else if (data?.reason === 'needs_review') {
-      toast({ title: 'งานนี้ต้องส่งตรวจก่อนปิด', variant: 'destructive' });
     } else {
-      toast({ title: 'ทำรายการไม่สำเร็จ', description: data?.reason || data?.error, variant: 'destructive' });
+      toast({ title: reasonToText(data), variant: 'destructive' });
     }
     refetchAll();
   };
@@ -86,17 +74,17 @@ export default function TaskBoard() {
           </div>
         ))}
       </div>
-      <div className="flex md:grid md:grid-cols-4 gap-3 overflow-x-auto snap-x pb-2">
+      <div className="flex md:grid md:grid-cols-3 gap-3 overflow-x-auto snap-x pb-2">
         <BoardColumn title="💬 ถูกพูดถึง" count={mentions.length} empty="ไม่มีข้อความ">
           {mentions.map(m => <MentionCard key={m.id} msg={m} onCreate={setChatMsg} />)}
         </BoardColumn>
-        <BoardColumn title="🆕 งานรอรับ" count={pool.length} empty="ไม่มีงานรอรับ">
+        <BoardColumn title="🆕 งานรอรับ" count={pool.length} empty="ไม่มีงานรอรับ" link={<Link to="/Tasks" className="text-xs text-primary hover:underline">ดูงานทั้งหมด →</Link>}>
           {pool.map(t => (
             <BoardTaskCard key={t.id} task={t} today={today} busy={busyId === t.id}
               actions={[{ key: 'claim', label: 'รับงาน', onClick: () => run(t, 'claim') }]} />
           ))}
         </BoardColumn>
-        <BoardColumn title="🔧 งานของฉัน" count={mine.length} empty="ยังไม่มีงาน">
+        <BoardColumn title="🔧 งานของฉัน" count={mine.length} empty="ยังไม่มีงาน" link={<Link to="/MyDay" className="text-xs text-primary hover:underline">ดูสรุปวันของฉัน →</Link>}>
           {mine.map(t => (
             <BoardTaskCard key={t.id} task={t} today={today} busy={busyId === t.id}
               actions={[
@@ -106,9 +94,6 @@ export default function TaskBoard() {
                 { key: 'release', label: 'คืนงาน', variant: 'outline', onClick: () => run(t, 'release') },
               ]} />
           ))}
-        </BoardColumn>
-        <BoardColumn title="✅ รอตรวจ & เสร็จวันนี้" count={done.length} empty="ยังไม่มี">
-          {done.map(t => <BoardTaskCard key={t.id} task={t} today={today} />)}
         </BoardColumn>
       </div>
       {chatMsg && (

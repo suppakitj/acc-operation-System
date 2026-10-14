@@ -16,6 +16,14 @@ import ReviewQueue from '../components/my-day/ReviewQueue';
 import DueDateApprovalQueue from '../components/tasks/DueDateApprovalQueue';
 import RejectDialog from '../components/tasks/RejectDialog';
 import { buildApprovePayload, buildRejectPayload } from '../utils/taskWorkflow';
+import { reasonToText } from '@/utils/taskActionMessages';
+
+const STATUS_TO_ACTION = {
+  in_progress: 'start',
+  review: 'submit_review',
+  completed: 'complete',
+  waiting_client: 'waiting_client',
+};
 
 export default function MyDay() {
   const queryClient = useQueryClient();
@@ -87,56 +95,25 @@ export default function MyDay() {
 
   // Status change mutation
   const updateTaskStatus = useMutation({
-    mutationFn: ({ id, newStatus, extraData }) => {
-      const updateData = { status: newStatus, ...extraData };
-      if (newStatus === 'review') {
-        updateData.review_status = 'pending_review';
-      }
-      return base44.entities.Task.update(id, updateData);
+    mutationFn: async ({ id, action }) => {
+      const { data } = await base44.functions.invoke('taskClaim', { task_id: id, action });
+      if (!data?.ok) throw Object.assign(new Error(data?.reason || 'error'), { reason: data?.reason, ...data });
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['myTasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['reviewTasks'] });
       toast.success('อัปเดตสถานะแล้ว');
+      if (data.warning) toast.warning(data.warning);
     },
+    onError: (err) => toast.error(reasonToText(err)),
   });
 
   const handleStatusChange = (taskId, newStatus) => {
-    const task = myTasks.find(t => t.id === taskId);
-    const isStaff = currentUser?.role === 'staff';
-    const isReviewerRole = ['admin', 'management', 'manager', 'super_supervisor'].includes(currentUser?.role);
-
-    // Staff ห้ามกด completed
-    if (isStaff && newStatus === 'completed') {
-      toast.error('ไม่สามารถปิดงานเองได้ — ต้องส่งตรวจให้หัวหน้า approve');
-      return;
-    }
-
-    // เช็ค checklist ก่อนส่งตรวจหรือปิดงาน
-    if ((newStatus === 'review' || newStatus === 'completed') && task) {
-      const checklist = task.checklist || [];
-      const allChecked = checklist.length === 0 || checklist.every(item => item.checked);
-      if (!allChecked) {
-        toast.error('กรุณา check checklist ให้ครบก่อน');
-        return;
-      }
-    }
-
-    // ถ้า reviewer ปิดงานตรง → set reviewer info
-    let extraData = {};
-    if (newStatus === 'completed' && isReviewerRole) {
-      const today = format(new Date(), 'yyyy-MM-dd');
-      extraData = {
-        completed_date: today,
-        review_status: 'approved',
-        reviewer_email: currentUser.email,
-        reviewer_name: currentUser.full_name || currentUser.email,
-        reviewed_date: today,
-        review_note: task.status === 'review' ? '' : 'ปิดงานโดยหัวหน้างาน (ไม่ผ่าน review)',
-      };
-    }
-
-    updateTaskStatus.mutate({ id: taskId, newStatus, extraData });
+    const action = STATUS_TO_ACTION[newStatus];
+    if (!action) { toast.error('สถานะนี้ยังไม่รองรับจากหน้านี้'); return; }
+    updateTaskStatus.mutate({ id: taskId, action });
   };
 
   // Approve/Reject สำหรับ ReviewQueue — uses shared helpers

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { format, differenceInDays } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -92,6 +93,9 @@ export default function TodayFocus({ activeTasks, dueToday, overdue, onStatusCha
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <Link to="/TaskBoard" className="text-xs text-primary hover:underline">ไปกระดานงาน →</Link>
+      </div>
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-3">
         {statCards.map((s, i) => (
