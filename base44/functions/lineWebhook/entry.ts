@@ -347,7 +347,32 @@ Deno.serve(async (req) => {
               multi_request: cls.multi_request,
               needs_review: cls.needs_review,
               triage_status: 'new',
+              ...(cls.is_actionable === true ? { classified_by: 'keyword' } : {}),
             });
+            if (cls.is_actionable === false || cls.request_type === 'other') {
+              (async () => {
+                try {
+                  let cId = '';
+                  let cName = '';
+                  if (isGroup && groupId) {
+                    const grps = await base44.asServiceRole.entities.LineGroup.filter({ group_id: groupId });
+                    if (grps.length > 0) { cId = grps[0].customer_id || ''; cName = grps[0].customer_name || ''; }
+                  }
+                  await base44.asServiceRole.functions.invoke('classifyActionable', {
+                    message: content,
+                    message_id: createdMsg.id,
+                    line_user_id: chatKey,
+                    chat_type: chatType,
+                    sender_name: senderName,
+                    customer_id: cId,
+                    customer_name: cName,
+                    received_at: new Date(event.timestamp || Date.now()).toISOString(),
+                  });
+                } catch (e) {
+                  console.warn('classifyActionable failed (non-blocking):', e.message);
+                }
+              })();
+            }
           } catch (e) {
             console.warn('classifyRequest failed (non-blocking):', e.message);
           }
