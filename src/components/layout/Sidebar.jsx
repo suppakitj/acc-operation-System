@@ -7,7 +7,7 @@ import {
   BarChart3, History, X, Database, Briefcase, CalendarHeart, TrendingUp, UsersRound, CalendarDays, RotateCcw,
   ChevronDown, PieChart, Folder, Contact, MessageSquare, Cog, HardDrive, Handshake, Zap, Timer, Scale, DollarSign, Target, Activity,
   HeartPulse, KeyRound, Globe, BookOpen, BookMarked, Home, ClipboardCheck, CalendarClock, FileBarChart, GraduationCap, FileText, ShieldAlert, Lightbulb, Trophy,
-  LayoutPanelTop, FileBarChart2, UserCheck, Sparkles, Search, Clock4, Flag, Tags, Inbox,
+  LayoutPanelTop, FileBarChart2, UserCheck, Sparkles, Search, Clock4, Flag, Tags, Inbox, LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '../LanguageContext';
@@ -29,6 +29,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
     { id: 'kpi_dashboard', label: 'KPI Dashboard', icon: Target, path: '/KpiDashboard' },
     // ─── งาน & ตารางงาน ───
     { id: 'tasks', label: t('menu_tasks'), icon: CheckSquare, path: '/Tasks' },
+    { id: 'task_board', label: 'กระดานงาน', icon: LayoutGrid, path: '/TaskBoard' },
     { id: 'task_calendar', label: 'Task Calendar', icon: CalendarDays, path: '/TaskCalendar' },
     { id: 'schedule', label: t('menu_schedule'), icon: Calendar, path: '/Schedule' },
     { id: 'tax_calendar', label: 'ปฏิทินภาษี', icon: CalendarClock, path: '/TaxCalendar' },
@@ -93,7 +94,7 @@ export default function Sidebar({ user, collapsed, setCollapsed, mobileOpen, set
   const menuGroups = [
     { key: 'personal', label: 'ส่วนตัว', icon: Home, ids: ['my_day', 'my_skills', 'my_ideas'] },
     { key: 'overview', label: 'ภาพรวม', icon: PieChart, ids: ['dashboard', 'kpi_dashboard'] },
-    { key: 'daily_work', label: 'งานประจำวัน', icon: CheckSquare, ids: ['tasks', 'task_calendar', 'schedule', 'time_tracking', 'meeting_notes'] },
+    { key: 'daily_work', label: 'งานประจำวัน', icon: CheckSquare, ids: ['task_board', 'tasks', 'task_calendar', 'schedule', 'time_tracking', 'meeting_notes'] },
     { key: 'comms', label: 'LINE', icon: MessageCircle, ids: ['line_chat', 'line_requests', 'request_triage', 'unclassified_review', 'line_files'] },
     { key: 'work_setup', label: 'เทมเพลต & ความรู้', icon: ClipboardList, ids: ['templates', 'task_generation', 'tax_calendar', 'knowledge_base', 'knowledge_manage'] },
     { key: 'clients', label: 'ลูกค้า', icon: Building2, ids: ['customers', 'customer_profile', 'customer_health', 'credential_vault', 'director_vault'] },
