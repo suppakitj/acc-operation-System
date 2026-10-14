@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +20,8 @@ const REQUEST_TYPES = {
   sso_terminate: { label: 'แจ้งออกประกันสังคม', icon: UserMinus, color: 'bg-orange-100 text-orange-700' },
 };
 
+const PAGE_SIZE = 20;
+
 const STATUS_MAP = {
   pending: { label: 'รอดำเนินการ', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
   in_progress: { label: 'กำลังดำเนินการ', color: 'bg-blue-100 text-blue-700', icon: PlayCircle },
@@ -38,39 +40,39 @@ export default function LineRequests() {
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const { data: requests = [], isLoading } = useQuery({
-    queryKey: ['line-requests', statusFilter],
-    queryFn: () => {
-      const filter = statusFilter === 'all' ? {} : { status: statusFilter };
-      return base44.entities.LineRequest.filter(filter, '-created_date', 100);
+  const [debounced, setDebounced] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(search.trim()), 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const query = useMemo(() => {
+    const q = {};
+    if (statusFilter !== 'all') q.status = statusFilter;
+    if (typeFilter !== 'all') q.request_type = typeFilter;
+    if (debounced) {
+      const rx = { $regex: debounced.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+      q.$or = ['customer_name', 'sender_name', 'original_message', 'details'].map(f => ({ [f]: rx }));
+    }
+    return q;
+  }, [statusFilter, typeFilter, debounced]);
+
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ['line-requests', query],
+    queryFn: ({ pageParam }) =>
+      base44.entities.LineRequest.filter(query, { sort: '-created_date', limit: PAGE_SIZE, ...(pageParam ? { cursor: pageParam } : {}) }),
+    initialPageParam: null,
+    getNextPageParam: (last) => (last.has_more ? last.next_cursor : undefined),
+  });
+  const filtered = data?.pages.flatMap(p => p.items) || [];
+
+  const { data: stats = {} } = useQuery({
+    queryKey: ['line-requests', 'stats'],
+    queryFn: async () => {
+      const res = await base44.entities.LineRequest.aggregate({ groupBy: 'status' });
+      return Object.fromEntries(res.rows.map(r => [r.status, r.count]));
     },
   });
-
-  const filtered = useMemo(() => {
-    let result = requests;
-    if (typeFilter !== 'all') {
-      result = result.filter(r => r.request_type === typeFilter);
-    }
-    if (search.trim()) {
-      const s = search.toLowerCase();
-      result = result.filter(r =>
-        (r.customer_name || '').toLowerCase().includes(s) ||
-        (r.sender_name || '').toLowerCase().includes(s) ||
-        (r.original_message || '').toLowerCase().includes(s) ||
-        (r.details || '').toLowerCase().includes(s)
-      );
-    }
-    return result;
-  }, [requests, typeFilter, search]);
-
-  const stats = useMemo(() => {
-    const all = requests;
-    return {
-      pending: all.filter(r => r.status === 'pending').length,
-      in_progress: all.filter(r => r.status === 'in_progress').length,
-      completed: all.filter(r => r.status === 'completed').length,
-    };
-  }, [requests]);
 
   async function handleAction(action) {
     setSaving(true);
@@ -105,9 +107,9 @@ export default function LineRequests() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">คำขอจาก LINE</h1>
         <div className="flex items-center gap-2 text-sm">
-          <Badge className="bg-yellow-100 text-yellow-700">{stats.pending} รอดำเนินการ</Badge>
-          <Badge className="bg-blue-100 text-blue-700">{stats.in_progress} กำลังทำ</Badge>
-          <Badge className="bg-green-100 text-green-700">{stats.completed} เสร็จแล้ว</Badge>
+          <Badge className="bg-yellow-100 text-yellow-700">{stats.pending || 0} รอดำเนินการ</Badge>
+          <Badge className="bg-blue-100 text-blue-700">{stats.in_progress || 0} กำลังทำ</Badge>
+          <Badge className="bg-green-100 text-green-700">{stats.completed || 0} เสร็จแล้ว</Badge>
         </div>
       </div>
 
@@ -192,6 +194,13 @@ export default function LineRequests() {
               </Card>
             );
           })}
+          {hasNextPage && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+                {isFetchingNextPage ? 'กำลังโหลด...' : 'โหลดเพิ่ม'}
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
