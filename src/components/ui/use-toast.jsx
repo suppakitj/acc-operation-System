@@ -1,5 +1,6 @@
 // Inspired by react-hot-toast library
 import { useState, useEffect } from "react";
+import { toast as sonnerToast } from "sonner";
 
 const TOAST_LIMIT = 20;
 const TOAST_REMOVE_DELAY = 500;
@@ -110,7 +111,15 @@ function dispatch(action) {
   });
 }
 
-function toast({ ...props }) {
+function toast({ title, description, variant, duration }) {
+  const id = sonnerToast[variant === 'destructive' ? 'error' : 'success'](title || description, {
+    description: title ? description : undefined,
+    duration: duration || 3000,
+  });
+  return { id, dismiss: () => sonnerToast.dismiss(id), update: () => {} };
+}
+
+function legacyToast({ ...props }) {
   const id = genId();
 
   const update = (props) =>
