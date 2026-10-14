@@ -101,6 +101,25 @@ function classifyRequest(content, keywordMap) {
 }
 // =================== END REQUEST CLASSIFIER ===================
 
+function detectMentionOfUs(msg, content, aliases) {
+  const result = { mentions_us: false, mention_source: 'none', mentioned_line_user_ids: [] };
+  try {
+    const mentionees = msg?.mention?.mentionees || [];
+    for (const m of mentionees) {
+      if (m.userId) result.mentioned_line_user_ids.push(m.userId);
+      if (m.isSelf === true) { result.mentions_us = true; result.mention_source = 'bot_mention'; }
+    }
+    if (!result.mentions_us && Array.isArray(aliases) && aliases.length > 0) {
+      const hay = String(content || '').toLowerCase();
+      if (aliases.some(a => a && hay.includes(String(a).toLowerCase().trim()))) {
+        result.mentions_us = true;
+        result.mention_source = 'keyword';
+      }
+    }
+  } catch (e) { console.warn('detectMentionOfUs failed:', e.message); }
+  return result;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'GET') {
     return Response.json({ status: 'ok' }, { status: 200 });
@@ -130,6 +149,11 @@ Deno.serve(async (req) => {
     const getVal = (key) => configs.find(c => c.key === key)?.value || '';
     const channelSecret = getVal('line_channel_secret');
     const accessToken = getVal('line_access_token');
+    let aliases = [];
+    try {
+      aliases = (getVal('our_aliases') || 'ACC,เอซีซี,ทีมบัญชี,ทีมภาษี')
+        .split(',').map(s => s.trim()).filter(Boolean);
+    } catch (e) { console.warn('aliases parse failed:', e.message); }
 
     if (!channelSecret || !accessToken) {
       return Response.json({ error: 'LINE OA not configured' }, { status: 400 });
@@ -137,6 +161,10 @@ Deno.serve(async (req) => {
 
     // Verify LINE signature
     const signature = req.headers.get('x-line-signature');
+    if (channelSecret && !signature) {
+      console.error('Missing LINE signature');
+      return Response.json({ error: 'Missing signature' }, { status: 403 });
+    }
     if (signature && channelSecret) {
       const hmac = createHmac('SHA256', channelSecret);
       hmac.update(body);
@@ -286,7 +314,12 @@ Deno.serve(async (req) => {
         // Only files (image/file with file_url) need Drive saving — mark others as already "saved"
         const needsDriveSave = fileUrl && (mappedType === 'image' || mappedType === 'file');
 
+        const mentionInfo = detectMentionOfUs(msg, content, aliases);
+
         const createdMsg = await base44.asServiceRole.entities.LineMessage.create({
+          mentions_us: mentionInfo.mentions_us,
+          mention_source: mentionInfo.mention_source,
+          mentioned_line_user_ids: mentionInfo.mentioned_line_user_ids,
           line_user_id: chatKey,
           display_name: chatDisplayName,
           profile_image: chatImage,
