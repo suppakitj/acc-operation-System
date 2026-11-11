@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
-export function useUserList() {
+export function useUserList(options = {}) {
   return useQuery({
     queryKey: ['users'],
     queryFn: async () => {
@@ -10,5 +10,6 @@ export function useUserList() {
     },
     staleTime: 2 * 60_000, // 2min — user list rarely changes
     gcTime: 10 * 60_000,   // keep in cache 10min
+    ...options,
   });
 }

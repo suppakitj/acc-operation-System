@@ -56,7 +56,7 @@ export default function UserManagement() {
 
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
   const ac = useAccessControl(currentUser);
-  const { data: users = [] } = useUserList();
+  const { data: users = [] } = useUserList({ staleTime: 0, refetchOnMount: 'always' });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }) => {
