@@ -13,36 +13,8 @@ import UserFormDialog from '../components/users/UserFormDialog';
 import { useAccessControl } from '../components/auth/useAccessControl';
 import { useUserList } from '../hooks/useUserList';
 
-// Employee ID prefixes per department
-const DEPT_PREFIX = {
-  management: 'MD',
-  accounting: 'ACC',
-  consulting: 'ACC',
-  audit: 'AC',
-  billing: 'ACC',
-  it: 'IT',
-};
-const DEPT_START = {
-  management: 1, accounting: 1, consulting: 1001, audit: 1, billing: 2001, it: 1,
-};
-
-function generateEmployeeId(department, existingUsers) {
-  const prefix = DEPT_PREFIX[department] || 'EMP';
-  const start = DEPT_START[department] || 1;
-
-  // Find max number for this prefix+range
-  const existingIds = existingUsers
-    .filter(u => u.employee_id?.startsWith(prefix + '-'))
-    .map(u => {
-      const num = parseInt(u.employee_id.split('-')[1]);
-      return isNaN(num) ? 0 : num;
-    })
-    .filter(n => n >= start);
-
-  const maxNum = existingIds.length > 0 ? Math.max(...existingIds) : start - 1;
-  const nextNum = maxNum + 1;
-  return `${prefix}-${String(nextNum).padStart(4, '0')}`;
-}
+import { generateEmployeeId } from '@/utils/employeeId';
+import { useApplyPendingProfiles, savePendingProfile } from '@/hooks/useApplyPendingProfiles';
 
 export default function UserManagement() {
   const { t } = useLanguage();
@@ -57,6 +29,7 @@ export default function UserManagement() {
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
   const ac = useAccessControl(currentUser);
   const { data: users = [] } = useUserList({ staleTime: 0, refetchOnMount: 'always' });
+  useApplyPendingProfiles(users, ac.canManageUsers);
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }) => {
@@ -100,6 +73,8 @@ export default function UserManagement() {
       // Invite new user
       const inviteRole = formData.role === 'admin' ? 'admin' : 'user';
       await base44.users.inviteUser(formData.email, inviteRole);
+      const { email, full_name, ...profile } = formData;
+      await savePendingProfile(email, { ...profile, last_modified_by: currentUser?.email || '' });
       toast.success('ส่งคำเชิญเรียบร้อย — ผู้ใช้จะได้รับ email เพื่อลงทะเบียน');
       setShowForm(false);
     }
